@@ -41,3 +41,13 @@ app-example
 # generated native folders
 /ios
 /android
+
+# .antigravityignore
+node_modules/
+dist/
+build/
+.git/
+graphify-out/
+repomix-output.xml
+# Added by code-review-graph
+.code-review-graph/

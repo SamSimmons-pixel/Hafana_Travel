@@ -28,6 +28,9 @@
 // The `@/` prefix = the root of the project (configured in tsconfig.json)
 // Same as Laravel's App\ namespace prefix!
 // ─────────────────────────────────────────────
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { useAuth } from '@/context/auth';
 import {
   ScrollView,
   StyleSheet,
@@ -37,7 +40,6 @@ import {
   View,
   StatusBar,
 } from 'react-native';
-import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DestinationCard from '@/components/destination-card';
 
@@ -95,6 +97,8 @@ const categories = ['All', 'Beach', 'Mountain', 'City', 'Cultural'];
 //   2. Returns JSX (the visual output)
 // ─────────────────────────────────────────────
 export default function HomeScreen() {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
 
   // ─────────────────────────────────────────────
   // 🎓 LESSON: useState = A reactive PHP variable
@@ -128,14 +132,24 @@ export default function HomeScreen() {
         {/* ── HEADER ── */}
         <View style={styles.header}>
           <View>
-            {/* 🎓 JSX Text — All text MUST be wrapped in <Text>. No loose strings! */}
-            <Text style={styles.greeting}>Good Morning 👋</Text>
+            <Text style={styles.greeting}>
+              {user ? `Hello, ${user.email?.split('@')[0]} 👋` : 'Welcome to Hafana 👋'}
+            </Text>
             <Text style={styles.headerTitle}>Where to next?</Text>
           </View>
-          {/* Avatar circle */}
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>AB</Text>
-          </View>
+
+          {/* Auth Action Button */}
+          {user ? (
+            <TouchableOpacity style={styles.avatar} onPress={signOut}>
+              <Text style={styles.avatarText}>
+                {user.email?.substring(0, 2).toUpperCase() || 'US'}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.loginBtnHeader} onPress={() => router.push('/login')}>
+              <Text style={styles.loginBtnText}>Sign In</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── SEARCH BAR ── */}
@@ -245,7 +259,7 @@ export default function HomeScreen() {
                 rating={destination.rating}
                 duration={destination.duration}
                 image={destination.image}
-                onPress={() => alert(`You tapped on ${destination.name}!`)}
+                onPress={() => router.push({ pathname: '/destination/[id]', params: { id: String(destination.id) } })}
               />
             ))}
           </ScrollView>
@@ -318,6 +332,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontSize: 14,
+  },
+  loginBtnHeader: {
+    backgroundColor: '#6C63FF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  loginBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 13,
   },
   // Search
   searchContainer: {
