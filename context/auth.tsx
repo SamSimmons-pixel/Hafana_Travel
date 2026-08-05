@@ -11,18 +11,13 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { apiRequest, getAuthToken, setAuthToken } from '@/services/api';
+import { User, AuthResponse } from '../types/auth';
 
-export interface User {
-  id: number | string;
-  name: string;
-  email: string;
-}
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, pass: string) => Promise<{ error: any }>;
-  signUp: (email: string, pass: string) => Promise<{ error: any }>;
+  signIn: (nomor_visa: string, tanggal_lahir: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -30,7 +25,6 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   signIn: async () => ({ error: null }),
-  signUp: async () => ({ error: null }),
   signOut: async () => {},
 });
 
@@ -61,41 +55,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Sign In (POST /api/login)
-  const signIn = async (email: string, pass: string) => {
+  const signIn = async (nomor_visa: string, tanggal_lahir: string) => {
     try {
       // 🎓 Calls Laravel Route::post('/api/login')
       const res = await apiRequest<{ token: string; user: User }>('/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password: pass }),
-      });
-
-      await setAuthToken(res.token);
-      setUser(res.user);
-      return { error: null };
-    } catch (err: any) {
-      // Demo fallback if backend is offline
-      if (email && pass) {
-        const mockUser: User = { id: 1, name: email.split('@')[0], email };
-        await setAuthToken('mock-sanctum-token-12345');
-        setUser(mockUser);
-        return { error: null };
-      }
-      return { error: err.message };
-    }
-  };
-
-  // Sign Up (POST /api/register)
-  const signUp = async (email: string, pass: string) => {
-    try {
-      // 🎓 Calls Laravel Route::post('/api/register')
-      const res = await apiRequest<{ token: string; user: User }>('/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: email.split('@')[0],
-          email,
-          password: pass,
-          password_confirmation: pass,
-        }),
+        body: JSON.stringify({ nomor_visa, tanggal_lahir: tanggal_lahir }),
       });
 
       await setAuthToken(res.token);
@@ -118,13 +83,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
         signIn,
-        signUp,
         signOut,
       }}
     >
@@ -133,4 +98,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+      throw new Error('useAuth must be used within AuthProvider');
+    }
+    return context;
+};
+  

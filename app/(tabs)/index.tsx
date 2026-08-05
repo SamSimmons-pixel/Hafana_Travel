@@ -133,7 +133,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>
-              {user ? `Hello, ${user.email?.split('@')[0]} 👋` : 'Welcome to Hafana 👋'}
+              {user ? `Hello, ${user.name} 👋` : 'Welcome to Hafana 👋'}
             </Text>
             <Text style={styles.headerTitle}>Where to next?</Text>
           </View>
@@ -142,7 +142,7 @@ export default function HomeScreen() {
           {user ? (
             <TouchableOpacity style={styles.avatar} onPress={signOut}>
               <Text style={styles.avatarText}>
-                {user.email?.substring(0, 2).toUpperCase() || 'US'}
+                {user.name?.substring(0, 2).toUpperCase() || 'US'}
               </Text>
             </TouchableOpacity>
           ) : (

@@ -15,10 +15,10 @@ Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
 
 // Logout (protected by auth middleware below)
-Route::post('auth/logout', [AuthController::class, 'logout'])->middleware('auth:api');
+Route::post('auth/logout', [AuthController::class, 'logout'])->middleware('throttle:10,1')->middleware('auth:api');
 
 // Get user profile (protected by auth middleware below)
-Route::get('user', [AuthController::class, 'user'])->middleware('auth:api');
+Route::get('user', [AuthController::class, 'me'])->middleware('auth:api');
 
 // ──────────────────────────────────────────────────────
 // 🌍 DESTINATION ROUTES (Public access)

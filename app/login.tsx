@@ -22,45 +22,20 @@ import { useAuth } from '@/context/auth';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn, signUp } = useAuth();
 
-  const [isSignUp, setIsSignUp] = useState<boolean>(false);
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [nomor_visa, setnomor_visa] = useState<string>('');
+  const [tanggal_lahir, setTanggal_lahir] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const { signIn } = useAuth();
 
-  const handleSubmit = async () => {
-    if (!email || !password) {
-      Alert.alert('Validation Error', 'Please enter email and password.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      if (isSignUp) {
-        // Handle Registration
-        const { error } = await signUp(email, password);
-        if (error) {
-          Alert.alert('Sign Up Failed', error.message);
-        } else {
-          Alert.alert('Success 🎉', 'Account created! You can now log in.');
-          setIsSignUp(false);
-        }
-      } else {
-        // Handle Login
-        const { error } = await signIn(email, password);
-        if (error) {
-          Alert.alert('Login Failed', error.message);
-        } else {
-          router.replace('/(tabs)'); // Redirect to Home tab
-        }
+  const handleLogin = async (): Promise<void> => {
+      try {
+        await signIn(nomor_visa, tanggal_lahir);
+      } catch (err) {
+        setError('Invalid email or password.');
       }
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   return (
     <KeyboardAvoidingView
@@ -70,33 +45,31 @@ export default function LoginScreen() {
       <View style={styles.card}>
         {/* Header Title */}
         <Text style={styles.brandTitle}>✈️ Hafana Travel</Text>
-        <Text style={styles.subtitle}>
-          {isSignUp ? 'Create your new account' : 'Welcome back! Sign in to continue.'}
-        </Text>
 
-        {/* Email Input */}
+        {/* nomor_visa Input */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email Address</Text>
+          <Text style={styles.label}>nomor_visa</Text>
           <TextInput
             style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="user@example.com"
+            value={nomor_visa}
+            onChangeText={setnomor_visa}
+            placeholder="219219"
             placeholderTextColor="rgba(255,255,255,0.4)"
-            keyboardType="email-address"
+            keyboardType="number-pad"
             autoCapitalize="none"
           />
         </View>
 
-        {/* Password Input */}
+        {/* tanggal_lahir Input */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>tanggal_lahir</Text>
           <TextInput
             style={styles.input}
-            value={password}
-            onChangeText={setPassword}
+            value={tanggal_lahir}
+            onChangeText={setTanggal_lahir}
             placeholder="••••••••"
             placeholderTextColor="rgba(255,255,255,0.4)"
+            keyboardType="number-pad"
             secureTextEntry
           />
         </View>
@@ -104,28 +77,16 @@ export default function LoginScreen() {
         {/* Submit Button */}
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleSubmit}
+          onPress={handleLogin}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.buttonText}>
-              {isSignUp ? 'Create Account' : 'Sign In'}
+              Sign In
             </Text>
           )}
-        </TouchableOpacity>
-
-        {/* Toggle Mode Button */}
-        <TouchableOpacity
-          style={styles.toggleContainer}
-          onPress={() => setIsSignUp(!isSignUp)}
-        >
-          <Text style={styles.toggleText}>
-            {isSignUp
-              ? 'Already have an account? Sign In'
-              : "Don't have an account? Sign Up"}
-          </Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
