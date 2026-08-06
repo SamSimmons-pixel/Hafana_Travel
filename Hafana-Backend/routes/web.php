@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\PaketController as AdminPaketController;
+use App\Http\Controllers\Admin\GroupController as AdminGroupController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\AdminUserController as AdminCrewController;
 
 Route::get('/', function () {
     return redirect()->route('admin.login');
@@ -22,4 +25,15 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
     Route::resource('pakets', AdminPaketController::class);
     Route::post('pakets/{paket}/toggle', [AdminPaketController::class, 'toggleVisibility'])
         ->name('pakets.toggle');
+
+    // Group & JSON Import management
+    Route::resource('groups', AdminGroupController::class);
+    Route::post('groups/{group}/append-json', [AdminGroupController::class, 'appendJson'])
+        ->name('groups.append-json');
+
+    // Jemaah User management
+    Route::resource('users', AdminUserController::class);
+
+    // Admin Crew management
+    Route::resource('admins', AdminCrewController::class);
 });

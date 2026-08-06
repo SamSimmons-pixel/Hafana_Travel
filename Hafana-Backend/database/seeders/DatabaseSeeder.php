@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Admin;
+use App\Models\Group;
 use App\Models\Paket;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -14,17 +15,29 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        // ── Group Rombongan Sample ──
+        $group = Group::create([
+            'nama_group' => 'Keberangkatan 16 Sep 2026 - Rombongan 1',
+            'keterangan' => 'Pembimbing Ust. Yusuf As Sidawy',
+        ]);
+
         // ── Jemaah Users ──
         User::factory()->create([
+            'group_id' => $group->id,
             'name' => 'Test User',
             'nomor_visa' => '1234567890',
             'tanggal_lahir' => '1995-08-15',
+            'nomor_paspor' => 'A1234567',
+            'no_hp' => '081234567890',
         ]);
 
         User::factory()->create([
+            'group_id' => $group->id,
             'name' => 'Ahmad Syahputra',
             'nomor_visa' => 'V-123456',
             'tanggal_lahir' => '1998-05-20',
+            'nomor_paspor' => 'B9876543',
+            'no_hp' => '089876543210',
         ]);
 
         // ── Admin Account ──

@@ -40,6 +40,8 @@
             --btn-edit-fg:    #ffffff;
             --btn-delete-bg:  #ef4444;
             --btn-delete-fg:  #ffffff;
+            --btn-info-bg:    #00AEEF;
+            --btn-info-fg:    #ffffff;
         }
 
         /* ── Reset ── */
@@ -58,10 +60,34 @@
             z-index: 100;
             box-shadow: 0 2px 8px rgba(0,0,0,0.12);
         }
-        .nav-brand { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: 0.2px; }
-        .nav-link { color: rgba(255,255,255,0.9); font-size: 13px; text-decoration: none; font-weight: 500; }
-        .nav-logout { background: rgba(255,255,255,0.15); border: none; padding: 7px 14px; border-radius: 8px; cursor: pointer; color: #fff; font-size: 13px; font-weight: 600; }
-        .nav-logout:hover { background: rgba(255,255,255,0.25); }
+        .nav-left { display: flex; align-items: center; gap: 24px; }
+        .nav-brand { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: 0.2px; text-decoration: none; }
+        .nav-links { display: flex; align-items: center; gap: 12px; }
+        .nav-link {
+            color: rgba(255,255,255,0.85);
+            font-size: 13px;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: background .15s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: #ffffff;
+        }
+        .nav-logout {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background .15s;
+        }
+        .nav-logout:hover { background: rgba(255,255,255,0.3); }
 
         /* ── Main Container ── */
         main { padding: 28px; max-width: 1200px; margin: 0 auto; }
@@ -80,7 +106,7 @@
         .alert-success { background: var(--success-bg); color: var(--success); border-left: 4px solid var(--success); }
         .alert-error   { background: var(--danger-bg);  color: var(--danger);  border-left: 4px solid var(--danger); }
 
-        /* ── Primary Button ── */
+        /* ── Buttons ── */
         .btn-primary {
             background: var(--primary);
             color: #fff;
@@ -135,6 +161,7 @@
         }
         .badge-on  { background: var(--success-bg); color: var(--success); }
         .badge-off { background: var(--danger-bg);  color: var(--danger); }
+        .badge-info{ background: var(--primary-light); color: var(--primary-dark); }
 
         /* ── Action Buttons (HIGH CONTRAST) ── */
         .actions { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
@@ -154,6 +181,7 @@
         .btn-action:active { transform: translateY(0); }
         .btn-edit   { background: var(--btn-edit-bg);   color: var(--btn-edit-fg); }
         .btn-delete { background: var(--btn-delete-bg); color: var(--btn-delete-fg); }
+        .btn-info   { background: var(--btn-info-bg);   color: var(--btn-info-fg); }
 
         /* ── Toggle Switch (Sembunyikan / Tampilkan) ── */
         .switch-wrap { display: flex; align-items: center; gap: 8px; }
@@ -239,16 +267,21 @@
 
     {{-- ── Navbar ── --}}
     <nav>
-        <span class="nav-brand">🕌 Hafana Travel Admin</span>
-        <div style="display:flex; align-items:center; gap:16px;">
-            <a href="{{ route('admin.pakets.index') }}" class="nav-link">📦 Paket</a>
-            <form method="POST" action="{{ route('admin.logout') }}" style="margin:0">
-                @csrf
-                <button type="submit" class="nav-logout">
-                    Logout · {{ Auth::guard('admin')->user()->name }}
-                </button>
-            </form>
+        <div class="nav-left">
+            <a href="{{ route('admin.pakets.index') }}" class="nav-brand">🕌 Hafana Travel Admin</a>
+            <div class="nav-links">
+                <a href="{{ route('admin.pakets.index') }}" class="nav-link {{ request()->routeIs('admin.pakets.*') ? 'active' : '' }}">📦 Paket Umrah</a>
+                <a href="{{ route('admin.groups.index') }}" class="nav-link {{ request()->routeIs('admin.groups.*') ? 'active' : '' }}">👥 Group & Import JSON</a>
+                <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">🧕 Data Jemaah</a>
+                <a href="{{ route('admin.admins.index') }}" class="nav-link {{ request()->routeIs('admin.admins.*') ? 'active' : '' }}">🛡️ Kelola Admin</a>
+            </div>
         </div>
+        <form method="POST" action="{{ route('admin.logout') }}" style="margin:0">
+            @csrf
+            <button type="submit" class="nav-logout">
+                Logout ({{ Auth::guard('admin')->user()->name }})
+            </button>
+        </form>
     </nav>
 
     {{-- ── Main Content ── --}}
