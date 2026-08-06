@@ -5,6 +5,7 @@
  * Handles requests to your Laravel backend (routes/api.php).
  */
 
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
 // 🎓 Change this to your computer's local IP or domain when running Laravel!
@@ -13,19 +14,28 @@ export const LARAVEL_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.122
 
 const TOKEN_KEY = 'laravel_sanctum_token';
 
-// Helper to get stored auth token
-export async function getAuthToken(): Promise<string | null> {
+export const getAuthToken = async (): Promise<string | null> => {
+  if (Platform.OS === 'web') {  
+    return localStorage.getItem(TOKEN_KEY);
+  }
   return await SecureStore.getItemAsync(TOKEN_KEY);
-}
+};
 
-// Helper to set stored auth token
-export async function setAuthToken(token: string | null): Promise<void> {
+export const setAuthToken = async (token: string | null): Promise<void> => {
+  if (Platform.OS === 'web') {
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+    return;
+  }
   if (token) {
     await SecureStore.setItemAsync(TOKEN_KEY, token);
   } else {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
   }
-}
+};
 
 /**
  * Generic Fetch Wrapper for Laravel API

@@ -58,9 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (nomor_visa: string, tanggal_lahir: string) => {
     try {
       // 🎓 Calls Laravel Route::post('/api/login')
-      const res = await apiRequest<{ token: string; user: User }>('/login', {
+      const res = await apiRequest<{ token: string; user: User }>('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ nomor_visa, tanggal_lahir: tanggal_lahir }),
+        body: JSON.stringify({ nomor_visa, tanggal_lahir }),
       });
 
       await setAuthToken(res.token);

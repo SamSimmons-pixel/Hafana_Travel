@@ -1,37 +1,17 @@
 /**
  * Home Screen — app/(tabs)/index.tsx
+ * Hafana Umrah Travel — Main Menu
  *
- * 🎓 LESSON: This file = your routes/web.php + HomeController + home.blade.php
- *
- * Because Expo Router is FILE-BASED (like Laravel, but even simpler):
- *   - This file lives at:  app/(tabs)/index.tsx
- *   - It maps to the URL:  / (the root tab)
- *
- * In Laravel:
- *   Route::get('/', [HomeController::class, 'index']); → home.blade.php
- *
- * In Expo Router:
- *   The file itself IS the route. No route file needed!
+ * All icons use MaterialCommunityIcons (solid, single-color vector font).
+ * Styles sourced from @/components/styles — edit theme.ts to retheme.
  */
 
-// ─────────────────────────────────────────────
-// 🎓 LESSON: Imports = PHP `use` statements
-//
-// In Laravel:
-//   use App\Models\Destination;
-//   use App\Http\Controllers\Controller;
-//
-// In React Native:
-//   import { View, Text } from 'react-native';  ← from npm package
-//   import DestinationCard from '@/components/destination-card'; ← our own file
-//
-// The `@/` prefix = the root of the project (configured in tsconfig.json)
-// Same as Laravel's App\ namespace prefix!
-// ─────────────────────────────────────────────
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/auth';
 import {
+  ActivityIndicator,
+  Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -41,244 +21,234 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import DestinationCard from '@/components/destination-card';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  COLORS, FONT, RADIUS, SPACING, SHADOW,
+  cardStyles, layoutStyles, sectionStyles, emptyStyles, textStyles,
+  MENU_ICONS, UI_ICONS,
+} from '@/components/styles';
+import { apiRequest } from '@/services/api';
 
-// ─────────────────────────────────────────────
-// 🎓 LESSON: Data = Your Eloquent Collection / JSON Response
-//
-// In a real app, this would come from an API (like your Laravel API).
-// For now, we hard-code it — same as returning a static array from a controller:
-//
-// Laravel:  return view('home', ['destinations' => Destination::all()]);
-// React:    const destinations = [...]; (data defined locally for now)
-// ─────────────────────────────────────────────
-const destinations = [
-  {
-    id: 1,
-    name: 'Bali',
-    country: 'Indonesia',
-    price: 1200,
-    rating: 4.9,
-    duration: '7 Days',
-    image: require('@/assets/images/bali.png'),
-  },
-  {
-    id: 2,
-    name: 'Paris',
-    country: 'France',
-    price: 2500,
-    rating: 4.7,
-    duration: '5 Days',
-    image: require('@/assets/images/paris.png'),
-  },
-  {
-    id: 3,
-    name: 'Maldives',
-    country: 'Maldives',
-    price: 3800,
-    rating: 5.0,
-    duration: '10 Days',
-    image: require('@/assets/images/maldives.png'),
-  },
-];
+// ── Types ────────────────────────────────────────────────────────────────────
+interface Paket {
+  id: number;
+  nama_paket: string;
+  kota_keberangkatan: string;
+  tanggal_berangkat: string;
+  durasi_hari: number;
+  harga: number;
+  maskapai: string;
+  gambar: string | null;
+}
 
-// Category filter data
-const categories = ['All', 'Beach', 'Mountain', 'City', 'Cultural'];
-
-// ─────────────────────────────────────────────
-// 🎓 LESSON: The Screen Component = Controller Method + View
-//
-// In Laravel, your HomeController@index does:
-//   1. Fetches data
-//   2. Returns a view with that data
-//
-// In React Native, the component does:
-//   1. Holds state (like session/request data)
-//   2. Returns JSX (the visual output)
-// ─────────────────────────────────────────────
+// ── Screen ───────────────────────────────────────────────────────────────────
 export default function HomeScreen() {
-  const router = useRouter();
   const { user, signOut } = useAuth();
-
-  // ─────────────────────────────────────────────
-  // 🎓 LESSON: useState = A reactive PHP variable
-  //
-  // In PHP/Blade:
-  //   $activeCategory = 'All';
-  //   // But changing it doesn't update the UI automatically!
-  //
-  // In React:
-  //   const [activeCategory, setActiveCategory] = useState('All');
-  //   // When you call setActiveCategory('Beach'), the UI AUTOMATICALLY re-renders!
-  //   // This is React's superpower — no page refresh needed (like Vue/Alpine.js)
-  //
-  // Syntax: const [value, setter] = useState(initialValue);
-  //   - value: read the current state (like echo $activeCategory)
-  //   - setter: change the state  (like $activeCategory = 'Beach')
-  // ─────────────────────────────────────────────
-  const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [pakets, setPakets]           = useState<Paket[]>([]);
+  const [loadingPakets, setLoading]   = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiRequest<{ data: Paket[] }>('/pakets');
+        setPakets(res.data);
+      } catch {
+        setPakets([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleMenuPress = (id: string) =>
+    Alert.alert('Segera Hadir', 'Fitur ini akan segera tersedia.');
+
+  const handleSignOut = () =>
+    Alert.alert('Keluar', 'Yakin ingin keluar?', [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Keluar', style: 'destructive', onPress: signOut },
+    ]);
+
+  const filtered = pakets.filter(p =>
+    p.nama_paket.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.kota_keberangkatan.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Hide status bar or style it */}
-      <StatusBar barStyle="light-content" backgroundColor="#0a0a1a" />
+    <SafeAreaView style={layoutStyles.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={layoutStyles.scrollContent}>
 
-      {/* 🎓 ScrollView = <div style="overflow-y: scroll"> in HTML/CSS */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* ── HEADER ── */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>
-              {user ? `Hello, ${user.name} 👋` : 'Welcome to Hafana 👋'}
-            </Text>
-            <Text style={styles.headerTitle}>Where to next?</Text>
+        {/* ── TOP BAR ── */}
+        <View style={s.topBar}>
+          <View style={layoutStyles.row}>
+            <View style={s.logoCircle}>
+              <Text style={s.logoText}>HF</Text>
+            </View>
+            <View style={{ marginLeft: SPACING.sm }}>
+              <Text style={s.brandName}>Hafana Travel</Text>
+              <Text style={s.brandSub}>Umrah & Haji</Text>
+            </View>
           </View>
+          <TouchableOpacity onPress={handleSignOut} style={s.avatarBtn}>
+            <Text style={s.avatarInitials}>
+              {user?.name?.substring(0, 2).toUpperCase() ?? 'US'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Auth Action Button */}
-          {user ? (
-            <TouchableOpacity style={styles.avatar} onPress={signOut}>
-              <Text style={styles.avatarText}>
-                {user.name?.substring(0, 2).toUpperCase() || 'US'}
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.loginBtnHeader} onPress={() => router.push('/login')}>
-              <Text style={styles.loginBtnText}>Sign In</Text>
-            </TouchableOpacity>
-          )}
+        {/* ── GREETING BANNER ── */}
+        <View style={s.greeting}>
+          <Text style={s.greetingHi}>Assalamu'alaikum</Text>
+          <Text style={s.greetingName}>{user?.name ?? 'Jemaah'}</Text>
         </View>
 
         {/* ── SEARCH BAR ── */}
-        {/*
-          🎓 LESSON: TextInput = <input type="text"> in HTML
-          The `value` and `onChangeText` = v-model in Vue / wire:model in Livewire
-          When user types, setSearchQuery runs → searchQuery updates → UI re-renders
-        */}
-        <View style={styles.searchContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
+        <View style={s.searchBar}>
+          {/* MaterialCommunityIcons: solid magnify icon, no outline border */}
+          <MaterialCommunityIcons
+            name={UI_ICONS.search.name}
+            size={UI_ICONS.search.size}
+            color={UI_ICONS.search.color}
+            style={{ marginRight: SPACING.sm }}
+          />
           <TextInput
-            style={styles.searchInput}
-            placeholder="Search destinations..."
-            placeholderTextColor="rgba(255,255,255,0.4)"
+            style={s.searchInput}
+            placeholder="Sedang cari paket apa?"
+            placeholderTextColor={COLORS.textMuted}
             value={searchQuery}
-            onChangeText={setSearchQuery}  // Called on every keystroke
+            onChangeText={setSearchQuery}
           />
         </View>
 
-        {/* ── CATEGORY FILTERS ── */}
-        {/*
-          🎓 LESSON: Horizontal ScrollView = overflow-x: scroll in CSS
-          The `horizontal` prop makes it scroll left/right
-        */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
-          contentContainerStyle={styles.categoriesContent}
-        >
-          {/*
-            🎓 LESSON: .map() = @foreach in Blade
-            In Blade:
-              @foreach($categories as $category)
-                <button>{{ $category }}</button>
-              @endforeach
-
-            In React:
-              {categories.map((category) => (
-                <TouchableOpacity key={...}>
-                  <Text>{category}</Text>
-                </TouchableOpacity>
-              ))}
-
-            ⚠️ The `key` prop is REQUIRED in lists — like a unique ID for each item.
-            In Blade you'd use $loop->index, here use the item itself or its id.
-          */}
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryChip,
-                // 🎓 Conditional styling — like @class(['active' => $activeCategory === $category])
-                activeCategory === category && styles.categoryChipActive,
-              ]}
-              onPress={() => setActiveCategory(category)}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  activeCategory === category && styles.categoryTextActive,
-                ]}
+        {/* ── MENU GRID ── */}
+        <View style={[cardStyles.padded, s.menuCard]}>
+          <View style={s.menuGrid}>
+            {MENU_ICONS.items.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={s.menuItem}
+                onPress={() => handleMenuPress(item.id)}
+                activeOpacity={0.7}
               >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* ── FEATURED DESTINATIONS ── */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>✈️ Featured Destinations</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/*
-            🎓 Horizontal card list — scrolls left/right like a carousel
-            This ScrollView wraps our DestinationCard components
-          */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.cardsContainer}
-          >
-            {/*
-              🎓 LESSON: Rendering a list of components with .map()
-              Each item in `destinations` array gets its own <DestinationCard />
-              
-              This is like:
-                @foreach($destinations as $destination)
-                  <x-destination-card
-                    :name="$destination['name']"
-                    :price="$destination['price']"
-                    ...
+                <View style={s.menuIconBox}>
+                  {/* Solid single-color vector icon — no OS emoji rendering */}
+                  <MaterialCommunityIcons
+                    name={item.icon}
+                    size={MENU_ICONS.iconSize}
+                    color={MENU_ICONS.iconColor}
                   />
-                @endforeach
-            */}
-            {destinations.map((destination) => (
-              <DestinationCard
-                key={destination.id}
-                name={destination.name}
-                country={destination.country}
-                price={destination.price}
-                rating={destination.rating}
-                duration={destination.duration}
-                image={destination.image}
-                onPress={() => router.push({ pathname: '/destination/[id]', params: { id: String(destination.id) } })}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* ── POPULAR SECTION ── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔥 Most Popular</Text>
-          <View style={styles.popularGrid}>
-            {destinations.slice(0, 2).map((dest) => (
-              <TouchableOpacity key={dest.id} style={styles.popularCard}>
-                <View style={styles.popularInfo}>
-                  <Text style={styles.popularName}>{dest.name}</Text>
-                  <Text style={styles.popularCountry}>{dest.country}</Text>
                 </View>
-                <Text style={styles.popularPrice}>${dest.price.toLocaleString()}</Text>
+                <Text style={s.menuLabel}>{item.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        {/* ── PAKET SECTION ── */}
+        <View style={{ marginTop: SPACING.xl }}>
+          <View style={sectionStyles.header}>
+            <Text style={sectionStyles.title}>Paket</Text>
+            <TouchableOpacity onPress={() => handleMenuPress('semua_paket')}>
+              <Text style={sectionStyles.link}>Lihat Semua</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loadingPakets ? (
+            <ActivityIndicator color={COLORS.primary} style={{ marginTop: 24 }} />
+          ) : filtered.length === 0 ? (
+            <View style={emptyStyles.container}>
+              {/* Solid mosque icon — single color, no outline */}
+              <MaterialCommunityIcons
+                name={UI_ICONS.mosque.name}
+                size={UI_ICONS.mosque.size}
+                color={UI_ICONS.mosque.color}
+                style={{ marginBottom: SPACING.md }}
+              />
+              <Text style={emptyStyles.title}>Belum ada paket tersedia</Text>
+              <Text style={emptyStyles.subtitle}>Admin belum menambahkan paket Umrah</Text>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: SPACING.page, gap: SPACING.md }}
+            >
+              {filtered.map((paket) => (
+                <TouchableOpacity
+                  key={paket.id}
+                  style={s.paketCard}
+                  onPress={() => handleMenuPress('semua_paket')}
+                  activeOpacity={0.85}
+                >
+                  {/* Card Image / Placeholder */}
+                  <View style={s.paketImageBox}>
+                    {paket.gambar ? (
+                      <Image
+                        source={{ uri: `${process.env.EXPO_PUBLIC_API_URL?.replace('/api', '')}/storage/${paket.gambar}` }}
+                        style={s.paketImage}
+                      />
+                    ) : (
+                      <View style={s.paketImagePlaceholder}>
+                        {/* Solid mosque placeholder — single color vector */}
+                        <MaterialCommunityIcons
+                          name="mosque"
+                          size={44}
+                          color={COLORS.primary}
+                        />
+                      </View>
+                    )}
+                    <View style={s.paketBadge}>
+                      <Text style={s.paketBadgeText}>UMROH</Text>
+                    </View>
+                  </View>
+
+                  {/* Card Info */}
+                  <View style={s.paketInfo}>
+                    <Text style={s.paketNama} numberOfLines={2}>{paket.nama_paket}</Text>
+                    <View style={{ gap: 5, marginBottom: SPACING.sm }}>
+                      <View style={layoutStyles.row}>
+                        <MaterialCommunityIcons
+                          name={UI_ICONS.calendar.name}
+                          size={UI_ICONS.calendar.size}
+                          color={UI_ICONS.calendar.color}
+                          style={{ marginRight: 4 }}
+                        />
+                        <Text style={textStyles.muted}>Berangkat {formatDate(paket.tanggal_berangkat)}</Text>
+                      </View>
+                      <View style={layoutStyles.row}>
+                        <MaterialCommunityIcons
+                          name={UI_ICONS.flight.name}
+                          size={UI_ICONS.flight.size}
+                          color={UI_ICONS.flight.color}
+                          style={{ marginRight: 4 }}
+                        />
+                        <Text style={textStyles.muted}>
+                          Dari{' '}
+                          <Text style={{ color: COLORS.primary, fontWeight: FONT.weightBold }}>
+                            {paket.kota_keberangkatan.toUpperCase()}
+                          </Text>
+                        </Text>
+                      </View>
+                      <View style={layoutStyles.row}>
+                        <MaterialCommunityIcons
+                          name={UI_ICONS.clock.name}
+                          size={UI_ICONS.clock.size}
+                          color={UI_ICONS.clock.color}
+                          style={{ marginRight: 4 }}
+                        />
+                        <Text style={textStyles.muted}>Paket {paket.durasi_hari} Hari</Text>
+                      </View>
+                    </View>
+                    <Text style={s.paketHarga}>
+                      Rp {Number(paket.harga).toLocaleString('id-ID')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
       </ScrollView>
@@ -286,169 +256,119 @@ export default function HomeScreen() {
   );
 }
 
-// ─────────────────────────────────────────────
-// 🎓 STYLES — Your CSS (Scoped to this component only)
-// Rule: camelCase, numbers instead of px, flexbox everywhere
-// ─────────────────────────────────────────────
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,                      // Fill the whole screen (like height: 100vh)
-    backgroundColor: '#0a0a1a',   // Deep dark navy — our app's bg color
-  },
-  scrollContent: {
-    paddingBottom: 32,
-  },
-  // Header
-  header: {
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function formatDate(dateStr: string): string {
+  try {
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'short', year: 'numeric',
+    });
+  } catch { return dateStr; }
+}
+
+// ── Screen-local styles ───────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.lg,
+    backgroundColor: COLORS.surface,
   },
+  logoCircle: {
+    width: 44, height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  logoText:      { color: COLORS.surface, fontWeight: FONT.weightBlack, fontSize: FONT.sizeMd },
+  brandName:     { color: COLORS.textPrimary, fontSize: 15, fontWeight: FONT.weightBlack },
+  brandSub:      { color: COLORS.primary, fontSize: FONT.sizeXs, fontWeight: FONT.weightMedium },
+  avatarBtn: {
+    width: 40, height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  avatarInitials: { color: COLORS.surface, fontWeight: FONT.weightBold, fontSize: FONT.sizeMd },
+
   greeting: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    marginBottom: 4,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: 18,
   },
-  headerTitle: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
+  greetingHi:   { color: 'rgba(255,255,255,0.85)', fontSize: FONT.sizeMd, marginBottom: 2 },
+  greetingName: { color: COLORS.surface, fontSize: 22, fontWeight: FONT.weightBlack },
+
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
+    ...SHADOW.card,
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#6C63FF',
+  searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: FONT.sizeBase },
+
+  menuCard: {
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
+  },
+  menuGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+  menuItem:    { width: '22%', alignItems: 'center' },
+  menuIconBox: {
+    width: 58, height: 58,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: SPACING.xs + 2,
+  },
+  menuLabel: {
+    color: COLORS.textPrimary,
+    fontSize: FONT.sizeXs,
+    textAlign: 'center',
+    fontWeight: FONT.weightMedium,
+    lineHeight: 15,
+  },
+
+  paketCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    width: 240,
+    overflow: 'hidden',
+    ...SHADOW.card,
+    shadowOpacity: 0.07,
+    elevation: 3,
+  },
+  paketImageBox: {
+    height: 130,
+    backgroundColor: COLORS.primaryLight,
+    position: 'relative',
+  },
+  paketImage:            { width: '100%', height: '100%', resizeMode: 'cover' },
+  paketImagePlaceholder: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(108, 99, 255, 0.5)',
+    backgroundColor: COLORS.primaryLight,
   },
-  avatarText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
+  paketBadge: {
+    position: 'absolute', top: 10, right: 10,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.sm, paddingVertical: 3,
+    borderRadius: SPACING.xs,
   },
-  loginBtnHeader: {
-    backgroundColor: '#6C63FF',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  loginBtnText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  // Search
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginHorizontal: 24,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 24,
-  },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 15,
-  },
-  // Categories
-  categoriesContainer: {
-    marginBottom: 28,
-  },
-  categoriesContent: {
-    paddingHorizontal: 24,
-    gap: 10,
-  },
-  categoryChip: {
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  categoryChipActive: {
-    backgroundColor: '#6C63FF',
-    borderColor: '#6C63FF',
-  },
-  categoryText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  categoryTextActive: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  // Sections
-  section: {
-    marginBottom: 28,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  seeAll: {
-    color: '#6C63FF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  cardsContainer: {
-    paddingHorizontal: 24,
-  },
-  // Popular
-  popularGrid: {
-    paddingHorizontal: 24,
-    gap: 12,
-  },
-  popularCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.09)',
-  },
-  popularInfo: {
-    gap: 2,
-  },
-  popularName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  popularCountry: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 13,
-  },
-  popularPrice: {
-    color: '#FFD700',
-    fontSize: 16,
-    fontWeight: '800',
-  },
+  paketBadgeText: { color: COLORS.surface, fontSize: 10, fontWeight: FONT.weightBlack, letterSpacing: 0.5 },
+  paketInfo:      { padding: SPACING.md },
+  paketNama:      { color: COLORS.textPrimary, fontSize: FONT.sizeMd, fontWeight: FONT.weightBold, marginBottom: SPACING.sm, lineHeight: 18 },
+  paketHarga:     { color: COLORS.primary, fontSize: FONT.sizeBase, fontWeight: FONT.weightBlack },
 });

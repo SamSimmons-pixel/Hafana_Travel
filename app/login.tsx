@@ -1,8 +1,8 @@
 /**
- * Login & Register Screen — app/login.tsx
- * 
- * 🎓 LESSON: This handles Authentication Forms & Submission
- * Laravel equivalent: LoginController / RegisterController + Blade view
+ * Login Screen — app/login.tsx
+ * Hafana Umrah Travel — Authentication
+ *
+ * Styles sourced from @/components/styles — edit theme.ts to retheme.
  */
 
 import { useState } from 'react';
@@ -11,6 +11,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -18,149 +19,191 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/context/auth';
+import {
+  COLORS, FONT, RADIUS, SPACING, SHADOW,
+  cardStyles, inputStyles, buttonStyles, textStyles,
+} from '@/components/styles';
 
 export default function LoginScreen() {
   const router = useRouter();
-
-  const [nomor_visa, setnomor_visa] = useState<string>('');
-  const [tanggal_lahir, setTanggal_lahir] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
   const { signIn } = useAuth();
 
-  const handleLogin = async (): Promise<void> => {
-      try {
-        await signIn(nomor_visa, tanggal_lahir);
-      } catch (err) {
-        setError('Invalid email or password.');
+  const [nomor_visa, setNomorVisa]       = useState('');
+  const [tanggal_lahir, setTanggalLahir] = useState('');
+  const [loading, setLoading]            = useState(false);
+
+  const handleLogin = async () => {
+    if (!nomor_visa || !tanggal_lahir) {
+      Alert.alert('Perhatian', 'Silakan masukkan Nomor Visa dan Tanggal Lahir.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await signIn(nomor_visa.trim(), tanggal_lahir.trim());
+      if (error) {
+        Alert.alert('Login Gagal', error || 'Nomor Visa atau Tanggal Lahir tidak sesuai.');
+      } else {
+        router.replace('/(tabs)');
       }
-    };
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Terjadi kesalahan. Coba lagi.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={{ flex: 1, backgroundColor: COLORS.primary }}
     >
-      <View style={styles.card}>
-        {/* Header Title */}
-        <Text style={styles.brandTitle}>✈️ Hafana Travel</Text>
-
-        {/* nomor_visa Input */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>nomor_visa</Text>
-          <TextInput
-            style={styles.input}
-            value={nomor_visa}
-            onChangeText={setnomor_visa}
-            placeholder="219219"
-            placeholderTextColor="rgba(255,255,255,0.4)"
-            keyboardType="number-pad"
-            autoCapitalize="none"
-          />
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Header Blue Band ── */}
+        <View style={s.header}>
+          <View style={s.logoCircle}>
+            <Text style={s.logoEmoji}>🕌</Text>
+          </View>
+          <Text style={s.brandTitle}>Hafana Travel</Text>
+          <Text style={s.brandSub}>Spesialis Umrah & Haji</Text>
         </View>
 
-        {/* tanggal_lahir Input */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>tanggal_lahir</Text>
-          <TextInput
-            style={styles.input}
-            value={tanggal_lahir}
-            onChangeText={setTanggal_lahir}
-            placeholder="••••••••"
-            placeholderTextColor="rgba(255,255,255,0.4)"
-            keyboardType="number-pad"
-            secureTextEntry
-          />
+        {/* ── Card ── */}
+        <View style={[cardStyles.padded, s.card]}>
+          <Text style={[textStyles.heading, { marginBottom: SPACING.xs }]}>Masuk ke Akun Anda</Text>
+          <Text style={[textStyles.muted, { marginBottom: SPACING.xxl, lineHeight: 18 }]}>
+            Masukkan Nomor Visa dan Tanggal Lahir yang terdaftar.
+          </Text>
+
+          {/* Nomor Visa */}
+          <View style={{ marginBottom: SPACING.lg }}>
+            <Text style={inputStyles.label}>Nomor Visa</Text>
+            <View style={inputStyles.wrapper}>
+              <MaterialCommunityIcons name="card-account-details" size={18} color={COLORS.textMuted} style={{ marginRight: SPACING.sm }} />
+              <TextInput
+                style={inputStyles.field}
+                value={nomor_visa}
+                onChangeText={setNomorVisa}
+                placeholder="Masukkan Nomor Visa"
+                placeholderTextColor={COLORS.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+
+          {/* Tanggal Lahir */}
+          <View style={{ marginBottom: SPACING.xl }}>
+            <Text style={inputStyles.label}>Tanggal Lahir</Text>
+            <View style={inputStyles.wrapper}>
+              <MaterialCommunityIcons name="calendar" size={18} color={COLORS.textMuted} style={{ marginRight: SPACING.sm }} />
+              <TextInput
+                style={inputStyles.field}
+                value={tanggal_lahir}
+                onChangeText={setTanggalLahir}
+                placeholder="YYYY-MM-DD  (cth: 1995-08-15)"
+                placeholderTextColor={COLORS.textMuted}
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
+          </View>
+
+          {/* Login Button */}
+          <TouchableOpacity
+            style={[buttonStyles.primary, loading && buttonStyles.disabled]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading
+              ? <ActivityIndicator color={COLORS.surface} />
+              : <Text style={buttonStyles.primaryText}>Masuk</Text>
+            }
+          </TouchableOpacity>
+
+          {/* Demo Hint */}
+          <View style={s.demoBox}>
+            <Text style={[textStyles.tiny, { marginBottom: SPACING.sm, fontWeight: FONT.weightSemi }]}>💡 Akun Demo:</Text>
+            {[
+              { label: 'Test User', visa: '1234567890', dob: '1995-08-15' },
+              { label: 'Ahmad Syahputra', visa: 'V-123456', dob: '1998-05-20' },
+            ].map((acc) => (
+              <TouchableOpacity
+                key={acc.visa}
+                style={s.demoChip}
+                onPress={() => { setNomorVisa(acc.visa); setTanggalLahir(acc.dob); }}
+              >
+                <Text style={s.demoChipText}>
+                  {acc.label} · Visa: <Text style={{ fontWeight: FONT.weightBold }}>{acc.visa}</Text>
+                  {' '}· Lahir: <Text style={{ fontWeight: FONT.weightBold }}>{acc.dob}</Text>
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>
-              Sign In
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
+        <Text style={s.footer}>© 2026 Hafana Travel. All rights reserved.</Text>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a1a',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
+const s = StyleSheet.create({
+  header: {
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    paddingTop: 64,
+    paddingBottom: 40,
+    paddingHorizontal: SPACING.xxl,
   },
+  logoCircle: {
+    width: 80, height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  logoEmoji:  { fontSize: 36 },
+  brandTitle: { color: COLORS.surface, fontSize: FONT.sizeXxl, fontWeight: FONT.weightBlack, letterSpacing: 0.5 },
+  brandSub:   { color: 'rgba(255,255,255,0.8)', fontSize: FONT.sizeMd, marginTop: SPACING.xs },
+
   card: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 24,
-    padding: 28,
+    flex: 1,
+    backgroundColor: COLORS.bg,
+    borderTopLeftRadius: RADIUS.xxl,
+    borderTopRightRadius: RADIUS.xxl,
+    padding: SPACING.xxl,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+
+  demoBox: {
+    marginTop: SPACING.xxl,
+    paddingTop: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  demoChip: {
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: RADIUS.sm + 2,
+    padding: SPACING.sm + 2,
+    marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: '#b3e0f7',
   },
-  brandTitle: {
-    color: '#fff',
-    fontSize: 30,
-    fontWeight: '800',
+  demoChipText: { color: COLORS.textPrimary, fontSize: FONT.sizeSm },
+
+  footer: {
+    backgroundColor: COLORS.bg,
     textAlign: 'center',
-    marginBottom: 6,
-  },
-  subtitle: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 28,
-  },
-  inputGroup: {
-    marginBottom: 18,
-  },
-  label: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: '#fff',
-    fontSize: 15,
-  },
-  button: {
-    backgroundColor: '#6C63FF',
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  toggleContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  toggleText: {
-    color: '#6C63FF',
-    fontSize: 14,
-    fontWeight: '600',
+    color: COLORS.textMuted,
+    fontSize: FONT.sizeXs,
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.xxl,
   },
 });

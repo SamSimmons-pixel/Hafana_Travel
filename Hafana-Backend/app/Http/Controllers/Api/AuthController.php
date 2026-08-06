@@ -10,38 +10,21 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(Request $request) 
-    {
-        $validated = $request->validate([
-            'tanggal_lahir' => 'required|date',
-            'nomor_visa' => 'required|string|max:255',
-        ]);
-
-        $user = User::create([
-            'tanggal_lahir' => $validated['tanggal_lahir'],
-            'nomor_visa' => $validated['nomor_visa'],
-        ]);
-
-        $token = $user->createToken('mobile_app')->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ], 201);
-    }
     
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'nomor_visa' => 'required',
-            'tanggal_lahir' => 'required',
+            'nomor_visa' => 'required|string',
+            'tanggal_lahir' => 'required|string',
         ]);
 
-        if (!Auth::attempt($credentials)) {
+        
+        $user = User::where('nomor_visa', $credentials['nomor_visa'])->where('tanggal_lahir', $credentials['tanggal_lahir'])->firstOrFail();
+
+        if (!$user) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        $user = User::where('nomor_visa', $request->nomor_visa)->firstOrFail();
         $token = $user->createToken('mobile_app')->plainTextToken;
 
         return response()->json([
