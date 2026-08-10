@@ -13,7 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Redirect unauthenticated web requests to admin login (instead of default 'login' route)
+        $middleware->redirectGuestsTo(fn (Request $request) =>
+            $request->expectsJson() ? null : route('admin.login')
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

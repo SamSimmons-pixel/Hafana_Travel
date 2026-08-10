@@ -23,11 +23,15 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
+        <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="currency" options={{ headerShown: false }} />
+          <Stack.Screen name="quran/index" options={{ headerShown: false }} />
+          <Stack.Screen name="quran/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="kiblat" options={{ headerShown: false }} />
           <Stack.Screen name="destination/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: true }} />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>

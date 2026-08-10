@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/auth';
 import {
   ActivityIndicator,
@@ -43,6 +44,7 @@ interface Paket {
 
 // ── Screen ───────────────────────────────────────────────────────────────────
 export default function HomeScreen() {
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [pakets, setPakets]           = useState<Paket[]>([]);
@@ -61,8 +63,21 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  const handleMenuPress = (id: string) =>
+  const handleMenuPress = (id: string) => {
+    if (id === 'konversi_valas') {
+      router.push('/currency');
+      return;
+    }
+    if (id === 'alquran') {
+      router.push('/quran' as any);
+      return;
+    }
+    if (id === 'kiblat') {
+      router.push('/kiblat' as any);
+      return;
+    }
     Alert.alert('Segera Hadir', 'Fitur ini akan segera tersedia.');
+  };
 
   const handleSignOut = () =>
     Alert.alert('Keluar', 'Yakin ingin keluar?', [
