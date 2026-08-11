@@ -1,8 +1,9 @@
 /**
  * Login Screen — app/login.tsx
- * Hafana Umrah Travel — Authentication
+ * Hafana Umrah Travel — Verification & Authentication
  *
- * Styles sourced from @/components/styles — edit theme.ts to retheme.
+ * Allows Jemaah to verify Visa & Birthdate to access profile & group info.
+ * Includes a "Masuk sebagai Tamu" option so unauthenticated users can freely browse the app.
  */
 
 import { useState } from 'react';
@@ -43,7 +44,7 @@ export default function LoginScreen() {
     try {
       const { error } = await signIn(nomor_visa.trim(), tanggal_lahir.trim());
       if (error) {
-        Alert.alert('Login Gagal', error || 'Nomor Visa atau Tanggal Lahir tidak sesuai.');
+        Alert.alert('Verifikasi Gagal', error || 'Nomor Visa atau Tanggal Lahir tidak sesuai.');
       } else {
         router.replace('/(tabs)');
       }
@@ -52,6 +53,10 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGuestBrowse = () => {
+    router.replace('/(tabs)');
   };
 
   return (
@@ -66,6 +71,12 @@ export default function LoginScreen() {
       >
         {/* ── Header Blue Band ── */}
         <View style={s.header}>
+          {/* Back/Close button for guest browse */}
+          <TouchableOpacity style={s.skipHeaderBtn} onPress={handleGuestBrowse} activeOpacity={0.8}>
+            <MaterialCommunityIcons name="arrow-left" size={20} color={COLORS.surface} style={{ marginRight: 4 }} />
+            <Text style={s.skipHeaderBtnText}>Jelajahi App</Text>
+          </TouchableOpacity>
+
           <View style={s.logoCircle}>
             <Text style={s.logoEmoji}>🕌</Text>
           </View>
@@ -75,21 +86,21 @@ export default function LoginScreen() {
 
         {/* ── Card ── */}
         <View style={[cardStyles.padded, s.card]}>
-          <Text style={[textStyles.heading, { marginBottom: SPACING.xs }]}>Masuk ke Akun Anda</Text>
+          <Text style={[textStyles.heading, { marginBottom: SPACING.xs }]}>Verifikasi Data Jemaah</Text>
           <Text style={[textStyles.muted, { marginBottom: SPACING.xxl, lineHeight: 18 }]}>
-            Masukkan Nomor Visa dan Tanggal Lahir yang terdaftar.
+            Masukkan Nomor Visa dan Tanggal Lahir untuk memverifikasi dokumen dan rombongan Anda.
           </Text>
 
           {/* Nomor Visa */}
           <View style={{ marginBottom: SPACING.lg }}>
-            <Text style={inputStyles.label}>Nomor Visa</Text>
+            <Text style={inputStyles.label}>Nomor Visa (Username)</Text>
             <View style={inputStyles.wrapper}>
               <MaterialCommunityIcons name="card-account-details" size={18} color={COLORS.textMuted} style={{ marginRight: SPACING.sm }} />
               <TextInput
                 style={inputStyles.field}
                 value={nomor_visa}
                 onChangeText={setNomorVisa}
-                placeholder="Masukkan Nomor Visa"
+                placeholder="Contoh: 6169281080"
                 placeholderTextColor={COLORS.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -99,14 +110,14 @@ export default function LoginScreen() {
 
           {/* Tanggal Lahir */}
           <View style={{ marginBottom: SPACING.xl }}>
-            <Text style={inputStyles.label}>Tanggal Lahir</Text>
+            <Text style={inputStyles.label}>Tanggal Lahir (Password)</Text>
             <View style={inputStyles.wrapper}>
               <MaterialCommunityIcons name="calendar" size={18} color={COLORS.textMuted} style={{ marginRight: SPACING.sm }} />
               <TextInput
                 style={inputStyles.field}
                 value={tanggal_lahir}
                 onChangeText={setTanggalLahir}
-                placeholder="YYYY-MM-DD  (cth: 1995-08-15)"
+                placeholder="YYYY-MM-DD  (cth: 1995-02-10)"
                 placeholderTextColor={COLORS.textMuted}
                 keyboardType="numbers-and-punctuation"
               />
@@ -122,16 +133,25 @@ export default function LoginScreen() {
           >
             {loading
               ? <ActivityIndicator color={COLORS.surface} />
-              : <Text style={buttonStyles.primaryText}>Masuk</Text>
+              : <Text style={buttonStyles.primaryText}>Verifikasi & Masuk</Text>
             }
+          </TouchableOpacity>
+
+          {/* Guest Browse Button */}
+          <TouchableOpacity
+            style={s.guestBrowseBtn}
+            onPress={handleGuestBrowse}
+            activeOpacity={0.8}
+          >
+            <Text style={s.guestBrowseBtnText}>Masuk sebagai Tamu (Nanti Saja)</Text>
           </TouchableOpacity>
 
           {/* Demo Hint */}
           <View style={s.demoBox}>
-            <Text style={[textStyles.tiny, { marginBottom: SPACING.sm, fontWeight: FONT.weightSemi }]}>💡 Akun Demo:</Text>
+            <Text style={[textStyles.tiny, { marginBottom: SPACING.sm, fontWeight: FONT.weightSemi }]}>💡 Contoh Jemaah Admin Panel:</Text>
             {[
-              { label: 'Test User', visa: '1234567890', dob: '1995-08-15' },
-              { label: 'Ahmad Syahputra', visa: 'V-123456', dob: '1998-05-20' },
+              { label: 'Abdul Latif Ramadhani', visa: '6169281080', dob: '1995-02-10' },
+              { label: 'Aisyah Nurul Sari', visa: '6169281119', dob: '1993-01-01' },
             ].map((acc) => (
               <TouchableOpacity
                 key={acc.visa}
@@ -157,9 +177,26 @@ const s = StyleSheet.create({
   header: {
     backgroundColor: COLORS.primary,
     alignItems: 'center',
-    paddingTop: 64,
+    paddingTop: 48,
     paddingBottom: 40,
     paddingHorizontal: SPACING.xxl,
+    position: 'relative',
+  },
+  skipHeaderBtn: {
+    position: 'absolute',
+    top: 48,
+    left: SPACING.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+  },
+  skipHeaderBtnText: {
+    color: COLORS.surface,
+    fontSize: FONT.sizeSm,
+    fontWeight: FONT.weightBold,
   },
   logoCircle: {
     width: 80, height: 80,
@@ -167,6 +204,7 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center', alignItems: 'center',
     marginBottom: SPACING.md,
+    marginTop: 20,
   },
   logoEmoji:  { fontSize: 36 },
   brandTitle: { color: COLORS.surface, fontSize: FONT.sizeXxl, fontWeight: FONT.weightBlack, letterSpacing: 0.5 },
@@ -182,9 +220,21 @@ const s = StyleSheet.create({
     elevation: 0,
   },
 
+  guestBrowseBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    marginTop: SPACING.md,
+  },
+  guestBrowseBtnText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT.sizeBase,
+    fontWeight: FONT.weightSemi,
+  },
+
   demoBox: {
-    marginTop: SPACING.xxl,
-    paddingTop: SPACING.lg,
+    marginTop: SPACING.xl,
+    paddingTop: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },

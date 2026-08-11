@@ -28,7 +28,7 @@ import {
   cardStyles, layoutStyles, sectionStyles, emptyStyles, textStyles,
   MENU_ICONS, UI_ICONS,
 } from '@/components/styles';
-import { apiRequest } from '@/services/api';
+import { apiRequest, getStorageUrl } from '@/services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Paket {
@@ -49,12 +49,19 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [pakets, setPakets]           = useState<Paket[]>([]);
   const [loadingPakets, setLoading]   = useState(true);
+  const [appLogo, setAppLogo]         = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiRequest<{ data: Paket[] }>('/pakets');
-        setPakets(res.data);
+        const [paketsRes, settingsRes] = await Promise.all([
+          apiRequest<{ data: Paket[] }>('/pakets'),
+          apiRequest<{ data: { app_logo: string | null } }>('/settings').catch(() => null),
+        ]);
+        setPakets(paketsRes.data);
+        if (settingsRes?.data?.app_logo) {
+          setAppLogo(getStorageUrl(settingsRes.data.app_logo));
+        }
       } catch {
         setPakets([]);
       } finally {
@@ -64,6 +71,10 @@ export default function HomeScreen() {
   }, []);
 
   const handleMenuPress = (id: string) => {
+    if (id === 'semua_paket') {
+      router.push('/pakets' as any);
+      return;
+    }
     if (id === 'konversi_valas') {
       router.push('/currency');
       return;
@@ -76,14 +87,24 @@ export default function HomeScreen() {
       router.push('/kiblat' as any);
       return;
     }
+    if (id === 'doa_dzikir') {
+      router.push('/doa' as any);
+      return;
+    }
+    if (id === 'gallery') {
+      router.push('/gallery' as any);
+      return;
+    }
     Alert.alert('Segera Hadir', 'Fitur ini akan segera tersedia.');
   };
 
-  const handleSignOut = () =>
-    Alert.alert('Keluar', 'Yakin ingin keluar?', [
-      { text: 'Batal', style: 'cancel' },
-      { text: 'Keluar', style: 'destructive', onPress: signOut },
-    ]);
+  const handleAvatarPress = () => {
+    if (user) {
+      router.push('/(tabs)/profile' as any);
+    } else {
+      router.push('/login');
+    }
+  };
 
   const filtered = pakets.filter(p =>
     p.nama_paket.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -98,18 +119,29 @@ export default function HomeScreen() {
         {/* ── TOP BAR ── */}
         <View style={s.topBar}>
           <View style={layoutStyles.row}>
-            <View style={s.logoCircle}>
-              <Text style={s.logoText}>HF</Text>
-            </View>
+            {appLogo ? (
+              <Image source={{ uri: appLogo }} style={s.logoImage} />
+            ) : (
+              <View style={s.logoCircle}>
+                <Text style={s.logoText}>HF</Text>
+              </View>
+            )}
             <View style={{ marginLeft: SPACING.sm }}>
               <Text style={s.brandName}>Hafana Travel</Text>
               <Text style={s.brandSub}>Umrah & Haji</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={handleSignOut} style={s.avatarBtn}>
-            <Text style={s.avatarInitials}>
-              {user?.name?.substring(0, 2).toUpperCase() ?? 'US'}
-            </Text>
+          <TouchableOpacity onPress={handleAvatarPress} style={user ? s.avatarBtn : s.loginHeaderBtn} activeOpacity={0.8}>
+            {user ? (
+              <Text style={s.avatarInitials}>
+                {user.name ? user.name.substring(0, 2).toUpperCase() : 'JM'}
+              </Text>
+            ) : (
+              <View style={layoutStyles.row}>
+                <MaterialCommunityIcons name="login" size={16} color={COLORS.surface} style={{ marginRight: 4 }} />
+                <Text style={s.loginHeaderBtnText}>Masuk</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -194,14 +226,14 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={paket.id}
                   style={s.paketCard}
-                  onPress={() => handleMenuPress('semua_paket')}
+                  onPress={() => router.push(`/pakets/${paket.id}` as any)}
                   activeOpacity={0.85}
                 >
                   {/* Card Image / Placeholder */}
                   <View style={s.paketImageBox}>
-                    {paket.gambar ? (
+                    {paket.gambar && getStorageUrl(paket.gambar) ? (
                       <Image
-                        source={{ uri: `${process.env.EXPO_PUBLIC_API_URL?.replace('/api', '')}/storage/${paket.gambar}` }}
+                        source={{ uri: getStorageUrl(paket.gambar)! }}
                         style={s.paketImage}
                       />
                     ) : (
@@ -297,6 +329,11 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.primary,
     justifyContent: 'center', alignItems: 'center',
   },
+  logoImage: {
+    width: 44, height: 44,
+    borderRadius: 10,
+    resizeMode: 'contain',
+  },
   logoText:      { color: COLORS.surface, fontWeight: FONT.weightBlack, fontSize: FONT.sizeMd },
   brandName:     { color: COLORS.textPrimary, fontSize: 15, fontWeight: FONT.weightBlack },
   brandSub:      { color: COLORS.primary, fontSize: FONT.sizeXs, fontWeight: FONT.weightMedium },
@@ -307,6 +344,14 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   avatarInitials: { color: COLORS.surface, fontWeight: FONT.weightBold, fontSize: FONT.sizeMd },
+  loginHeaderBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  loginHeaderBtnText: { color: COLORS.surface, fontWeight: FONT.weightBold, fontSize: FONT.sizeSm },
 
   greeting: {
     backgroundColor: COLORS.primary,

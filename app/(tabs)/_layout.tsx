@@ -1,4 +1,4 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
@@ -8,7 +8,7 @@ import { COLORS, TAB_ICON } from '@/components/styles';
 import { useAuth } from '@/context/auth';
 
 export default function TabLayout() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -18,14 +18,11 @@ export default function TabLayout() {
     );
   }
 
-  if (!user) {
-    return <Redirect href="/login" />;
-  }
-
+  // App is open for both guests and authenticated jemaah!
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: TAB_ICON.activeColor,   // ← from iconConfig.ts
+        tabBarActiveTintColor: TAB_ICON.activeColor,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
@@ -46,11 +43,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="profile"
         options={{
-          title: 'Explore',
+          title: 'Profil',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={TAB_ICON.size} name="paperplane.fill" color={color} />
+            <IconSymbol size={TAB_ICON.size} name="person.fill" color={color} />
           ),
         }}
       />

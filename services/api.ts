@@ -12,6 +12,17 @@ import * as SecureStore from 'expo-secure-store';
 // Example: 'http://192.168.1.50:8000/api' or 'http://localhost:8000/api'
 export const LARAVEL_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.122.122.128:8000/api';
 
+/**
+ * Helper to construct full storage URL for uploaded files/images.
+ */
+export function getStorageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const baseUrl = LARAVEL_API_URL.replace('/api', '');
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${baseUrl}/storage/${cleanPath}`;
+}
+
 const TOKEN_KEY = 'laravel_sanctum_token';
 
 export const getAuthToken = async (): Promise<string | null> => {

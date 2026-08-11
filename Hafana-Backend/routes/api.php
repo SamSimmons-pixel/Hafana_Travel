@@ -14,6 +14,16 @@ Route::post('auth/logout', [AuthController::class, 'logout'])->middleware('throt
 Route::get('user', [AuthController::class, 'me'])->middleware('auth:sanctum');
 
 // ──────────────────────────────────────────────────────
+// ⚙️ SETTINGS ROUTE (Public - mobile app)
+// ──────────────────────────────────────────────────────
+Route::get('settings', [\App\Http\Controllers\Api\SettingController::class, 'index']);
+
+// ──────────────────────────────────────────────────────
+// 🖼️ GALERI & TESTIMONI ROUTES (Public - mobile app)
+// ──────────────────────────────────────────────────────
+Route::get('galeri', [\App\Http\Controllers\Api\GaleriController::class, 'index']);
+
+// ──────────────────────────────────────────────────────
 // 📦 PAKET UMRAH ROUTES (Public - mobile app)
 // ──────────────────────────────────────────────────────
 Route::get('pakets', [\App\Http\Controllers\Api\PaketController::class, 'index']);

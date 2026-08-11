@@ -222,7 +222,7 @@
         .empty { text-align: center; padding: 56px; color: var(--text-muted); font-size: 15px; }
 
         /* ── Form Styles ── */
-        .card { background: var(--surface); border-radius: 14px; padding: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .card, .form-card { background: var(--surface); border-radius: 14px; padding: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
         .form-group { margin-bottom: 18px; }
         label { display: block; font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
         input[type="text"], input[type="email"], input[type="password"],
@@ -261,6 +261,104 @@
         .error-msg { color: var(--danger); font-size: 12px; margin-top: 4px; }
         .current-img img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border); margin-top: 8px; }
         .hint { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+
+        /* ── Pagination Styling (Laravel Links Override) ── */
+        .pagination-wrap {
+            margin-top: 20px;
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 14px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+        }
+        nav[role="navigation"] {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            width: 100% !important;
+        }
+        nav[role="navigation"] svg {
+            width: 14px !important;
+            height: 14px !important;
+            max-width: 14px !important;
+            max-height: 14px !important;
+            fill: currentColor;
+            display: inline-block !important;
+            vertical-align: middle;
+        }
+        nav[role="navigation"] p {
+            font-size: 13px !important;
+            color: var(--text-muted) !important;
+            margin: 0 !important;
+        }
+        nav[role="navigation"] p .font-medium,
+        nav[role="navigation"] p span {
+            font-weight: 700 !important;
+            color: var(--text-primary) !important;
+        }
+        nav[role="navigation"] a,
+        nav[role="navigation"] span.relative {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: var(--text-primary) !important;
+            text-decoration: none !important;
+            padding: 6px 12px !important;
+            border-radius: 8px !important;
+            border: 1px solid var(--border) !important;
+            background: var(--surface) !important;
+            transition: all .15s ease;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            line-height: 1.2 !important;
+            box-shadow: none !important;
+        }
+        nav[role="navigation"] a:hover {
+            background: var(--primary-light) !important;
+            color: var(--primary-dark) !important;
+            border-color: var(--primary) !important;
+        }
+        nav[role="navigation"] span[aria-current="page"] span,
+        nav[role="navigation"] span[aria-current="page"] {
+            background: var(--primary) !important;
+            color: #ffffff !important;
+            border-color: var(--primary) !important;
+            font-weight: 800 !important;
+        }
+        nav[role="navigation"] span[aria-disabled="true"] {
+            opacity: 0.45 !important;
+            cursor: not-allowed !important;
+            background: var(--bg) !important;
+        }
+        nav[role="navigation"] > div {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+        nav[role="navigation"] .inline-flex,
+        nav[role="navigation"] span.z-0 {
+            display: flex !important;
+            gap: 4px !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+        }
+        nav[role="navigation"] .sm\:hidden {
+            display: none !important;
+        }
+        nav[role="navigation"] .sm\:flex-1 {
+            display: flex !important;
+            width: 100% !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
     </style>
 </head>
 <body>
@@ -271,6 +369,8 @@
             <a href="{{ route('admin.pakets.index') }}" class="nav-brand">🕌 Hafana Travel Admin</a>
             <div class="nav-links">
                 <a href="{{ route('admin.pakets.index') }}" class="nav-link {{ request()->routeIs('admin.pakets.*') ? 'active' : '' }}">📦 Paket Umrah</a>
+                <a href="{{ route('admin.galeri.index') }}" class="nav-link {{ request()->routeIs('admin.galeri.*') ? 'active' : '' }}">🖼️ Galeri & Testimoni</a>
+                <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">⚙️ Logo & Pengaturan</a>
                 <a href="{{ route('admin.groups.index') }}" class="nav-link {{ request()->routeIs('admin.groups.*') ? 'active' : '' }}">👥 Group & Import JSON</a>
                 <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">🧕 Data Jemaah</a>
                 <a href="{{ route('admin.admins.index') }}" class="nav-link {{ request()->routeIs('admin.admins.*') ? 'active' : '' }}">🛡️ Kelola Admin</a>

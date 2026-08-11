@@ -30,6 +30,12 @@ export default function RootLayout() {
           <Stack.Screen name="quran/index" options={{ headerShown: false }} />
           <Stack.Screen name="quran/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="kiblat" options={{ headerShown: false }} />
+          <Stack.Screen name="doa/index" options={{ headerShown: false }} />
+          <Stack.Screen name="doa/[category]" options={{ headerShown: false }} />
+          <Stack.Screen name="doa/detail" options={{ headerShown: false }} />
+          <Stack.Screen name="pakets/index" options={{ headerShown: false }} />
+          <Stack.Screen name="pakets/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="gallery/index" options={{ headerShown: false }} />
           <Stack.Screen name="destination/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: true }} />
         </Stack>

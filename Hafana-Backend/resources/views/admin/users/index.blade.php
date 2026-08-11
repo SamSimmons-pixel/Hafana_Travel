@@ -90,7 +90,7 @@
     </table>
 </div>
 
-<div style="margin-top:20px;">
+<div class="pagination-wrap">
     {{ $users->links() }}
 </div>
 @endsection
