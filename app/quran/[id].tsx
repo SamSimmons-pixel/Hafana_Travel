@@ -25,6 +25,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAppTheme } from '@/context/theme';
 import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
   cardStyles, layoutStyles, textStyles, emptyStyles,
@@ -56,10 +57,11 @@ interface SurahDetail {
 export default function SurahDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { isDarkMode, colors } = useAppTheme();
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Map of ayah number → measured Y offset from top of scroll content
-  const ayahYPositions = useRef<Record<number, number>>({});
+  const ayahYMap = useRef<Record<number, number>>({});
 
   const [detail, setDetail]   = useState<SurahDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -78,7 +80,7 @@ export default function SurahDetailScreen() {
   const fetchSurahDetail = async (surahNo: string) => {
     setLoading(true);
     setHighlightedAyat(null);
-    ayahYPositions.current = {};
+    ayahYMap.current = {};
     try {
       const res = await fetch(`https://equran.id/api/v2/surat/${surahNo}`);
       const json = await res.json();
@@ -97,7 +99,7 @@ export default function SurahDetailScreen() {
   /** Called when each ayah card is laid out — records its Y position */
   const handleAyahLayout = (nomorAyat: number, event: LayoutChangeEvent) => {
     const y = event.nativeEvent.layout.y;
-    ayahYPositions.current[nomorAyat] = y;
+    ayahYMap.current[nomorAyat] = y;
   };
 
   /** Jump handler — uses recorded Y positions, no virtualization issues */
@@ -114,11 +116,10 @@ export default function SurahDetailScreen() {
     setJumpAyatInput('');
     setHighlightedAyat(targetAyat);
 
-    const targetY = ayahYPositions.current[targetAyat];
+    const targetY = ayahYMap.current[targetAyat];
 
-    if (targetY !== undefined) {
-      // Y position already measured — scroll immediately
-      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+    if (targetY !== undefined && scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: Math.max(0, targetY - 16), animated: true });
     } else {
       // Fallback: estimate based on average ayah height (~280px) + header (~260px)
       const estimatedY = 260 + (targetAyat - 1) * 280;
@@ -132,16 +133,16 @@ export default function SurahDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
 
       {/* ── TOP BAR ── */}
-      <View style={s.topBar}>
+      <View style={[s.topBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
 
-        <Text style={s.headerTitle} numberOfLines={1}>
+        <Text style={[s.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {detail ? `${detail.nomor}. ${detail.namaLatin}` : 'Detail Surah'}
         </Text>
 
@@ -149,25 +150,25 @@ export default function SurahDetailScreen() {
         {detail && (
           <TouchableOpacity
             onPress={() => setShowJumpModal(true)}
-            style={s.jumpTopBtn}
+            style={[s.jumpTopBtn, { backgroundColor: colors.primaryLight }]}
             activeOpacity={0.8}
           >
-            <MaterialCommunityIcons name="format-list-numbered" size={16} color={COLORS.primary} style={{ marginRight: 4 }} />
-            <Text style={s.jumpTopText}>Ke Ayat</Text>
+            <MaterialCommunityIcons name="format-list-numbered" size={16} color={colors.primary} style={{ marginRight: 4 }} />
+            <Text style={[s.jumpTopText, { color: colors.primary }]}>Ke Ayat</Text>
           </TouchableOpacity>
         )}
       </View>
 
       {loading ? (
         <View style={layoutStyles.centered}>
-          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
-          <Text style={[textStyles.muted, { marginTop: 12 }]}>Memuat ayat-ayat Surah...</Text>
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+          <Text style={[textStyles.muted, { marginTop: 12, color: colors.textSecondary }]}>Memuat ayat-ayat Surah...</Text>
         </View>
       ) : !detail ? (
         <View style={emptyStyles.container}>
           <Text style={emptyStyles.icon}>⚠️</Text>
-          <Text style={emptyStyles.title}>Gagal Memuat Surah</Text>
-          <Text style={emptyStyles.subtitle}>Periksa koneksi internet Anda</Text>
+          <Text style={[emptyStyles.title, { color: colors.textPrimary }]}>Gagal Memuat Surah</Text>
+          <Text style={[emptyStyles.subtitle, { color: colors.textSecondary }]}>Periksa koneksi internet Anda</Text>
         </View>
       ) : (
         <ScrollView
@@ -176,7 +177,7 @@ export default function SurahDetailScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* ── SURAH HEADER CARD ── */}
-          <View style={[cardStyles.padded, s.headerCard]}>
+          <View style={[cardStyles.padded, s.headerCard, { backgroundColor: isDarkMode ? '#1e293b' : colors.primary }]}>
             <Text style={s.headerSurahLatin}>{detail.namaLatin}</Text>
             <Text style={s.headerSurahArabic}>{detail.nama}</Text>
             <Text style={s.headerSurahArti}>"{detail.arti}"</Text>
@@ -197,26 +198,26 @@ export default function SurahDetailScreen() {
             return (
               <View
                 key={item.nomorAyat}
-                style={[s.ayahCard, isHighlighted && s.ayahCardHighlighted]}
+                style={[s.ayahCard, { backgroundColor: colors.surface, borderColor: isHighlighted ? colors.primary : colors.border }, isHighlighted && s.ayahCardHighlighted]}
                 onLayout={(e) => handleAyahLayout(item.nomorAyat, e)}
               >
                 {/* Badge row */}
                 <View style={s.ayahTopRow}>
-                  <View style={[s.ayahBadge, isHighlighted && s.ayahBadgeHighlighted]}>
-                    <Text style={[s.ayahBadgeText, isHighlighted && s.ayahBadgeTextHighlighted]}>
+                  <View style={[s.ayahBadge, { backgroundColor: isHighlighted ? colors.primary : colors.primaryLight }, isHighlighted && s.ayahBadgeHighlighted]}>
+                    <Text style={[s.ayahBadgeText, { color: isHighlighted ? '#ffffff' : colors.primary }, isHighlighted && s.ayahBadgeTextHighlighted]}>
                       {detail.nomor}:{item.nomorAyat}{isHighlighted ? '  📍' : ''}
                     </Text>
                   </View>
                 </View>
 
                 {/* Arabic Text */}
-                <Text style={s.teksArab}>{item.teksArab}</Text>
+                <Text style={[s.teksArab, { color: colors.textPrimary }]}>{item.teksArab}</Text>
 
                 {/* Latin */}
-                <Text style={s.teksLatin}>{item.teksLatin}</Text>
+                <Text style={[s.teksLatin, { color: colors.primary }]}>{item.teksLatin}</Text>
 
                 {/* Indonesian */}
-                <Text style={s.teksIndonesia}>{item.teksIndonesia}</Text>
+                <Text style={[s.teksIndonesia, { color: colors.textSecondary }]}>{item.teksIndonesia}</Text>
               </View>
             );
           })}
@@ -225,21 +226,21 @@ export default function SurahDetailScreen() {
           <View style={s.footerNav}>
             {detail.suratSebelumnya ? (
               <TouchableOpacity
-                style={s.navPrevBtn}
+                style={[s.navPrevBtn, { backgroundColor: colors.surface, borderColor: colors.primary }]}
                 onPress={() => router.push(`/quran/${(detail.suratSebelumnya as any).nomor}` as any)}
               >
-                <MaterialCommunityIcons name="chevron-left" size={20} color={COLORS.primary} />
-                <Text style={s.navBtnText}>Surah Sebelumnya</Text>
+                <MaterialCommunityIcons name="chevron-left" size={20} color={colors.primary} />
+                <Text style={[s.navBtnText, { color: colors.primary }]}>Surah Sebelumnya</Text>
               </TouchableOpacity>
             ) : <View />}
 
             {detail.suratSelanjutnya ? (
               <TouchableOpacity
-                style={s.navNextBtn}
+                style={[s.navNextBtn, { backgroundColor: colors.primary }]}
                 onPress={() => router.push(`/quran/${(detail.suratSelanjutnya as any).nomor}` as any)}
               >
                 <Text style={s.navBtnTextNext}>Surah Selanjutnya</Text>
-                <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.surface} />
+                <MaterialCommunityIcons name="chevron-right" size={20} color="#ffffff" />
               </TouchableOpacity>
             ) : <View />}
           </View>
@@ -255,27 +256,27 @@ export default function SurahDetailScreen() {
           onRequestClose={() => setShowJumpModal(false)}
         >
           <View style={s.modalOverlay}>
-            <View style={s.modalContainer}>
+            <View style={[s.modalContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={layoutStyles.spaceBetween}>
                 <View style={layoutStyles.row}>
-                  <MaterialCommunityIcons name="format-list-numbered" size={22} color={COLORS.primary} style={{ marginRight: 6 }} />
-                  <Text style={s.modalTitle}>Lompat Ke Ayat</Text>
+                  <MaterialCommunityIcons name="format-list-numbered" size={22} color={colors.primary} style={{ marginRight: 6 }} />
+                  <Text style={[s.modalTitle, { color: colors.textPrimary }]}>Lompat Ke Ayat</Text>
                 </View>
                 <TouchableOpacity onPress={() => setShowJumpModal(false)}>
-                  <MaterialCommunityIcons name="close" size={20} color={COLORS.textMuted} />
+                  <MaterialCommunityIcons name="close" size={20} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
 
-              <Text style={s.modalSub}>
-                Surah {detail.namaLatin} — <Text style={{ fontWeight: FONT.weightBold, color: COLORS.primary }}>1 s/d {detail.jumlahAyat} Ayat</Text>
+              <Text style={[s.modalSub, { color: colors.textSecondary }]}>
+                Surah {detail.namaLatin} — <Text style={{ fontWeight: FONT.weightBold, color: colors.primary }}>1 s/d {detail.jumlahAyat} Ayat</Text>
               </Text>
 
               {/* Number Input */}
-              <View style={s.modalInputWrapper}>
+              <View style={[s.modalInputWrapper, { backgroundColor: colors.bg, borderColor: colors.border }]}>
                 <TextInput
-                  style={s.modalInput}
+                  style={[s.modalInput, { color: colors.textPrimary }]}
                   placeholder={`Nomor Ayat (1 - ${detail.jumlahAyat})`}
-                  placeholderTextColor={COLORS.textMuted}
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
                   value={jumpAyatInput}
                   onChangeText={setJumpAyatInput}

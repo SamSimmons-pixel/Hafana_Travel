@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAppTheme } from '@/context/theme';
 import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
   cardStyles, layoutStyles, textStyles, emptyStyles,
@@ -40,6 +41,7 @@ const POPULAR_SURAH_NUMBERS = [1, 18, 36, 55, 56, 67, 112, 113, 114];
 
 export default function QuranIndexScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useAppTheme();
 
   const [surahs, setSurahs]           = useState<SurahItem[]>([]);
   const [loading, setLoading]         = useState<boolean>(true);
@@ -88,22 +90,22 @@ export default function QuranIndexScreen() {
   });
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
 
       {/* ── TOP BAR ── */}
-      <View style={s.topBar}>
+      <View style={[s.topBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Al-Qur'anul Karim</Text>
+        <Text style={[s.headerTitle, { color: colors.textPrimary }]}>Al-Qur'anul Karim</Text>
         <TouchableOpacity onPress={fetchSurahs} style={s.refreshBtn}>
-          <MaterialCommunityIcons name="refresh" size={22} color={COLORS.primary} />
+          <MaterialCommunityIcons name="refresh" size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       {/* ── BANNER ── */}
-      <View style={s.headerBanner}>
+      <View style={[s.headerBanner, { backgroundColor: isDarkMode ? '#1e293b' : colors.primary }]}>
         <View>
           <Text style={s.bannerTitle}>Baca & Hayati Al-Qur'an 📖</Text>
           <Text style={s.bannerSub}>114 Surah lengkap teks Arab, latin & terjemahan</Text>
@@ -111,18 +113,18 @@ export default function QuranIndexScreen() {
       </View>
 
       {/* ── SEARCH BAR ── */}
-      <View style={s.searchBar}>
-        <MaterialCommunityIcons name="magnify" size={20} color={COLORS.textMuted} style={{ marginRight: SPACING.sm }} />
+      <View style={[s.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} style={{ marginRight: SPACING.sm }} />
         <TextInput
-          style={s.searchInput}
+          style={[s.searchInput, { color: colors.textPrimary }]}
           placeholder="Cari Surah (contoh: Yasin, Al-Kahf)..."
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <MaterialCommunityIcons name="close-circle" size={18} color={COLORS.textMuted} />
+            <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -140,11 +142,11 @@ export default function QuranIndexScreen() {
             return (
               <TouchableOpacity
                 key={cat.id}
-                style={[s.chip, active && s.chipActive]}
+                style={[s.chip, { backgroundColor: active ? colors.primary : colors.surface, borderColor: active ? colors.primary : colors.border }]}
                 onPress={() => setFilterCategory(cat.id as any)}
                 activeOpacity={0.7}
               >
-                <Text style={[s.chipText, active && s.chipTextActive]}>{cat.label}</Text>
+                <Text style={[s.chipText, { color: active ? '#ffffff' : colors.textSecondary }]}>{cat.label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -154,14 +156,14 @@ export default function QuranIndexScreen() {
       {/* ── SURAH LIST ── */}
       {loading ? (
         <View style={layoutStyles.centered}>
-          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
-          <Text style={[textStyles.muted, { marginTop: 12 }]}>Memuat daftar Surah Al-Qur'an...</Text>
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+          <Text style={[textStyles.muted, { marginTop: 12, color: colors.textSecondary }]}>Memuat daftar Surah Al-Qur'an...</Text>
         </View>
       ) : filteredSurahs.length === 0 ? (
         <View style={emptyStyles.container}>
           <Text style={emptyStyles.icon}>📖</Text>
-          <Text style={emptyStyles.title}>Surah Tidak Ditemukan</Text>
-          <Text style={emptyStyles.subtitle}>Coba kata kunci pencarian yang lain</Text>
+          <Text style={[emptyStyles.title, { color: colors.textPrimary }]}>Surah Tidak Ditemukan</Text>
+          <Text style={[emptyStyles.subtitle, { color: colors.textSecondary }]}>Coba kata kunci pencarian yang lain</Text>
         </View>
       ) : (
         <FlatList
@@ -171,21 +173,21 @@ export default function QuranIndexScreen() {
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={s.surahCard}
+              style={[s.surahCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => router.push(`/quran/${item.nomor}` as any)}
               activeOpacity={0.75}
             >
               {/* Surah Number Star Badge */}
-              <View style={s.numberBadge}>
-                <Text style={s.numberText}>{item.nomor}</Text>
+              <View style={[s.numberBadge, { backgroundColor: colors.primaryLight }]}>
+                <Text style={[s.numberText, { color: colors.primary }]}>{item.nomor}</Text>
               </View>
 
               {/* Surah Info */}
               <View style={s.surahInfo}>
-                <Text style={s.surahLatin}>{item.namaLatin}</Text>
-                <Text style={s.surahArti}>{item.arti} · <Text style={{ color: COLORS.primary }}>{item.jumlahAyat} Ayat</Text></Text>
+                <Text style={[s.surahLatin, { color: colors.textPrimary }]}>{item.namaLatin}</Text>
+                <Text style={[s.surahArti, { color: colors.textSecondary }]}>{item.arti} · <Text style={{ color: colors.primary, fontWeight: '700' }}>{item.jumlahAyat} Ayat</Text></Text>
                 <View style={s.tagRow}>
-                  <Text style={s.tempatTag}>
+                  <Text style={[s.tempatTag, { backgroundColor: colors.surfaceAlt, color: colors.textSecondary }]}>
                     {item.tempatTurun === 'Mekah' ? '🕋 Makkiyah' : '🕌 Madaniyah'}
                   </Text>
                 </View>
@@ -193,7 +195,7 @@ export default function QuranIndexScreen() {
 
               {/* Arabic Name */}
               <View style={s.arabicBox}>
-                <Text style={s.surahArabic}>{item.nama}</Text>
+                <Text style={[s.surahArabic, { color: colors.primary }]}>{item.nama}</Text>
               </View>
             </TouchableOpacity>
           )}

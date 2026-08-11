@@ -28,41 +28,48 @@ export const MENU_ICONS = {
   iconBg:    COLORS.primaryLight,   // ← box background behind all icons
 
   items: [
+    // ── Row 1 ──
     {
       id:    'semua_paket',
       label: 'Semua\nPaket',
-      // Solid package/box icon
       icon:  'package-variant-closed' as const,
-    },
-    {
-      id:    'konversi_valas',
-      label: 'Konversi\nMata Uang',
-      // Solid swap/exchange arrows
-      icon:  'swap-horizontal-bold' as const,
-    },
-    {
-      id:    'alquran',
-      label: 'Al-Quran',
-      // Solid open book
-      icon:  'book-open-page-variant' as const,
     },
     {
       id:    'doa_dzikir',
       label: 'Doa &\nDzikir',
-      // Solid praying hands
       icon:  'hands-pray' as const,
-    },
-    {
-      id:    'kiblat',
-      label: 'Kiblat',
-      // Solid compass rose
-      icon:  'compass-rose' as const,
     },
     {
       id:    'gallery',
       label: 'Gallery',
-      // Solid multiple images
       icon:  'image-multiple' as const,
+    },
+    {
+      id:    'khutbah',
+      label: 'Khutbah\nJumat',
+      icon:  'account-voice' as const,
+    },
+
+    // ── Row 2 ──
+    {
+      id:    'waktu_sholat',
+      label: 'Waktu Sholat\n(Madinah)',
+      icon:  'clock-time-four-outline' as const,
+    },
+    {
+      id:    'konversi_valas',
+      label: 'Konversi\nMata Uang',
+      icon:  'swap-horizontal-bold' as const,
+    },
+    {
+      id:    'kiblat',
+      label: 'Kiblat',
+      icon:  'compass-rose' as const,
+    },
+    {
+      id:    'alquran',
+      label: 'Al-Quran',
+      icon:  'book-open-page-variant' as const,
     },
   ],
 } as const;

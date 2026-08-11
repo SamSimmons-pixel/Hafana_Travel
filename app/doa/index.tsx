@@ -24,25 +24,27 @@ import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
   layoutStyles,
 } from '@/components/styles';
+import { useAppTheme } from '@/context/theme';
 import { DOA_CATEGORIES } from '@/data/doaData';
 
 export default function DoaMenuScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useAppTheme();
 
   const handleCategoryPress = (categoryId: string) => {
     router.push(`/doa/${categoryId}` as any);
   };
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
 
       {/* ── APP BAR ── */}
-      <View style={s.appBar}>
+      <View style={[s.appBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={s.appBarTitle}>Doa-doa</Text>
+        <Text style={[s.appBarTitle, { color: colors.textPrimary }]}>Doa-doa</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -55,14 +57,14 @@ export default function DoaMenuScreen() {
           {DOA_CATEGORIES.map((cat) => (
             <TouchableOpacity
               key={cat.id}
-              style={s.card}
+              style={[s.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => handleCategoryPress(cat.id)}
               activeOpacity={0.8}
             >
-              <View style={s.iconCircle}>
-                {renderCategoryIcon(cat.id, cat.icon)}
+              <View style={[s.iconCircle, { backgroundColor: colors.primaryLight }]}>
+                {renderCategoryIcon(cat.id, cat.icon, colors.primary)}
               </View>
-              <Text style={s.cardLabel} numberOfLines={2}>
+              <Text style={[s.cardLabel, { color: colors.textPrimary }]} numberOfLines={2}>
                 {cat.label}
               </Text>
             </TouchableOpacity>
@@ -74,16 +76,16 @@ export default function DoaMenuScreen() {
   );
 }
 
-function renderCategoryIcon(catId: string, iconName: string) {
+function renderCategoryIcon(catId: string, iconName: string, primaryColor: string) {
   switch (catId) {
     case 'haji':
-      return <FontAwesome5 name="kaaba" size={28} color={COLORS.primary} />;
+      return <FontAwesome5 name="kaaba" size={28} color={primaryColor} />;
     case 'shalat':
-      return <MaterialCommunityIcons name="clock-time-four-outline" size={30} color={COLORS.primary} />;
+      return <MaterialCommunityIcons name="clock-time-four-outline" size={30} color={primaryColor} />;
     case 'shalat-jenazah':
-      return <MaterialCommunityIcons name="grave-stone" size={30} color={COLORS.primary} />;
+      return <MaterialCommunityIcons name="grave-stone" size={30} color={primaryColor} />;
     default:
-      return <MaterialCommunityIcons name={iconName as any} size={30} color={COLORS.primary} />;
+      return <MaterialCommunityIcons name={iconName as any} size={30} color={primaryColor} />;
   }
 }
 

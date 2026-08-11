@@ -6,29 +6,37 @@
  * Styles sourced from @/components/styles — edit theme.ts to retheme.
  */
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import {
+  COLORS, FONT,
+  MENU_ICONS,
+  RADIUS,
+  SHADOW,
+  SPACING,
+  UI_ICONS,
+  cardStyles,
+  emptyStyles,
+  layoutStyles, sectionStyles,
+  textStyles,
+} from '@/components/styles';
 import { useAuth } from '@/context/auth';
+import { useAppTheme } from '@/context/theme';
+import { apiRequest, getStorageUrl } from '@/services/api';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import {
-  COLORS, FONT, RADIUS, SPACING, SHADOW,
-  cardStyles, layoutStyles, sectionStyles, emptyStyles, textStyles,
-  MENU_ICONS, UI_ICONS,
-} from '@/components/styles';
-import { apiRequest, getStorageUrl } from '@/services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Paket {
@@ -46,10 +54,11 @@ interface Paket {
 export default function HomeScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { isDarkMode, toggleTheme, colors } = useAppTheme();
   const [searchQuery, setSearchQuery] = useState('');
-  const [pakets, setPakets]           = useState<Paket[]>([]);
-  const [loadingPakets, setLoading]   = useState(true);
-  const [appLogo, setAppLogo]         = useState<string | null>(null);
+  const [pakets, setPakets] = useState<Paket[]>([]);
+  const [loadingPakets, setLoading] = useState(true);
+  const [appLogo, setAppLogo] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -75,24 +84,32 @@ export default function HomeScreen() {
       router.push('/pakets' as any);
       return;
     }
-    if (id === 'konversi_valas') {
-      router.push('/currency');
-      return;
-    }
-    if (id === 'alquran') {
-      router.push('/quran' as any);
-      return;
-    }
-    if (id === 'kiblat') {
-      router.push('/kiblat' as any);
-      return;
-    }
     if (id === 'doa_dzikir') {
       router.push('/doa' as any);
       return;
     }
     if (id === 'gallery') {
       router.push('/gallery' as any);
+      return;
+    }
+    if (id === 'khutbah') {
+      router.push('/khutbah' as any);
+      return;
+    }
+    if (id === 'waktu_sholat') {
+      router.push('/waktu-sholat' as any);
+      return;
+    }
+    if (id === 'konversi_valas') {
+      router.push('/currency');
+      return;
+    }
+    if (id === 'kiblat') {
+      router.push('/kiblat' as any);
+      return;
+    }
+    if (id === 'alquran') {
+      router.push('/quran' as any);
       return;
     }
     Alert.alert('Segera Hadir', 'Fitur ini akan segera tersedia.');
@@ -112,65 +129,80 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={layoutStyles.scrollContent}>
 
         {/* ── TOP BAR ── */}
-        <View style={s.topBar}>
+        <View style={[s.topBar, { backgroundColor: colors.surface }]}>
           <View style={layoutStyles.row}>
             {appLogo ? (
               <Image source={{ uri: appLogo }} style={s.logoImage} />
             ) : (
-              <View style={s.logoCircle}>
+              <View style={[s.logoCircle, { backgroundColor: colors.primary }]}>
                 <Text style={s.logoText}>HF</Text>
               </View>
             )}
             <View style={{ marginLeft: SPACING.sm }}>
-              <Text style={s.brandName}>Hafana Travel</Text>
-              <Text style={s.brandSub}>Umrah & Haji</Text>
+              <Text style={[s.brandName, { color: colors.textPrimary }]}>Hafana Travel</Text>
+              <Text style={[s.brandSub, { color: colors.textSecondary }]}>Umrah & Haji</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={handleAvatarPress} style={user ? s.avatarBtn : s.loginHeaderBtn} activeOpacity={0.8}>
-            {user ? (
-              <Text style={s.avatarInitials}>
-                {user.name ? user.name.substring(0, 2).toUpperCase() : 'JM'}
-              </Text>
-            ) : (
-              <View style={layoutStyles.row}>
-                <MaterialCommunityIcons name="login" size={16} color={COLORS.surface} style={{ marginRight: 4 }} />
-                <Text style={s.loginHeaderBtnText}>Masuk</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {/* 🌙 Theme Toggle Button (sebelah user profile avatar) */}
+            <TouchableOpacity
+              onPress={toggleTheme}
+              style={[s.themeToggleBtn, { backgroundColor: isDarkMode ? colors.surfaceAlt : colors.primaryLight }]}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons
+                name={isDarkMode ? 'weather-sunny' : 'weather-night'}
+                size={20}
+                color={isDarkMode ? '#f59e0b' : colors.primary}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleAvatarPress} style={user ? [s.avatarBtn, { backgroundColor: colors.primary }] : [s.loginHeaderBtn, { backgroundColor: colors.primary }]} activeOpacity={0.8}>
+              {user ? (
+                <Text style={s.avatarInitials}>
+                  {user.name ? user.name.substring(0, 2).toUpperCase() : 'JM'}
+                </Text>
+              ) : (
+                <View style={layoutStyles.row}>
+                  <MaterialCommunityIcons name="login" size={16} color="#ffffff" style={{ marginRight: 4 }} />
+                  <Text style={s.loginHeaderBtnText}>Masuk</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── GREETING BANNER ── */}
-        <View style={s.greeting}>
+        <View style={[s.greeting, { backgroundColor: isDarkMode ? '#1e293b' : colors.primaryDark }]}>
           <Text style={s.greetingHi}>Assalamu'alaikum</Text>
           <Text style={s.greetingName}>{user?.name ?? 'Jemaah'}</Text>
         </View>
 
         {/* ── SEARCH BAR ── */}
-        <View style={s.searchBar}>
-          {/* MaterialCommunityIcons: solid magnify icon, no outline border */}
+        <View style={[s.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <MaterialCommunityIcons
             name={UI_ICONS.search.name}
             size={UI_ICONS.search.size}
-            color={UI_ICONS.search.color}
+            color={colors.textMuted}
             style={{ marginRight: SPACING.sm }}
           />
           <TextInput
-            style={s.searchInput}
+            style={[s.searchInput, { color: colors.textPrimary }]}
             placeholder="Sedang cari paket apa?"
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
 
         {/* ── MENU GRID ── */}
-        <View style={[cardStyles.padded, s.menuCard]}>
+        <View style={[cardStyles.padded, s.menuCard, { backgroundColor: colors.surface }]}>
           <View style={s.menuGrid}>
             {MENU_ICONS.items.map((item) => (
               <TouchableOpacity
@@ -179,15 +211,14 @@ export default function HomeScreen() {
                 onPress={() => handleMenuPress(item.id)}
                 activeOpacity={0.7}
               >
-                <View style={s.menuIconBox}>
-                  {/* Solid single-color vector icon — no OS emoji rendering */}
+                <View style={[s.menuIconBox, { backgroundColor: colors.primaryLight }]}>
                   <MaterialCommunityIcons
                     name={item.icon}
                     size={MENU_ICONS.iconSize}
-                    color={MENU_ICONS.iconColor}
+                    color={colors.primary}
                   />
                 </View>
-                <Text style={s.menuLabel}>{item.label}</Text>
+                <Text style={[s.menuLabel, { color: colors.textPrimary }]}>{item.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -196,25 +227,24 @@ export default function HomeScreen() {
         {/* ── PAKET SECTION ── */}
         <View style={{ marginTop: SPACING.xl }}>
           <View style={sectionStyles.header}>
-            <Text style={sectionStyles.title}>Paket</Text>
+            <Text style={[sectionStyles.title, { color: colors.textPrimary }]}>Paket</Text>
             <TouchableOpacity onPress={() => handleMenuPress('semua_paket')}>
-              <Text style={sectionStyles.link}>Lihat Semua</Text>
+              <Text style={[sectionStyles.link, { color: colors.primary }]}>Lihat Semua</Text>
             </TouchableOpacity>
           </View>
 
           {loadingPakets ? (
-            <ActivityIndicator color={COLORS.primary} style={{ marginTop: 24 }} />
+            <ActivityIndicator color={colors.primary} style={{ marginTop: 24 }} />
           ) : filtered.length === 0 ? (
             <View style={emptyStyles.container}>
-              {/* Solid mosque icon — single color, no outline */}
               <MaterialCommunityIcons
-                name={UI_ICONS.mosque.name}
-                size={UI_ICONS.mosque.size}
-                color={UI_ICONS.mosque.color}
+                name="mosque"
+                size={40}
+                color={colors.primary}
                 style={{ marginBottom: SPACING.md }}
               />
-              <Text style={emptyStyles.title}>Belum ada paket tersedia</Text>
-              <Text style={emptyStyles.subtitle}>Admin belum menambahkan paket Umrah</Text>
+              <Text style={[emptyStyles.title, { color: colors.textPrimary }]}>Belum ada paket tersedia</Text>
+              <Text style={[emptyStyles.subtitle, { color: colors.textSecondary }]}>Admin belum menambahkan paket Umrah</Text>
             </View>
           ) : (
             <ScrollView
@@ -225,7 +255,7 @@ export default function HomeScreen() {
               {filtered.map((paket) => (
                 <TouchableOpacity
                   key={paket.id}
-                  style={s.paketCard}
+                  style={[s.paketCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                   onPress={() => router.push(`/pakets/${paket.id}` as any)}
                   activeOpacity={0.85}
                 >
@@ -237,43 +267,42 @@ export default function HomeScreen() {
                         style={s.paketImage}
                       />
                     ) : (
-                      <View style={s.paketImagePlaceholder}>
-                        {/* Solid mosque placeholder — single color vector */}
+                      <View style={[s.paketImagePlaceholder, { backgroundColor: colors.primaryLight }]}>
                         <MaterialCommunityIcons
                           name="mosque"
                           size={44}
-                          color={COLORS.primary}
+                          color={colors.primary}
                         />
                       </View>
                     )}
-                    <View style={s.paketBadge}>
+                    <View style={[s.paketBadge, { backgroundColor: colors.primary }]}>
                       <Text style={s.paketBadgeText}>UMROH</Text>
                     </View>
                   </View>
 
                   {/* Card Info */}
                   <View style={s.paketInfo}>
-                    <Text style={s.paketNama} numberOfLines={2}>{paket.nama_paket}</Text>
+                    <Text style={[s.paketNama, { color: colors.textPrimary }]} numberOfLines={2}>{paket.nama_paket}</Text>
                     <View style={{ gap: 5, marginBottom: SPACING.sm }}>
                       <View style={layoutStyles.row}>
                         <MaterialCommunityIcons
                           name={UI_ICONS.calendar.name}
                           size={UI_ICONS.calendar.size}
-                          color={UI_ICONS.calendar.color}
+                          color={colors.textSecondary}
                           style={{ marginRight: 4 }}
                         />
-                        <Text style={textStyles.muted}>Berangkat {formatDate(paket.tanggal_berangkat)}</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: FONT.sizeSm }}>Berangkat {formatDate(paket.tanggal_berangkat)}</Text>
                       </View>
                       <View style={layoutStyles.row}>
                         <MaterialCommunityIcons
                           name={UI_ICONS.flight.name}
                           size={UI_ICONS.flight.size}
-                          color={UI_ICONS.flight.color}
+                          color={colors.textSecondary}
                           style={{ marginRight: 4 }}
                         />
-                        <Text style={textStyles.muted}>
+                        <Text style={{ color: colors.textSecondary, fontSize: FONT.sizeSm }}>
                           Dari{' '}
-                          <Text style={{ color: COLORS.primary, fontWeight: FONT.weightBold }}>
+                          <Text style={{ color: colors.primary, fontWeight: FONT.weightBold }}>
                             {paket.kota_keberangkatan.toUpperCase()}
                           </Text>
                         </Text>
@@ -282,13 +311,13 @@ export default function HomeScreen() {
                         <MaterialCommunityIcons
                           name={UI_ICONS.clock.name}
                           size={UI_ICONS.clock.size}
-                          color={UI_ICONS.clock.color}
+                          color={colors.textSecondary}
                           style={{ marginRight: 4 }}
                         />
-                        <Text style={textStyles.muted}>Paket {paket.durasi_hari} Hari</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: FONT.sizeSm }}>Paket {paket.durasi_hari} Hari</Text>
                       </View>
                     </View>
-                    <Text style={s.paketHarga}>
+                    <Text style={[s.paketHarga, { color: colors.primary }]}>
                       Rp {Number(paket.harga).toLocaleString('id-ID')}
                     </Text>
                   </View>
@@ -314,6 +343,14 @@ function formatDate(dateStr: string): string {
 
 // ── Screen-local styles ───────────────────────────────────────────────────────
 const s = StyleSheet.create({
+  themeToggleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4,
+  },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -334,9 +371,9 @@ const s = StyleSheet.create({
     borderRadius: 10,
     resizeMode: 'contain',
   },
-  logoText:      { color: COLORS.surface, fontWeight: FONT.weightBlack, fontSize: FONT.sizeMd },
-  brandName:     { color: COLORS.textPrimary, fontSize: 15, fontWeight: FONT.weightBlack },
-  brandSub:      { color: COLORS.primary, fontSize: FONT.sizeXs, fontWeight: FONT.weightMedium },
+  logoText: { color: COLORS.surface, fontWeight: FONT.weightBlack, fontSize: FONT.sizeMd },
+  brandName: { color: COLORS.textPrimary, fontSize: 15, fontWeight: FONT.weightBlack },
+  brandSub: { color: COLORS.primary, fontSize: FONT.sizeXs, fontWeight: FONT.weightMedium },
   avatarBtn: {
     width: 40, height: 40,
     borderRadius: 20,
@@ -358,7 +395,7 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     paddingVertical: 18,
   },
-  greetingHi:   { color: 'rgba(255,255,255,0.85)', fontSize: FONT.sizeMd, marginBottom: 2 },
+  greetingHi: { color: 'rgba(255,255,255,0.85)', fontSize: FONT.sizeMd, marginBottom: 2 },
   greetingName: { color: COLORS.surface, fontSize: 22, fontWeight: FONT.weightBlack },
 
   searchBar: {
@@ -384,7 +421,7 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     gap: SPACING.md,
   },
-  menuItem:    { width: '22%', alignItems: 'center' },
+  menuItem: { width: '22%', alignItems: 'center' },
   menuIconBox: {
     width: 58, height: 58,
     borderRadius: RADIUS.md,
@@ -414,7 +451,7 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.primaryLight,
     position: 'relative',
   },
-  paketImage:            { width: '100%', height: '100%', resizeMode: 'cover' },
+  paketImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   paketImagePlaceholder: {
     flex: 1,
     justifyContent: 'center',
@@ -428,7 +465,7 @@ const s = StyleSheet.create({
     borderRadius: SPACING.xs,
   },
   paketBadgeText: { color: COLORS.surface, fontSize: 10, fontWeight: FONT.weightBlack, letterSpacing: 0.5 },
-  paketInfo:      { padding: SPACING.md },
-  paketNama:      { color: COLORS.textPrimary, fontSize: FONT.sizeMd, fontWeight: FONT.weightBold, marginBottom: SPACING.sm, lineHeight: 18 },
-  paketHarga:     { color: COLORS.primary, fontSize: FONT.sizeBase, fontWeight: FONT.weightBlack },
+  paketInfo: { padding: SPACING.md },
+  paketNama: { color: COLORS.textPrimary, fontSize: FONT.sizeMd, fontWeight: FONT.weightBold, marginBottom: SPACING.sm, lineHeight: 18 },
+  paketHarga: { color: COLORS.primary, fontSize: FONT.sizeBase, fontWeight: FONT.weightBlack },
 });

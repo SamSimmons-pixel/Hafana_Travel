@@ -24,10 +24,13 @@ import {
   cardStyles, layoutStyles,
 } from '@/components/styles';
 
+import { useAppTheme } from '@/context/theme';
+
 const GOOGLE_QIBLA_FINDER_URL = 'https://qiblafinder.withgoogle.com';
 
 export default function KiblatScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useAppTheme();
 
   // Auto-launch Chrome Custom Tab in-app on mount
   useEffect(() => {
@@ -37,7 +40,7 @@ export default function KiblatScreen() {
   const openGoogleQiblaFinder = async () => {
     try {
       await WebBrowser.openBrowserAsync(GOOGLE_QIBLA_FINDER_URL, {
-        toolbarColor: COLORS.primary,
+        toolbarColor: colors.primary,
         controlsColor: '#ffffff',
         showTitle: true,
         enableBarCollapsing: true,
@@ -49,16 +52,16 @@ export default function KiblatScreen() {
   };
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
 
       {/* ── TOP BAR ── */}
-      <View style={s.topBar}>
+      <View style={[s.topBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
 
-        <Text style={s.headerTitle} numberOfLines={1}>
+        <Text style={[s.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           🧭 Google Qibla Finder
         </Text>
       </View>
@@ -66,48 +69,48 @@ export default function KiblatScreen() {
       {/* ── IN-APP CHROME CONTAINER CARD ── */}
       <View style={s.contentContainer}>
         {/* Kaabah Icon Card */}
-        <View style={s.mainCard}>
-          <View style={s.iconCircle}>
+        <View style={[s.mainCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[s.iconCircle, { backgroundColor: colors.primaryLight }]}>
             <Text style={s.kaabahEmoji}>🕋</Text>
           </View>
 
-          <Text style={s.cardTitle}>Google Qibla Finder</Text>
-          <Text style={s.cardSub}>
+          <Text style={[s.cardTitle, { color: colors.textPrimary }]}>Google Qibla Finder</Text>
+          <Text style={[s.cardSub, { color: colors.textSecondary }]}>
             Menentukan arah Kiblat secara presisi menggunakan teknologi Kamera AR & Kompas resmi dari Google.
           </Text>
 
           {/* Features Checklist */}
           <View style={s.featureList}>
             <View style={s.featureRow}>
-              <MaterialCommunityIcons name="check-circle" size={18} color={COLORS.primary} />
-              <Text style={s.featureText}>Kompas & Sensor Gerak Presisi Google</Text>
+              <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
+              <Text style={[s.featureText, { color: colors.textPrimary }]}>Kompas & Sensor Gerak Presisi Google</Text>
             </View>
             <View style={s.featureRow}>
-              <MaterialCommunityIcons name="check-circle" size={18} color={COLORS.primary} />
-              <Text style={s.featureText}>Visualisasi Kamera 3D / Realitas Campuran (AR)</Text>
+              <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
+              <Text style={[s.featureText, { color: colors.textPrimary }]}>Visualisasi Kamera 3D / Realitas Campuran (AR)</Text>
             </View>
             <View style={s.featureRow}>
-              <MaterialCommunityIcons name="check-circle" size={18} color={COLORS.primary} />
-              <Text style={s.featureText}>Akses Langsung Dalam Aplikasi (Chrome In-App)</Text>
+              <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
+              <Text style={[s.featureText, { color: colors.textPrimary }]}>Akses Langsung Dalam Aplikasi (Chrome In-App)</Text>
             </View>
           </View>
 
           {/* Primary Action Button */}
           <TouchableOpacity
-            style={s.launchBtn}
+            style={[s.launchBtn, { backgroundColor: colors.primary }]}
             onPress={openGoogleQiblaFinder}
             activeOpacity={0.85}
           >
-            <MaterialCommunityIcons name="compass" size={22} color={COLORS.surface} style={{ marginRight: 8 }} />
+            <MaterialCommunityIcons name="compass" size={22} color="#ffffff" style={{ marginRight: 8 }} />
             <Text style={s.launchBtnText}>Buka Qibla Finder (Chrome)</Text>
           </TouchableOpacity>
         </View>
 
         {/* Instructions Footer */}
-        <View style={s.tipCard}>
-          <MaterialCommunityIcons name="information-outline" size={18} color={COLORS.primary} style={{ marginRight: 8, marginTop: 1 }} />
-          <Text style={s.tipText}>
-            Pilih <Text style={{ fontWeight: FONT.weightBold }}>"Izinkan Lokasi & Kamera"</Text> saat Chrome terbuka untuk pengalaman navigasi Kiblat 3D yang optimal.
+        <View style={[s.tipCard, { backgroundColor: colors.primaryLight, borderColor: colors.border }]}>
+          <MaterialCommunityIcons name="information-outline" size={18} color={colors.primary} style={{ marginRight: 8, marginTop: 1 }} />
+          <Text style={[s.tipText, { color: colors.textSecondary }]}>
+            Pilih <Text style={{ fontWeight: FONT.weightBold, color: colors.primary }}>"Izinkan Lokasi & Kamera"</Text> saat Chrome terbuka untuk pengalaman navigasi Kiblat 3D yang optimal.
           </Text>
         </View>
       </View>

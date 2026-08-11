@@ -22,6 +22,7 @@ Route::get('settings', [\App\Http\Controllers\Api\SettingController::class, 'ind
 // 🖼️ GALERI & TESTIMONI ROUTES (Public - mobile app)
 // ──────────────────────────────────────────────────────
 Route::get('galeri', [\App\Http\Controllers\Api\GaleriController::class, 'index']);
+Route::get('galeri/youtube-playlist', [\App\Http\Controllers\Api\GaleriController::class, 'youtubePlaylist']);
 
 // ──────────────────────────────────────────────────────
 // 📦 PAKET UMRAH ROUTES (Public - mobile app)

@@ -26,11 +26,13 @@ import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
   layoutStyles, textStyles,
 } from '@/components/styles';
+import { useAppTheme } from '@/context/theme';
 import { DOA_CATEGORIES } from '@/data/doaData';
 
 export default function DoaDetailScreen() {
   const { id, categoryId } = useLocalSearchParams<{ id: string; categoryId: string }>();
   const router = useRouter();
+  const { isDarkMode, colors } = useAppTheme();
 
   // Find the item from data
   const item = useMemo(() => {
@@ -45,9 +47,9 @@ export default function DoaDetailScreen() {
 
   if (!item) {
     return (
-      <SafeAreaView style={layoutStyles.screen}>
+      <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
         <View style={layoutStyles.centered}>
-          <Text style={{ color: COLORS.textMuted, marginTop: 40 }}>
+          <Text style={{ color: colors.textMuted, marginTop: 40 }}>
             Konten tidak ditemukan.
           </Text>
         </View>
@@ -56,15 +58,15 @@ export default function DoaDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.surface} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
 
       {/* ── APP BAR ── */}
-      <View style={s.appBar}>
+      <View style={[s.appBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={s.appBarTitle} numberOfLines={1}>
+        <Text style={[s.appBarTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {cat?.label ?? 'Detail'}
         </Text>
         <View style={{ width: 36 }} />
@@ -75,43 +77,43 @@ export default function DoaDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── TITLE ── */}
-        <Text style={s.itemTitle}>{item.title}</Text>
+        <Text style={[s.itemTitle, { color: colors.textPrimary }]}>{item.title}</Text>
 
         {item.type === 'doa' ? (
           /* ── DOA MODE ── */
           <>
             {/* Arabic Text Card */}
-            <View style={s.arabicCard}>
-              <Text style={s.arabicText}>{item.arabic}</Text>
+            <View style={[s.arabicCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[s.arabicText, { color: colors.textPrimary }]}>{item.arabic}</Text>
             </View>
 
             {/* Divider label */}
             <View style={s.sectionLabel}>
-              <View style={s.labelLine} />
-              <Text style={s.labelText}>Latin</Text>
-              <View style={s.labelLine} />
+              <View style={[s.labelLine, { backgroundColor: colors.border }]} />
+              <Text style={[s.labelText, { color: colors.textMuted }]}>Latin</Text>
+              <View style={[s.labelLine, { backgroundColor: colors.border }]} />
             </View>
 
             {/* Latin */}
-            <View style={s.contentCard}>
-              <Text style={s.latinText}>{item.latin}</Text>
+            <View style={[s.contentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[s.latinText, { color: colors.textPrimary }]}>{item.latin}</Text>
             </View>
 
             {/* Divider label */}
             <View style={s.sectionLabel}>
-              <View style={s.labelLine} />
-              <Text style={s.labelText}>Terjemahan</Text>
-              <View style={s.labelLine} />
+              <View style={[s.labelLine, { backgroundColor: colors.border }]} />
+              <Text style={[s.labelText, { color: colors.textMuted }]}>Terjemahan</Text>
+              <View style={[s.labelLine, { backgroundColor: colors.border }]} />
             </View>
 
             {/* Translation */}
-            <View style={s.contentCard}>
-              <Text style={s.translationText}>{item.translation}</Text>
+            <View style={[s.contentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[s.translationText, { color: colors.textSecondary }]}>{item.translation}</Text>
             </View>
           </>
         ) : (
           /* ── ARTICLE MODE (Fiqh Haji, info) ── */
-          <ArticleBody content={item.content ?? ''} />
+          <ArticleBody content={item.content ?? ''} colors={colors} />
         )}
 
         <View style={{ height: 60 }} />
@@ -122,7 +124,7 @@ export default function DoaDetailScreen() {
 }
 
 // ── Article renderer — simple paragraph splitter + bold via ** markers ────────
-function ArticleBody({ content }: { content: string }) {
+function ArticleBody({ content, colors }: { content: string; colors: any }) {
   const paragraphs = content.split('\n').filter((p) => p.trim() !== '');
 
   return (
@@ -134,14 +136,14 @@ function ArticleBody({ content }: { content: string }) {
         if (isHeading) {
           const text = para.replace(/\*\*/g, '');
           return (
-            <Text key={i} style={a.heading}>
+            <Text key={i} style={[a.heading, { color: colors.textPrimary }]}>
               {text}
             </Text>
           );
         }
 
         return (
-          <Text key={i} style={isBullet ? a.bullet : a.body}>
+          <Text key={i} style={[isBullet ? a.bullet : a.body, { color: colors.textSecondary }]}>
             {renderBold(para)}
           </Text>
         );

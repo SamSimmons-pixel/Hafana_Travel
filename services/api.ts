@@ -152,3 +152,17 @@ export async function createBooking(data: {
     };
   }
 }
+
+/**
+ * GET /api/galeri/youtube-playlist
+ * Dynamically fetches YouTube playlist video items from Laravel backend cache.
+ */
+export async function fetchYouTubePlaylist(playlistId: string): Promise<any[]> {
+  try {
+    const res = await apiRequest<{ data: any[] }>(`/galeri/youtube-playlist?playlist_id=${playlistId}`);
+    return res.data;
+  } catch (err) {
+    console.log('Failed to fetch youtube playlist from API:', err);
+    return [];
+  }
+}

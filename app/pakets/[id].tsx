@@ -27,6 +27,7 @@ import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
   layoutStyles, textStyles,
 } from '@/components/styles';
+import { useAppTheme } from '@/context/theme';
 import { apiRequest, getStorageUrl } from '@/services/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ function formatRupiah(amount: number): string {
 export default function DetailPaketScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { isDarkMode, colors } = useAppTheme();
   const [paket, setPaket]   = useState<Paket | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -82,9 +84,9 @@ export default function DetailPaketScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[layoutStyles.screen, layoutStyles.centered]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={[textStyles.muted, { marginTop: 12 }]}>Memuat detail paket...</Text>
+      <SafeAreaView style={[layoutStyles.screen, layoutStyles.centered, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[textStyles.muted, { marginTop: 12, color: colors.textSecondary }]}>Memuat detail paket...</Text>
       </SafeAreaView>
     );
   }
@@ -94,26 +96,26 @@ export default function DetailPaketScreen() {
   const imgUri = imageUri(paket.gambar);
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* ── HERO IMAGE ── */}
-        <View style={s.hero}>
+        <View style={[s.hero, { backgroundColor: colors.primaryLight }]}>
           {imgUri ? (
             <Image source={{ uri: imgUri }} style={s.heroImage} />
           ) : (
-            <View style={s.heroPlaceholder}>
-              <MaterialCommunityIcons name="mosque" size={72} color={COLORS.surface} />
+            <View style={[s.heroPlaceholder, { backgroundColor: colors.primary }]}>
+              <MaterialCommunityIcons name="mosque" size={72} color="#ffffff" />
             </View>
           )}
 
           {/* Overlay gradient header */}
           <View style={s.heroOverlay}>
             <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-              <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.surface} />
+              <MaterialCommunityIcons name="arrow-left" size={22} color="#ffffff" />
             </TouchableOpacity>
-            <View style={s.heroBadge}>
+            <View style={[s.heroBadge, { backgroundColor: colors.primary }]}>
               <Text style={s.heroBadgeText}>UMROH</Text>
             </View>
           </View>
@@ -122,68 +124,73 @@ export default function DetailPaketScreen() {
         {/* ── CONTENT ── */}
         <View style={s.body}>
           {/* Title */}
-          <Text style={s.title}>{paket.nama_paket}</Text>
+          <Text style={[s.title, { color: colors.textPrimary }]}>{paket.nama_paket}</Text>
 
           {/* Harga — highlighted */}
-          <View style={s.hargaCard}>
-            <Text style={s.hargaLabel}>Harga per Orang</Text>
-            <Text style={s.hargaValue}>{formatRupiah(paket.harga)}</Text>
+          <View style={[s.hargaCard, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}>
+            <Text style={[s.hargaLabel, { color: colors.primary }]}>Harga per Orang</Text>
+            <Text style={[s.hargaValue, { color: colors.primary }]}>{formatRupiah(paket.harga)}</Text>
           </View>
 
           {/* Info Grid */}
-          <View style={s.infoCard}>
+          <View style={[s.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <InfoRow
               icon="calendar-range"
               label="Tanggal Berangkat"
               value={formatDate(paket.tanggal_berangkat)}
+              colors={colors}
             />
-            <Divider />
+            <Divider color={colors.border} />
             <InfoRow
               icon="clock-outline"
               label="Durasi"
               value={`${paket.durasi_hari} Hari`}
+              colors={colors}
             />
-            <Divider />
+            <Divider color={colors.border} />
             <InfoRow
               icon="airplane-takeoff"
               label="Kota Keberangkatan"
               value={paket.kota_keberangkatan}
+              colors={colors}
             />
             {paket.maskapai ? (
               <>
-                <Divider />
+                <Divider color={colors.border} />
                 <InfoRow
                   icon="airplane"
                   label="Maskapai"
                   value={paket.maskapai}
+                  colors={colors}
                 />
               </>
             ) : null}
-            <Divider />
+            <Divider color={colors.border} />
             <InfoRow
               icon="account-group"
               label="Kuota"
               value={`${paket.kuota} orang`}
+              colors={colors}
             />
           </View>
 
           {/* Deskripsi */}
           {paket.deskripsi ? (
-            <View style={s.descCard}>
-              <Text style={s.descTitle}>Deskripsi Paket</Text>
-              <Text style={s.descText}>{paket.deskripsi}</Text>
+            <View style={[s.descCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[s.descTitle, { color: colors.textPrimary }]}>Deskripsi Paket</Text>
+              <Text style={[s.descText, { color: colors.textSecondary }]}>{paket.deskripsi}</Text>
             </View>
           ) : null}
 
           {/* CTA */}
           <TouchableOpacity
-            style={s.ctaBtn}
+            style={[s.ctaBtn, { backgroundColor: colors.primary }]}
             activeOpacity={0.85}
             onPress={() => {
               WebBrowser.openBrowserAsync('https://hafanatravel.com/chat');
             }}
           >
-            <MaterialCommunityIcons name="phone" size={20} color={COLORS.surface} style={{ marginRight: 8 }} />
+            <MaterialCommunityIcons name="phone" size={20} color="#ffffff" style={{ marginRight: 8 }} />
             <Text style={s.ctaBtnText}>Hubungi Agen</Text>
           </TouchableOpacity>
         </View>
@@ -193,22 +200,22 @@ export default function DetailPaketScreen() {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+function InfoRow({ icon, label, value, colors }: { icon: string; label: string; value: string; colors: any }) {
   return (
     <View style={s.infoRow}>
-      <View style={s.infoIconBox}>
-        <MaterialCommunityIcons name={icon as any} size={18} color={COLORS.primary} />
+      <View style={[s.infoIconBox, { backgroundColor: colors.primaryLight }]}>
+        <MaterialCommunityIcons name={icon as any} size={18} color={colors.primary} />
       </View>
       <View style={s.infoText}>
-        <Text style={s.infoLabel}>{label}</Text>
-        <Text style={s.infoValue}>{value}</Text>
+        <Text style={[s.infoLabel, { color: colors.textSecondary }]}>{label}</Text>
+        <Text style={[s.infoValue, { color: colors.textPrimary }]}>{value}</Text>
       </View>
     </View>
   );
 }
 
-function Divider() {
-  return <View style={{ height: 1, backgroundColor: COLORS.borderLight, marginLeft: 46 }} />;
+function Divider({ color }: { color?: string }) {
+  return <View style={{ height: 1, backgroundColor: color || COLORS.borderLight, marginLeft: 46 }} />;
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────

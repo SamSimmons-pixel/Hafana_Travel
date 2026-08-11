@@ -4,24 +4,31 @@
  * Supports: SAR (Saudi Riyal), USD (US Dollar), EUR (Euro), MYR (Malaysian Ringgit), SGD (Singapore Dollar)
  */
 
+// 🎨 EDIT YOUR DESIRED PAGE & SECTION COLORS HERE (Lines 7-9):
+export const SCREEN_BG_COLOR = '#6c7994ff'; // ← Whole page background color (edit here!)
+export const DARK_SECTION_BG = '#50596dff'; // ← Card section background color (edit here!)
+export const DARK_SECTION_TEXT = '#ffffff'; // ← Text color for dark sections (edit here!)
+
+import {
+  COLORS, FONT, RADIUS,
+  SHADOW,
+  SPACING,
+  cardStyles, layoutStyles,
+} from '@/components/styles';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import {
-  COLORS, FONT, RADIUS, SPACING, SHADOW,
-  cardStyles, layoutStyles,
-} from '@/components/styles';
 
 export interface CurrencyConfig {
   code: string;
@@ -33,6 +40,8 @@ export interface CurrencyConfig {
   presets: { val: number; label: string; desc: string }[];
 }
 
+const defaultAmount = '0';
+
 export const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
   SAR: {
     code: 'SAR',
@@ -40,7 +49,7 @@ export const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
     flag: '🇸🇦',
     symbol: '﷼',
     defaultFallbackRate: 4250,
-    defaultAmount: '100',
+    defaultAmount: defaultAmount,
     presets: [
       { val: 10, label: '10 SAR', desc: 'Minuman / Cukur' },
       { val: 50, label: '50 SAR', desc: 'Makan / Taxi' },
@@ -55,7 +64,7 @@ export const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
     flag: '🇺🇸',
     symbol: '$',
     defaultFallbackRate: 16200,
-    defaultAmount: '10',
+    defaultAmount: defaultAmount,
     presets: [
       { val: 5, label: '$5 USD', desc: 'Kopi / Snack' },
       { val: 20, label: '$20 USD', desc: 'Makan Siang' },
@@ -70,7 +79,7 @@ export const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
     flag: '🇪🇺',
     symbol: '€',
     defaultFallbackRate: 17500,
-    defaultAmount: '10',
+    defaultAmount: defaultAmount,
     presets: [
       { val: 5, label: '€5 EUR', desc: 'Snack / Tiket' },
       { val: 20, label: '€20 EUR', desc: 'Makan Siang' },
@@ -85,7 +94,7 @@ export const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
     flag: '🇲🇾',
     symbol: 'RM',
     defaultFallbackRate: 3650,
-    defaultAmount: '100',
+    defaultAmount: defaultAmount,
     presets: [
       { val: 10, label: 'RM 10', desc: 'Roti Canai / Teh' },
       { val: 50, label: 'RM 50', desc: 'Makan / Grab' },
@@ -100,7 +109,7 @@ export const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
     flag: '🇸🇬',
     symbol: 'S$',
     defaultFallbackRate: 12100,
-    defaultAmount: '20',
+    defaultAmount: defaultAmount,
     presets: [
       { val: 5, label: 'S$5', desc: 'MRT / Snack' },
       { val: 20, label: 'S$20', desc: 'Makan Food Court' },
@@ -120,16 +129,16 @@ export default function CurrencyScreen() {
   const currConfig = CURRENCY_CONFIGS[selectedCurrencyCode] || CURRENCY_CONFIGS.SAR;
 
   // Rate states
-  const [rateToIdr, setRateToIdr]     = useState<number>(currConfig.defaultFallbackRate);
+  const [rateToIdr, setRateToIdr] = useState<number>(currConfig.defaultFallbackRate);
   const [loadingRate, setLoadingRate] = useState<boolean>(true);
   const [lastUpdated, setLastUpdated] = useState<string>('');
-  const [isLive, setIsLive]           = useState<boolean>(false);
+  const [isLive, setIsLive] = useState<boolean>(false);
 
   // Mode: 'FOREIGN_TO_IDR' or 'IDR_TO_FOREIGN'
-  const [mode, setMode]               = useState<'FOREIGN_TO_IDR' | 'IDR_TO_FOREIGN'>('FOREIGN_TO_IDR');
+  const [mode, setMode] = useState<'FOREIGN_TO_IDR' | 'IDR_TO_FOREIGN'>('FOREIGN_TO_IDR');
 
   // Input value string
-  const [amountStr, setAmountStr]     = useState<string>(currConfig.defaultAmount);
+  const [amountStr, setAmountStr] = useState<string>(currConfig.defaultAmount);
 
   // Fetch real-time exchange rates for selected currency
   const fetchExchangeRate = async (code: string = selectedCurrencyCode) => {
@@ -202,18 +211,18 @@ export default function CurrencyScreen() {
   };
 
   // Bank Indonesia Buy & Sell Rate estimates (Spread ±1%)
-  const spread   = Math.round(rateToIdr * 0.01);
-  const buyRate  = Math.round(rateToIdr - spread);
+  const spread = Math.round(rateToIdr * 0.01);
+  const buyRate = Math.round(rateToIdr - spread);
   const sellRate = Math.round(rateToIdr + spread);
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: SCREEN_BG_COLOR }]}>
+      <StatusBar barStyle="light-content" backgroundColor={SCREEN_BG_COLOR} />
 
       {/* ── HEADER BAR ── */}
       <View style={s.topBar}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
+          <MaterialCommunityIcons name="arrow-left" size={22} color="#ffffff" />
         </TouchableOpacity>
         <Text style={s.headerTitle}>Konversi Mata Uang</Text>
         <TouchableOpacity onPress={() => fetchExchangeRate(selectedCurrencyCode)} style={s.refreshBtn}>
@@ -385,15 +394,15 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surface,
+    backgroundColor: SCREEN_BG_COLOR,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backBtn: {
     padding: SPACING.xs,
   },
   headerTitle: {
-    color: COLORS.textPrimary,
+    color: '#ffffff',
     fontSize: FONT.sizeLg,
     fontWeight: FONT.weightBlack,
   },
@@ -403,10 +412,10 @@ const s = StyleSheet.create({
 
   // Currency Tab Bar
   currencyTabSection: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: SCREEN_BG_COLOR,
     paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   currencyTabList: {
     paddingHorizontal: SPACING.lg,
@@ -415,15 +424,15 @@ const s = StyleSheet.create({
   currencyTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.bg,
+    backgroundColor: DARK_SECTION_BG,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs + 2,
     borderRadius: RADIUS.pill,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   currencyTabActive: {
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
   },
   currencyTabFlag: {
@@ -431,21 +440,21 @@ const s = StyleSheet.create({
     marginRight: 6,
   },
   currencyTabCode: {
-    color: COLORS.textSecondary,
+    color: '#94a3b8',
     fontSize: FONT.sizeSm,
     fontWeight: FONT.weightBold,
   },
   currencyTabCodeActive: {
-    color: COLORS.primaryDark,
+    color: '#ffffff',
   },
 
   // Rate Banner
   rateBanner: {
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: DARK_SECTION_BG,
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#b3e0f7',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   liveDot: {
     width: 8, height: 8,
@@ -453,12 +462,12 @@ const s = StyleSheet.create({
     marginRight: 6,
   },
   rateBannerTitle: {
-    color: COLORS.textPrimary,
+    color: '#ffffff',
     fontSize: FONT.sizeSm,
     fontWeight: FONT.weightBold,
   },
   rateBannerSub: {
-    color: COLORS.textSecondary,
+    color: '#94a3b8',
     fontSize: FONT.sizeSm,
     marginTop: 2,
   },
@@ -546,26 +555,29 @@ const s = StyleSheet.create({
   // Presets
   presetSection: {
     marginTop: SPACING.xl,
+    backgroundColor: DARK_SECTION_BG,
+    paddingVertical: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    marginHorizontal: SPACING.lg,
   },
   sectionTitle: {
-    color: COLORS.textPrimary,
+    color: DARK_SECTION_TEXT,
     fontSize: FONT.sizeBase,
     fontWeight: FONT.weightBold,
-    paddingHorizontal: SPACING.page,
+    paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.sm,
   },
   presetList: {
-    paddingHorizontal: SPACING.page,
+    paddingHorizontal: SPACING.lg,
     gap: SPACING.sm,
   },
   presetChip: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: SCREEN_BG_COLOR,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     width: 140,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    ...SHADOW.card,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   presetLabel: {
     color: COLORS.primary,
@@ -573,12 +585,12 @@ const s = StyleSheet.create({
     fontWeight: FONT.weightBlack,
   },
   presetDesc: {
-    color: COLORS.textMuted,
+    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: FONT.sizeXs,
     marginVertical: 2,
   },
   presetValue: {
-    color: COLORS.textPrimary,
+    color: DARK_SECTION_TEXT,
     fontSize: FONT.sizeSm,
     fontWeight: FONT.weightBold,
     marginTop: SPACING.xs,
@@ -588,9 +600,13 @@ const s = StyleSheet.create({
   biGuideCard: {
     marginHorizontal: SPACING.lg,
     marginTop: SPACING.xl,
+    backgroundColor: DARK_SECTION_BG,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   biGuideTitle: {
-    color: COLORS.textPrimary,
+    color: DARK_SECTION_TEXT,
     fontSize: FONT.sizeBase,
     fontWeight: FONT.weightBold,
   },
@@ -602,24 +618,24 @@ const s = StyleSheet.create({
   },
   biRateBox: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: SCREEN_BG_COLOR,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     alignItems: 'center',
   },
   biRateLabel: {
-    color: COLORS.textMuted,
+    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: FONT.sizeXs,
     fontWeight: FONT.weightMedium,
   },
   biRateVal: {
-    color: COLORS.textPrimary,
+    color: DARK_SECTION_TEXT,
     fontSize: FONT.sizeSm,
     fontWeight: FONT.weightBlack,
     marginVertical: 2,
   },
   biRateSub: {
-    color: COLORS.textMuted,
+    color: 'rgba(255, 255, 255, 0.5)',
     fontSize: 9,
     textAlign: 'center',
   },
@@ -628,17 +644,17 @@ const s = StyleSheet.create({
     marginTop: SPACING.lg,
     paddingTop: SPACING.md,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
     gap: 4,
   },
   tipsTitle: {
-    color: COLORS.textPrimary,
+    color: DARK_SECTION_TEXT,
     fontSize: FONT.sizeSm,
     fontWeight: FONT.weightBold,
     marginBottom: 2,
   },
   tipsText: {
-    color: COLORS.textSecondary,
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: FONT.sizeXs,
     lineHeight: 16,
   },

@@ -22,6 +22,7 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/context/auth';
+import { useAppTheme } from '@/context/theme';
 import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
   cardStyles, inputStyles, buttonStyles, textStyles,
@@ -30,6 +31,7 @@ import {
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
+  const { colors } = useAppTheme();
 
   const [nomor_visa, setNomorVisa]       = useState('');
   const [tanggal_lahir, setTanggalLahir] = useState('');
@@ -62,7 +64,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: COLORS.primary }}
+      style={{ flex: 1, backgroundColor: colors.primary }}
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
@@ -70,10 +72,10 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Header Blue Band ── */}
-        <View style={s.header}>
+        <View style={[s.header, { backgroundColor: colors.primary }]}>
           {/* Back/Close button for guest browse */}
           <TouchableOpacity style={s.skipHeaderBtn} onPress={handleGuestBrowse} activeOpacity={0.8}>
-            <MaterialCommunityIcons name="arrow-left" size={20} color={COLORS.surface} style={{ marginRight: 4 }} />
+            <MaterialCommunityIcons name="arrow-left" size={20} color="#ffffff" style={{ marginRight: 4 }} />
             <Text style={s.skipHeaderBtnText}>Jelajahi App</Text>
           </TouchableOpacity>
 
@@ -85,23 +87,23 @@ export default function LoginScreen() {
         </View>
 
         {/* ── Card ── */}
-        <View style={[cardStyles.padded, s.card]}>
-          <Text style={[textStyles.heading, { marginBottom: SPACING.xs }]}>Verifikasi Data Jemaah</Text>
-          <Text style={[textStyles.muted, { marginBottom: SPACING.xxl, lineHeight: 18 }]}>
+        <View style={[cardStyles.padded, s.card, { backgroundColor: colors.surface }]}>
+          <Text style={[textStyles.heading, { marginBottom: SPACING.xs, color: colors.textPrimary }]}>Verifikasi Data Jemaah</Text>
+          <Text style={[textStyles.muted, { marginBottom: SPACING.xxl, lineHeight: 18, color: colors.textSecondary }]}>
             Masukkan Nomor Visa dan Tanggal Lahir untuk memverifikasi dokumen dan rombongan Anda.
           </Text>
 
           {/* Nomor Visa */}
           <View style={{ marginBottom: SPACING.lg }}>
-            <Text style={inputStyles.label}>Nomor Visa (Username)</Text>
-            <View style={inputStyles.wrapper}>
-              <MaterialCommunityIcons name="card-account-details" size={18} color={COLORS.textMuted} style={{ marginRight: SPACING.sm }} />
+            <Text style={[inputStyles.label, { color: colors.textSecondary }]}>Nomor Visa (Username)</Text>
+            <View style={[inputStyles.wrapper, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+              <MaterialCommunityIcons name="card-account-details" size={18} color={colors.textMuted} style={{ marginRight: SPACING.sm }} />
               <TextInput
-                style={inputStyles.field}
+                style={[inputStyles.field, { color: colors.textPrimary }]}
                 value={nomor_visa}
                 onChangeText={setNomorVisa}
                 placeholder="Contoh: 6169281080"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
               />
@@ -110,15 +112,15 @@ export default function LoginScreen() {
 
           {/* Tanggal Lahir */}
           <View style={{ marginBottom: SPACING.xl }}>
-            <Text style={inputStyles.label}>Tanggal Lahir (Password)</Text>
-            <View style={inputStyles.wrapper}>
-              <MaterialCommunityIcons name="calendar" size={18} color={COLORS.textMuted} style={{ marginRight: SPACING.sm }} />
+            <Text style={[inputStyles.label, { color: colors.textSecondary }]}>Tanggal Lahir (Password)</Text>
+            <View style={[inputStyles.wrapper, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+              <MaterialCommunityIcons name="calendar" size={18} color={colors.textMuted} style={{ marginRight: SPACING.sm }} />
               <TextInput
-                style={inputStyles.field}
+                style={[inputStyles.field, { color: colors.textPrimary }]}
                 value={tanggal_lahir}
                 onChangeText={setTanggalLahir}
                 placeholder="YYYY-MM-DD  (cth: 1995-02-10)"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 keyboardType="numbers-and-punctuation"
               />
             </View>
@@ -126,13 +128,13 @@ export default function LoginScreen() {
 
           {/* Login Button */}
           <TouchableOpacity
-            style={[buttonStyles.primary, loading && buttonStyles.disabled]}
+            style={[buttonStyles.primary, { backgroundColor: colors.primary }, loading && buttonStyles.disabled]}
             onPress={handleLogin}
             disabled={loading}
             activeOpacity={0.85}
           >
             {loading
-              ? <ActivityIndicator color={COLORS.surface} />
+              ? <ActivityIndicator color="#ffffff" />
               : <Text style={buttonStyles.primaryText}>Verifikasi & Masuk</Text>
             }
           </TouchableOpacity>
@@ -143,7 +145,7 @@ export default function LoginScreen() {
             onPress={handleGuestBrowse}
             activeOpacity={0.8}
           >
-            <Text style={s.guestBrowseBtnText}>Masuk sebagai Tamu (Nanti Saja)</Text>
+            <Text style={[s.guestBrowseBtnText, { color: colors.primary }]}>Masuk sebagai Tamu (Nanti Saja)</Text>
           </TouchableOpacity>
 
           {/* Demo Hint */}

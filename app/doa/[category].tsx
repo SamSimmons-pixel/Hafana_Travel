@@ -25,11 +25,13 @@ import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
   layoutStyles,
 } from '@/components/styles';
+import { useAppTheme } from '@/context/theme';
 import { DOA_CATEGORIES, DoaItem } from '@/data/doaData';
 
 export default function DoaCategoryScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
   const router = useRouter();
+  const { isDarkMode, colors } = useAppTheme();
   const [query, setQuery] = useState('');
 
   // Find the matching category
@@ -55,9 +57,9 @@ export default function DoaCategoryScreen() {
 
   if (!cat) {
     return (
-      <SafeAreaView style={layoutStyles.screen}>
+      <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
         <View style={layoutStyles.centered}>
-          <Text style={{ color: COLORS.textMuted, marginTop: 40 }}>
+          <Text style={{ color: colors.textMuted, marginTop: 40 }}>
             Kategori tidak ditemukan.
           </Text>
         </View>
@@ -66,15 +68,15 @@ export default function DoaCategoryScreen() {
   }
 
   return (
-    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: COLORS.surface }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.surface} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.surface }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.surface} />
 
       {/* ── APP BAR ── */}
-      <View style={s.appBar}>
+      <View style={[s.appBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={s.appBarTitle} numberOfLines={1}>
+        <Text style={[s.appBarTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {cat.label}
         </Text>
         <View style={{ width: 36 }} />
@@ -82,16 +84,16 @@ export default function DoaCategoryScreen() {
 
       {/* ── SEARCH BAR ── */}
       <View style={s.searchWrapper}>
-        <View style={s.searchBar}>
+        <View style={[s.searchBar, { backgroundColor: colors.bg, borderColor: colors.border }]}>
           <TextInput
-            style={s.searchInput}
+            style={[s.searchInput, { color: colors.textPrimary }]}
             placeholder="Cari doa ..."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={query}
             onChangeText={setQuery}
             returnKeyType="search"
           />
-          <MaterialCommunityIcons name="magnify" size={20} color={COLORS.primary} />
+          <MaterialCommunityIcons name="magnify" size={20} color={colors.primary} />
         </View>
       </View>
 
@@ -101,26 +103,26 @@ export default function DoaCategoryScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={s.listContent}
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={s.divider} />}
+        ItemSeparatorComponent={() => <View style={[s.divider, { backgroundColor: colors.border }]} />}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={s.listItem}
             onPress={() => handleItemPress(item)}
             activeOpacity={0.7}
           >
-            <Text style={s.itemTitle} numberOfLines={2}>
+            <Text style={[s.itemTitle, { color: colors.textPrimary }]} numberOfLines={2}>
               {item.title}
             </Text>
             <MaterialCommunityIcons
               name="chevron-right"
               size={22}
-              color={COLORS.primary}
+              color={colors.primary}
             />
           </TouchableOpacity>
         )}
         ListEmptyComponent={
           <View style={{ padding: SPACING.xl, alignItems: 'center' }}>
-            <Text style={{ color: COLORS.textMuted, fontSize: FONT.sizeSm }}>
+            <Text style={{ color: colors.textMuted, fontSize: FONT.sizeSm }}>
               Tidak ditemukan hasil untuk "{query}".
             </Text>
           </View>

@@ -29,6 +29,7 @@ import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
   layoutStyles, textStyles, emptyStyles,
 } from '@/components/styles';
+import { useAppTheme } from '@/context/theme';
 import { apiRequest, getStorageUrl } from '@/services/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -65,6 +66,7 @@ function formatRupiah(amount: number): string {
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function SemuaPaketScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useAppTheme();
   const [pakets, setPakets]         = useState<Paket[]>([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -109,32 +111,32 @@ export default function SemuaPaketScreen() {
   }, [pakets, query, cityFilter]);
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
 
       {/* ── HEADER ── */}
-      <View style={s.header}>
+      <View style={[s.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Semua Paket</Text>
+        <Text style={[s.headerTitle, { color: colors.textPrimary }]}>Semua Paket</Text>
         <View style={{ width: 36 }} />
       </View>
 
       {/* ── SEARCH BAR ── */}
-      <View style={s.searchWrapper}>
-        <MaterialCommunityIcons name="magnify" size={20} color={COLORS.textMuted} style={{ marginRight: SPACING.sm }} />
+      <View style={[s.searchWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} style={{ marginRight: SPACING.sm }} />
         <TextInput
-          style={s.searchInput}
+          style={[s.searchInput, { color: colors.textPrimary }]}
           placeholder="Cari nama paket, kota, maskapai..."
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={query}
           onChangeText={setQuery}
           returnKeyType="search"
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')}>
-            <MaterialCommunityIcons name="close-circle" size={18} color={COLORS.textMuted} />
+            <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -173,17 +175,18 @@ export default function SemuaPaketScreen() {
             <PaketCard
               paket={item}
               onPress={() => router.push(`/pakets/${item.id}` as any)}
+              colors={colors}
             />
           )}
           ListEmptyComponent={
             <View style={emptyStyles.container}>
-              <MaterialCommunityIcons name="mosque" size={52} color={COLORS.textMuted} />
-              <Text style={[emptyStyles.title, { marginTop: SPACING.md }]}>
+              <MaterialCommunityIcons name="mosque" size={52} color={colors.textMuted} />
+              <Text style={[emptyStyles.title, { marginTop: SPACING.md, color: colors.textPrimary }]}>
                 {query || cityFilter
                   ? 'Tidak ada paket sesuai pencarian'
                   : 'Belum ada paket tersedia'}
               </Text>
-              <Text style={emptyStyles.subtitle}>
+              <Text style={[emptyStyles.subtitle, { color: colors.textSecondary }]}>
                 {query || cityFilter
                   ? 'Coba ubah kata kunci atau filter kota'
                   : 'Admin belum menambahkan paket Umrah'}
@@ -197,44 +200,44 @@ export default function SemuaPaketScreen() {
 }
 
 // ── PaketCard ─────────────────────────────────────────────────────────────────
-function PaketCard({ paket, onPress }: { paket: Paket; onPress: () => void }) {
+function PaketCard({ paket, onPress, colors }: { paket: Paket; onPress: () => void; colors: any }) {
   const imgUri = imageUri(paket.gambar);
 
   return (
-    <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity style={[s.card, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={onPress} activeOpacity={0.85}>
       {/* Image */}
       <View style={s.cardImg}>
         {imgUri ? (
           <Image source={{ uri: imgUri }} style={s.cardImgInner} />
         ) : (
-          <View style={s.cardImgPlaceholder}>
-            <MaterialCommunityIcons name="mosque" size={40} color={COLORS.primary} />
+          <View style={[s.cardImgPlaceholder, { backgroundColor: colors.primaryLight }]}>
+            <MaterialCommunityIcons name="mosque" size={40} color={colors.primary} />
           </View>
         )}
-        <View style={s.badge}>
+        <View style={[s.badge, { backgroundColor: colors.primary }]}>
           <Text style={s.badgeText}>UMROH</Text>
         </View>
       </View>
 
       {/* Info */}
       <View style={s.cardBody}>
-        <Text style={s.cardName} numberOfLines={2}>{paket.nama_paket}</Text>
+        <Text style={[s.cardName, { color: colors.textPrimary }]} numberOfLines={2}>{paket.nama_paket}</Text>
 
         <View style={s.metaGrid}>
-          <MetaRow icon="calendar" text={formatDate(paket.tanggal_berangkat)} />
-          <MetaRow icon="airplane-takeoff" text={`dari ${paket.kota_keberangkatan.toUpperCase()}`} />
-          <MetaRow icon="clock-outline" text={`${paket.durasi_hari} Hari`} />
+          <MetaRow icon="calendar" text={formatDate(paket.tanggal_berangkat)} color={colors.textSecondary} />
+          <MetaRow icon="airplane-takeoff" text={`dari ${paket.kota_keberangkatan.toUpperCase()}`} color={colors.textSecondary} />
+          <MetaRow icon="clock-outline" text={`${paket.durasi_hari} Hari`} color={colors.textSecondary} />
           {paket.maskapai ? (
-            <MetaRow icon="airplane" text={paket.maskapai} />
+            <MetaRow icon="airplane" text={paket.maskapai} color={colors.textSecondary} />
           ) : null}
-          <MetaRow icon="account-group" text={`Kuota ${paket.kuota} orang`} />
+          <MetaRow icon="account-group" text={`Kuota ${paket.kuota} orang`} color={colors.textSecondary} />
         </View>
 
         <View style={s.cardFooter}>
-          <Text style={s.harga}>{formatRupiah(paket.harga)}</Text>
-          <View style={s.detailBtn}>
-            <Text style={s.detailBtnText}>Detail</Text>
-            <MaterialCommunityIcons name="chevron-right" size={16} color={COLORS.primary} />
+          <Text style={[s.harga, { color: colors.primary }]}>{formatRupiah(paket.harga)}</Text>
+          <View style={[s.detailBtn, { backgroundColor: colors.primaryLight }]}>
+            <Text style={[s.detailBtnText, { color: colors.primary }]}>Detail</Text>
+            <MaterialCommunityIcons name="chevron-right" size={16} color={colors.primary} />
           </View>
         </View>
       </View>
@@ -242,11 +245,11 @@ function PaketCard({ paket, onPress }: { paket: Paket; onPress: () => void }) {
   );
 }
 
-function MetaRow({ icon, text }: { icon: string; text: string }) {
+function MetaRow({ icon, text, color }: { icon: string; text: string; color?: string }) {
   return (
     <View style={s.metaRow}>
-      <MaterialCommunityIcons name={icon as any} size={13} color={COLORS.textMuted} style={{ marginRight: 4 }} />
-      <Text style={s.metaText} numberOfLines={1}>{text}</Text>
+      <MaterialCommunityIcons name={icon as any} size={13} color={color || COLORS.textMuted} style={{ marginRight: 4 }} />
+      <Text style={[s.metaText, color ? { color } : null]} numberOfLines={1}>{text}</Text>
     </View>
   );
 }

@@ -32,6 +32,7 @@ import {
   layoutStyles, textStyles,
 } from '@/components/styles';
 import { useAuth } from '@/context/auth';
+import { useAppTheme } from '@/context/theme';
 
 function formatDate(dateStr?: string | null): string {
   if (!dateStr) return '-';
@@ -47,6 +48,7 @@ function formatDate(dateStr?: string | null): string {
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { isDarkMode, colors } = useAppTheme();
 
   const handleSignOut = () => {
     Alert.alert('Keluar', 'Apakah Anda yakin ingin keluar dari akun ini?', [
@@ -66,12 +68,12 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={layoutStyles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
 
       {/* ── TOP BAR ── */}
-      <View style={s.topBar}>
-        <Text style={s.topBarTitle}>Profil Jemaah</Text>
+      <View style={[s.topBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <Text style={[s.topBarTitle, { color: colors.textPrimary }]}>Profil Jemaah</Text>
       </View>
 
       <ScrollView
@@ -82,30 +84,31 @@ export default function ProfileScreen() {
           /* ── LOGGED IN JEMAAH VIEW ── */
           <>
             {/* Header Profile Card */}
-            <View style={s.profileCard}>
-              <View style={s.avatarCircle}>
+            <View style={[s.profileCard, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
+              <View style={[s.avatarCircle, { backgroundColor: colors.primary }]}>
                 <Text style={s.avatarText}>
                   {user.name ? user.name.substring(0, 2).toUpperCase() : 'JM'}
                 </Text>
               </View>
-              <Text style={s.userName}>{user.name}</Text>
-              <View style={s.verifiedBadge}>
-                <MaterialCommunityIcons name="check-decagram" size={16} color={COLORS.surface} />
-                <Text style={s.verifiedText}>Jemaah Terverifikasi</Text>
+              <Text style={[s.userName, { color: colors.textPrimary }]}>{user.name}</Text>
+              <View style={[s.verifiedBadge, { backgroundColor: colors.primaryLight }]}>
+                <MaterialCommunityIcons name="check-decagram" size={16} color={colors.primary} />
+                <Text style={[s.verifiedText, { color: colors.primary }]}>Jemaah Terverifikasi</Text>
               </View>
             </View>
 
             {/* Information Grid Card */}
-            <View style={s.infoCard}>
-              <Text style={s.cardHeading}>Data Dokumen Jemaah</Text>
+            <View style={[s.infoCard, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
+              <Text style={[s.cardHeading, { color: colors.textPrimary }]}>Data Dokumen Jemaah</Text>
 
               {/* Nama Jemaah */}
               <InfoItem
                 icon="account"
                 label="Nama Jemaah"
                 value={user.name}
+                colors={colors}
               />
-              <Divider />
+              <Divider color={colors.border} />
 
               {/* Nomor Visa */}
               <InfoItem
@@ -113,24 +116,27 @@ export default function ProfileScreen() {
                 label="Nomor Visa (Username Login)"
                 value={user.nomor_visa || '-'}
                 highlight
+                colors={colors}
               />
-              <Divider />
+              <Divider color={colors.border} />
 
               {/* Tanggal Lahir */}
               <InfoItem
                 icon="calendar"
                 label="Tanggal Lahir"
                 value={formatDate(user.tanggal_lahir)}
+                colors={colors}
               />
-              <Divider />
+              <Divider color={colors.border} />
 
               {/* Nomor Paspor */}
               <InfoItem
                 icon="passport"
                 label="Nomor Paspor"
                 value={user.nomor_paspor || '-'}
+                colors={colors}
               />
-              <Divider />
+              <Divider color={colors.border} />
 
               {/* Group Rombongan Keberangkatan */}
               <InfoItem
@@ -138,12 +144,13 @@ export default function ProfileScreen() {
                 label="Group Rombongan Keberangkatan"
                 value={user.group?.nama_group || 'Belum Ditempatkan dalam Group'}
                 badge
+                colors={colors}
               />
             </View>
 
             {/* Logout Button */}
             <TouchableOpacity
-              style={s.logoutBtn}
+              style={[s.logoutBtn, { backgroundColor: colors.surface, borderColor: COLORS.danger, borderWidth: 1 }]}
               onPress={handleSignOut}
               activeOpacity={0.85}
             >
@@ -153,37 +160,37 @@ export default function ProfileScreen() {
           </>
         ) : (
           /* ── GUEST / UNAUTHENTICATED VIEW ── */
-          <View style={s.guestCard}>
-            <View style={s.guestIconCircle}>
-              <MaterialCommunityIcons name="shield-account-outline" size={48} color={COLORS.primary} />
+          <View style={[s.guestCard, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
+            <View style={[s.guestIconCircle, { backgroundColor: colors.primaryLight }]}>
+              <MaterialCommunityIcons name="shield-account-outline" size={48} color={colors.primary} />
             </View>
 
-            <Text style={s.guestTitle}>Verifikasi Data Jemaah</Text>
-            <Text style={s.guestSub}>
+            <Text style={[s.guestTitle, { color: colors.textPrimary }]}>Verifikasi Data Jemaah</Text>
+            <Text style={[s.guestSub, { color: colors.textSecondary }]}>
               Anda dapat menjelajahi aplikasi Hafana Travel secara bebas. Untuk melihat data visa, paspor, dan rombongan keberangkatan Anda, silakan masuk.
             </Text>
 
             <View style={s.guestBenefits}>
               <View style={s.benefitRow}>
-                <MaterialCommunityIcons name="check-circle" size={18} color={COLORS.primary} />
-                <Text style={s.benefitText}>Cek Nomor Visa & Nomor Paspor Jemaah</Text>
+                <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
+                <Text style={[s.benefitText, { color: colors.textPrimary }]}>Cek Nomor Visa & Nomor Paspor Jemaah</Text>
               </View>
               <View style={s.benefitRow}>
-                <MaterialCommunityIcons name="check-circle" size={18} color={COLORS.primary} />
-                <Text style={s.benefitText}>Lihat Info Group Rombongan Keberangkatan</Text>
+                <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
+                <Text style={[s.benefitText, { color: colors.textPrimary }]}>Lihat Info Group Rombongan Keberangkatan</Text>
               </View>
               <View style={s.benefitRow}>
-                <MaterialCommunityIcons name="check-circle" size={18} color={COLORS.primary} />
-                <Text style={s.benefitText}>Akses Terintegrasi dengan Admin Hafana Travel</Text>
+                <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
+                <Text style={[s.benefitText, { color: colors.textPrimary }]}>Akses Terintegrasi dengan Admin Hafana Travel</Text>
               </View>
             </View>
 
             <TouchableOpacity
-              style={s.loginBtn}
+              style={[s.loginBtn, { backgroundColor: colors.primary }]}
               onPress={handleLoginPress}
               activeOpacity={0.85}
             >
-              <MaterialCommunityIcons name="login" size={20} color={COLORS.surface} style={{ marginRight: 8 }} />
+              <MaterialCommunityIcons name="login" size={20} color="#ffffff" style={{ marginRight: 8 }} />
               <Text style={s.loginBtnText}>Masuk / Verifikasi Visa</Text>
             </TouchableOpacity>
           </View>
@@ -200,26 +207,33 @@ function InfoItem({
   value,
   highlight = false,
   badge = false,
+  colors,
 }: {
   icon: string;
   label: string;
   value: string;
   highlight?: boolean;
   badge?: boolean;
+  colors?: any;
 }) {
+  const pColor = colors?.primary || COLORS.primary;
+  const pLight = colors?.primaryLight || COLORS.primaryLight;
+  const tPrimary = colors?.textPrimary || COLORS.textPrimary;
+  const tSecondary = colors?.textSecondary || COLORS.textSecondary;
+
   return (
     <View style={s.infoRow}>
-      <View style={s.infoIconBox}>
-        <MaterialCommunityIcons name={icon as any} size={20} color={COLORS.primary} />
+      <View style={[s.infoIconBox, { backgroundColor: pLight }]}>
+        <MaterialCommunityIcons name={icon as any} size={20} color={pColor} />
       </View>
       <View style={s.infoContent}>
-        <Text style={s.infoLabel}>{label}</Text>
+        <Text style={[s.infoLabel, { color: tSecondary }]}>{label}</Text>
         {badge ? (
-          <View style={s.groupBadgeBox}>
-            <Text style={s.groupBadgeText}>{value}</Text>
+          <View style={[s.groupBadgeBox, { backgroundColor: pLight, borderColor: pColor }]}>
+            <Text style={[s.groupBadgeText, { color: pColor }]}>{value}</Text>
           </View>
         ) : (
-          <Text style={[s.infoValue, highlight && s.infoValueHighlight]}>
+          <Text style={[s.infoValue, { color: tPrimary }, highlight && s.infoValueHighlight]}>
             {value}
           </Text>
         )}
@@ -228,8 +242,8 @@ function InfoItem({
   );
 }
 
-function Divider() {
-  return <View style={s.divider} />;
+function Divider({ color }: { color?: string }) {
+  return <View style={[s.divider, color ? { backgroundColor: color } : null]} />;
 }
 
 // ── Styles ───────────────────────────────────────────────────────────────────
