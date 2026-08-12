@@ -369,6 +369,7 @@
             <a href="{{ route('admin.pakets.index') }}" class="nav-brand">🕌 Hafana Travel Admin</a>
             <div class="nav-links">
                 <a href="{{ route('admin.pakets.index') }}" class="nav-link {{ request()->routeIs('admin.pakets.*') ? 'active' : '' }}">📦 Paket Umrah</a>
+                <a href="{{ route('admin.articles.index') }}" class="nav-link {{ request()->routeIs('admin.articles.*') ? 'active' : '' }}">📰 Artikel</a>
                 <a href="{{ route('admin.galeri.index') }}" class="nav-link {{ request()->routeIs('admin.galeri.*') ? 'active' : '' }}">🖼️ Galeri & Testimoni</a>
                 <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">⚙️ Logo & Pengaturan</a>
                 <a href="{{ route('admin.groups.index') }}" class="nav-link {{ request()->routeIs('admin.groups.*') ? 'active' : '' }}">👥 Group & Import JSON</a>

@@ -31,6 +31,7 @@ Travel yang amanah akan memberikan kepastian tanggal keberangkatan, maskapai pen
 ### 4. Transparansi Fasilitas Hotel & Bus
 Perhatikan jarak hotel dari Masjidil Haram di Makkah dan Masjid Nabawi di Madinah. Pilihlah travel yang transparan menyampaikan nama hotel dan kualifikasi bintangnya.",
                 'is_published' => true,
+                'is_pinned'    => true,
                 'published_at' => '2026-05-08 09:00:00',
             ],
             [
@@ -47,6 +48,7 @@ Perhatikan jarak hotel dari Masjidil Haram di Makkah dan Masjid Nabawi di Madina
 * **Membawa Obat Pribadi**: Siapkan obat-obatan pribadi yang biasa dikonsumsi, vitamin C, suplemen daya tahan tubuh, dan pelembab kulit.
 * **Cukup Minum Air Putih**: Udara di Arab Saudi cenderung lebih kering, pastikan minum air zamzam atau air mineral minimal 2-3 liter per hari.",
                 'is_published' => true,
+                'is_pinned'    => true,
                 'published_at' => '2026-04-25 14:30:00',
             ],
             [
@@ -65,6 +67,7 @@ Raudhah adalah area yang terletak di antara rumah (makam) Rasulullah ﷺ dan mim
 2. Membaca shalawat dan salam saat melintasi makam Rasulullah ﷺ dan dua sahabat beliau (Abu Bakar Ash-Shiddiq & Umar bin Khattab).
 3. Berdoa dengan khusyu' tanpa melakukan perbuatan syirik atau meminta-minta kepada penghuni kubur.",
                 'is_published' => true,
+                'is_pinned'    => true,
                 'published_at' => '2026-04-18 10:15:00',
             ],
             [

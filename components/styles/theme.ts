@@ -30,7 +30,7 @@ export const LIGHT_COLORS: ThemeColors = {
   // Brand blues — change these to shift app color
   primary: '#254091ff',      // Main brand blue (buttons, highlights, badges)
   primaryDark: '#172757ff',  // Hover / pressed state
-  primaryLight: '#fafafa',   // Tinted backgrounds, cards
+  primaryLight: '#f7f7f7ff',   // Tinted backgrounds, cards
 
   // App backgrounds
   bg: '#f2f6fa',             // Screen background
@@ -58,9 +58,9 @@ export const LIGHT_COLORS: ThemeColors = {
 // ── Dark Mode Palette ───────────────────────────────────────────────────────
 export const DARK_COLORS: ThemeColors = {
   // Brand blues in Dark Mode
-  primary: '#4f6ef7',        // Vibrant blue accent in dark mode
-  primaryDark: '#254091',    // Darker shade
-  primaryLight: '#1e293b',   // Card background accent
+  primary: '#223d8dff',        // Vibrant blue accent in dark mode
+  primaryDark: '#1f3579ff',    // Darker shade
+  primaryLight: '#1b2535ff',   // Card background accent
 
   // App backgrounds
   bg: '#0f172a',             // Dark slate screen background

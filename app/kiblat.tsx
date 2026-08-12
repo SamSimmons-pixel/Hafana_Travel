@@ -80,7 +80,7 @@ export default function KiblatScreen() {
           </Text>
 
           {/* Features Checklist */}
-          <View style={s.featureList}>
+          <View style={[s.featureList, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}>
             <View style={s.featureRow}>
               <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
               <Text style={[s.featureText, { color: colors.textPrimary }]}>Kompas & Sensor Gerak Presisi Google</Text>

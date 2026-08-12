@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('summary')->nullable();
             $table->longText('content');
             $table->boolean('is_published')->default(true);
+            $table->boolean('is_pinned')->default(false);
             $table->timestamp('published_at')->useCurrent();
             $table->timestamps();
         });

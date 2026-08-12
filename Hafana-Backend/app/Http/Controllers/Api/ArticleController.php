@@ -19,6 +19,7 @@ class ArticleController extends Controller
         $perPage = min(max($perPage, 1), 50);
 
         $paginated = Article::where('is_published', true)
+            ->orderBy('is_pinned', 'desc')
             ->orderBy('published_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);

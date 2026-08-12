@@ -17,11 +17,13 @@ class Article extends Model
         'summary',
         'content',
         'is_published',
+        'is_pinned',
         'published_at',
     ];
 
     protected $casts = [
         'is_published' => 'boolean',
+        'is_pinned'    => 'boolean',
         'published_at' => 'datetime',
     ];
 }

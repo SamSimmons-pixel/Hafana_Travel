@@ -170,7 +170,7 @@ export default function ProfileScreen() {
               Anda dapat menjelajahi aplikasi Hafana Travel secara bebas. Untuk melihat data visa, paspor, dan rombongan keberangkatan Anda, silakan masuk.
             </Text>
 
-            <View style={s.guestBenefits}>
+            <View style={[s.guestBenefits, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}>
               <View style={s.benefitRow}>
                 <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
                 <Text style={[s.benefitText, { color: colors.textPrimary }]}>Cek Nomor Visa & Nomor Paspor Jemaah</Text>

@@ -179,6 +179,7 @@ export interface Article {
   author: string;
   summary?: string;
   content: string;
+  is_pinned?: boolean;
   published_at: string;
   created_at?: string;
 }

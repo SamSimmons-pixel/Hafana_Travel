@@ -68,7 +68,7 @@ export default function HomeScreen() {
     setLoadingArticles(true);
     setArticleError(false);
     try {
-      const res = await fetchArticles(1, 5);
+      const res = await fetchArticles(1, 3);
       setArticles(res.data);
     } catch {
       setArticleError(true);

@@ -63,4 +63,6 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
 
     // Article management
     Route::resource('articles', \App\Http\Controllers\Admin\ArticleController::class);
+    Route::post('articles/{article}/toggle-pin', [\App\Http\Controllers\Admin\ArticleController::class, 'togglePin'])
+        ->name('articles.toggle-pin');
 });
