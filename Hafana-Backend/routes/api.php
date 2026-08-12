@@ -30,6 +30,12 @@ Route::get('galeri/youtube-playlist', [\App\Http\Controllers\Api\GaleriControlle
 Route::get('pakets', [\App\Http\Controllers\Api\PaketController::class, 'index']);
 Route::get('pakets/{id}', [\App\Http\Controllers\Api\PaketController::class, 'show']);
 
+// ──────────────────────────────────────────────────────
+// 📰 ARTIKEL ROUTES (Public - mobile app)
+// ──────────────────────────────────────────────────────
+Route::get('articles', [\App\Http\Controllers\Api\ArticleController::class, 'index']);
+Route::get('articles/{id}', [\App\Http\Controllers\Api\ArticleController::class, 'show']);
+
 
 // // ──────────────────────────────────────────────────────
 // // 🌍 DESTINATION ROUTES (Public access)

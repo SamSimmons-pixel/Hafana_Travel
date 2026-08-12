@@ -83,33 +83,56 @@ export default function DoaDetailScreen() {
           /* ── DOA MODE ── */
           <>
             {/* Arabic Text Card */}
-            <View style={[s.arabicCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[s.arabicText, { color: colors.textPrimary }]}>{item.arabic}</Text>
-            </View>
+            {item.arabic ? (
+              <View style={[s.arabicCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[s.arabicText, { color: colors.textPrimary }]}>{item.arabic}</Text>
+              </View>
+            ) : null}
 
             {/* Divider label */}
-            <View style={s.sectionLabel}>
-              <View style={[s.labelLine, { backgroundColor: colors.border }]} />
-              <Text style={[s.labelText, { color: colors.textMuted }]}>Latin</Text>
-              <View style={[s.labelLine, { backgroundColor: colors.border }]} />
-            </View>
+            {item.latin ? (
+              <>
+                <View style={s.sectionLabel}>
+                  <View style={[s.labelLine, { backgroundColor: colors.border }]} />
+                  <Text style={[s.labelText, { color: colors.textMuted }]}>Latin</Text>
+                  <View style={[s.labelLine, { backgroundColor: colors.border }]} />
+                </View>
 
-            {/* Latin */}
-            <View style={[s.contentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[s.latinText, { color: colors.textPrimary }]}>{item.latin}</Text>
-            </View>
+                {/* Latin */}
+                <View style={[s.contentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Text style={[s.latinText, { color: colors.textPrimary }]}>{item.latin}</Text>
+                </View>
+              </>
+            ) : null}
 
             {/* Divider label */}
-            <View style={s.sectionLabel}>
-              <View style={[s.labelLine, { backgroundColor: colors.border }]} />
-              <Text style={[s.labelText, { color: colors.textMuted }]}>Terjemahan</Text>
-              <View style={[s.labelLine, { backgroundColor: colors.border }]} />
-            </View>
+            {item.translation ? (
+              <>
+                <View style={s.sectionLabel}>
+                  <View style={[s.labelLine, { backgroundColor: colors.border }]} />
+                  <Text style={[s.labelText, { color: colors.textMuted }]}>Terjemahan</Text>
+                  <View style={[s.labelLine, { backgroundColor: colors.border }]} />
+                </View>
 
-            {/* Translation */}
-            <View style={[s.contentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[s.translationText, { color: colors.textSecondary }]}>{item.translation}</Text>
-            </View>
+                {/* Translation */}
+                <View style={[s.contentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Text style={[s.translationText, { color: colors.textSecondary }]}>{item.translation}</Text>
+                </View>
+              </>
+            ) : null}
+
+            {/* Optional Article Content Section if Doa item has additional content/panduan */}
+            {item.content ? (
+              <>
+                <View style={s.sectionLabel}>
+                  <View style={[s.labelLine, { backgroundColor: colors.border }]} />
+                  <Text style={[s.labelText, { color: colors.textMuted }]}>Penjelasan & Panduan Tata Cara</Text>
+                  <View style={[s.labelLine, { backgroundColor: colors.border }]} />
+                </View>
+
+                <ArticleBody content={item.content} colors={colors} />
+              </>
+            ) : null}
           </>
         ) : (
           /* ── ARTICLE MODE (Fiqh Haji, info) ── */

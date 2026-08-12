@@ -166,3 +166,56 @@ export async function fetchYouTubePlaylist(playlistId: string): Promise<any[]> {
     return [];
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Article API & Helpers
+// ─────────────────────────────────────────────────────────────
+
+export interface Article {
+  id: string | number;
+  title: string;
+  slug?: string;
+  thumbnail_url: string;
+  author: string;
+  summary?: string;
+  content: string;
+  published_at: string;
+  created_at?: string;
+}
+
+export interface ArticlesPaginatedResponse {
+  status: string;
+  data: Article[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    total: number;
+    per_page: number;
+    has_more: boolean;
+  };
+}
+
+/**
+ * Format ISO datetime string to Indonesian date format: "DD MMM YY" (e.g. "08 Mei 26")
+ */
+export function formatIndonesianDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const month = months[date.getMonth()];
+  const year = String(date.getFullYear()).slice(-2);
+
+  return `${day} ${month} ${year}`;
+}
+
+export async function fetchArticles(page = 1, limit = 10): Promise<ArticlesPaginatedResponse> {
+  return await apiRequest<ArticlesPaginatedResponse>(`/articles?page=${page}&per_page=${limit}`);
+}
+
+export async function fetchArticleById(id: string | number): Promise<Article> {
+  const res = await apiRequest<{ status: string; data: Article }>(`/articles/${id}`);
+  return res.data;
+}

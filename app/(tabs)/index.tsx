@@ -20,7 +20,7 @@ import {
 } from '@/components/styles';
 import { useAuth } from '@/context/auth';
 import { useAppTheme } from '@/context/theme';
-import { apiRequest, getStorageUrl } from '@/services/api';
+import { Article, apiRequest, fetchArticles, formatIndonesianDate, getStorageUrl } from '@/services/api';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -60,6 +60,23 @@ export default function HomeScreen() {
   const [loadingPakets, setLoading] = useState(true);
   const [appLogo, setAppLogo] = useState<string | null>(null);
 
+  const [articles, setArticles]               = useState<Article[]>([]);
+  const [loadingArticles, setLoadingArticles] = useState(true);
+  const [articleError, setArticleError]       = useState(false);
+
+  const loadArticles = async () => {
+    setLoadingArticles(true);
+    setArticleError(false);
+    try {
+      const res = await fetchArticles(1, 5);
+      setArticles(res.data);
+    } catch {
+      setArticleError(true);
+    } finally {
+      setLoadingArticles(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -77,6 +94,8 @@ export default function HomeScreen() {
         setLoading(false);
       }
     })();
+
+    loadArticles();
   }, []);
 
   const handleMenuPress = (id: string) => {
@@ -327,6 +346,70 @@ export default function HomeScreen() {
           )}
         </View>
 
+        {/* ── ARTIKEL SECTION ── */}
+        <View style={{ marginHorizontal: SPACING.lg, marginTop: SPACING.xl, marginBottom: SPACING.xxl }}>
+          <View style={layoutStyles.spaceBetween}>
+            <Text style={[sectionStyles.title, { color: colors.textPrimary }]}>Artikel</Text>
+            <TouchableOpacity onPress={() => router.push('/articles' as any)} activeOpacity={0.8}>
+              <Text style={[sectionStyles.link, { color: colors.primary }]}>Lihat Semua</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loadingArticles ? (
+            <View style={{ gap: SPACING.md, marginTop: SPACING.md }}>
+              {[1, 2, 3].map((i) => (
+                <View key={i} style={[s.articleCardSkeleton, { backgroundColor: colors.surface, borderColor: colors.border }]} />
+              ))}
+            </View>
+          ) : articleError ? (
+            <View style={[s.articleErrorCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={colors.textMuted} />
+              <Text style={{ color: colors.textSecondary, fontSize: FONT.sizeSm, marginTop: 4, marginBottom: SPACING.sm }}>
+                Gagal memuat artikel
+              </Text>
+              <TouchableOpacity
+                style={[s.retryBtn, { backgroundColor: colors.primary }]}
+                onPress={loadArticles}
+                activeOpacity={0.85}
+              >
+                <Text style={s.retryBtnText}>Coba Lagi</Text>
+              </TouchableOpacity>
+            </View>
+          ) : articles.length === 0 ? (
+            <Text style={{ color: colors.textMuted, marginTop: SPACING.md, fontSize: FONT.sizeSm }}>
+              Belum ada artikel terbaru.
+            </Text>
+          ) : (
+            <View style={{ gap: SPACING.md, marginTop: SPACING.md }}>
+              {articles.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[s.articleCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  onPress={() => router.push(`/articles/${item.id}` as any)}
+                  activeOpacity={0.88}
+                >
+                  <Image
+                    source={{ uri: item.thumbnail_url }}
+                    style={s.articleThumb}
+                    resizeMode="cover"
+                  />
+                  <View style={s.articleInfo}>
+                    <Text style={[s.articleTitle, { color: colors.textPrimary }]} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                    <Text style={[s.articleAuthor, { color: colors.textMuted }]}>
+                      Posted by {item.author}
+                    </Text>
+                    <Text style={[s.articleDate, { color: colors.textMuted }]}>
+                      {formatIndonesianDate(item.published_at)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -468,4 +551,59 @@ const s = StyleSheet.create({
   paketInfo: { padding: SPACING.md },
   paketNama: { color: COLORS.textPrimary, fontSize: FONT.sizeMd, fontWeight: FONT.weightBold, marginBottom: SPACING.sm, lineHeight: 18 },
   paketHarga: { color: COLORS.primary, fontSize: FONT.sizeBase, fontWeight: FONT.weightBlack },
+
+  articleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.sm + 2,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    gap: SPACING.md,
+    ...SHADOW.card,
+  },
+  articleThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: RADIUS.md,
+  },
+  articleInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  articleTitle: {
+    fontSize: FONT.sizeSm + 1,
+    fontWeight: FONT.weightBold,
+    lineHeight: 19,
+    marginBottom: 4,
+  },
+  articleAuthor: {
+    fontSize: FONT.sizeXs,
+    marginBottom: 2,
+  },
+  articleDate: {
+    fontSize: FONT.sizeXs,
+  },
+  articleCardSkeleton: {
+    height: 92,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    opacity: 0.6,
+  },
+  articleErrorCard: {
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    marginTop: SPACING.md,
+  },
+  retryBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+  },
+  retryBtnText: {
+    color: '#ffffff',
+    fontWeight: FONT.weightBold,
+    fontSize: FONT.sizeSm,
+  },
 });

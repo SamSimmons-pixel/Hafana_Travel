@@ -87,5 +87,7 @@ class DatabaseSeeder extends Seeder
         foreach ($pakets as $paket) {
             Paket::create($paket);
         }
+
+        $this->call(ArticleSeeder::class);
     }
 }

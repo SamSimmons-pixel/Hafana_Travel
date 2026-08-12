@@ -60,4 +60,7 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
 
     // Admin Crew management
     Route::resource('admins', AdminCrewController::class);
+
+    // Article management
+    Route::resource('articles', \App\Http\Controllers\Admin\ArticleController::class);
 });

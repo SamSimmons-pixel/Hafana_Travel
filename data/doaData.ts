@@ -681,37 +681,44 @@ Masjid yang di dalamnya terjadi perpindahan kiblat dari Baitul Maqdis ke Ka'bah.
     items: [
       {
         id: 'jenazah-1',
-        title: 'Rukun Shalat Jenazah',
-        type: 'article',
-        content: `**Rukun Shalat Jenazah**
+        title: 'Bacaan & Panduan Rukun Shalat Jenazah',
+        type: 'doa',
+        arabic: 'اللَّهُمَّ اغْفِرْ لَهُ وَارْحَمْهُ وَعَافِهِ وَاعْفُ عَنْهُ وَأَكْرِمْ نُزُلَهُ وَوَسِّعْ مُدْخَلَهُ وَاغْسِلْهُ بِالْمَاءِ وَالثَّلْجِ وَالْبَرَدِ وَنَقِّهِ مِنَ الْخَطَايَا كَمَا نَقَّيْتَ الثَّوْبَ الْأَبْيَضَ مِنَ الدَّنَسِ',
+        latin: 'Allahummaghfirlahu warhamhu wa \'aafihi wa\'fu \'anhu wa akrim nuzulahu wa wassi\' mudkhalahu waghsilhu bil maa-i wats tsalji wal baradi wa naqqihi minal khathaayaa kamaa naqqaitats tsaubal abyadha minad danasi.',
+        translation: 'Ya Allah, ampunilah dia (jenazah laki-laki), rahmatilah dia, sejahterakanlah dia, dan maafkanlah dia. Muliakanlah tempat tinggalnya, lapangkanlah jalan masuknya, suci bersihkanlah dia dengan air, salju, dan embun. Bersihkanlah dia dari segala kesalahan sebagaimana Engkau membersihkan baju putih dari kotoran.',
+        content: `**Panduan & Rukun Shalat Jenazah**
 
-Shalat jenazah adalah shalat yang dilakukan untuk mendoakan jenazah Muslim. Terdiri dari 4 takbir tanpa ruku' dan sujud.
+Shalat jenazah adalah shalat fardhu kifayah yang dilakukan untuk mendoakan jenazah Muslim. Shalat ini terdiri dari 4 kali takbir tanpa ruku' dan sujud.
 
 **Rukun Shalat Jenazah:**
-1. **Niat** — Berniat shalat jenazah
-2. **Berdiri** — Jika mampu
-3. **Takbir 4 kali**
-4. **Membaca Al-Fatihah** — Setelah takbir pertama
-5. **Membaca Shalawat** — Setelah takbir kedua
-6. **Mendoakan Jenazah** — Setelah takbir ketiga
-7. **Salam** — Setelah takbir keempat
+1. **Niat** — Berniat shalat jenazah karena Allah Ta'ala
+2. **Berdiri** — Bagi yang mampu
+3. **Takbir 4 Kali** — Tanpa ruku' dan tanpa sujud
+4. **Membaca Surat Al-Fatihah** — Setelah Takbir Pertama
+5. **Membaca Shalawat Nabi** — Setelah Takbir Kedua
+6. **Mendoakan Jenazah** — Setelah Takbir Ketiga
+7. **Salam** — Setelah Takbir Keempat
 
-**Tata Cara Lengkap:**
+**Tata Cara Per Takbir:**
 
-*Takbir 1:* Niat + Al-Fatihah
-*لَبَّيْكَ اللَّهُمَّ ...* → Baca Al-Fatihah
+**Takbir Pertama (Ke-1):**
+Setelah takbiratul ihram, membaca Surat Al-Fatihah.
 
-*Takbir 2:* Shalawat Nabi
-*اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ...*
+**Takbir Kedua (Ke-2):**
+Membaca shalawat kepada Nabi Muhammad SAW:
+*اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ*
 
-*Takbir 3:* Doa untuk jenazah
-*اللَّهُمَّ اغْفِرْ لَهُ وَارْحَمْهُ وَعَافِهِ وَاعْفُ عَنْهُ...*
-(Ganti "لَهُ" dengan "لَهَا" jika jenazah perempuan, atau "لَهُمْ" jika banyak)
+**Takbir Ketiga (Ke-3):**
+Membaca doa ampunan untuk jenazah (bacaan teks Arab utama di atas).
+*(Catatan: Ganti kata "لَهُ/lahu" menjadi "لَهَا/laha" jika jenazah wanita, atau "لَهُمْ/lahum" jika jenazah banyak).*
 
-*Takbir 4:* Doa
+**Takbir Keempat (Ke-4):**
+Membaca doa:
 *اللَّهُمَّ لَا تَحْرِمْنَا أَجْرَهُ وَلَا تَفْتِنَّا بَعْدَهُ وَاغْفِرْ لَنَا وَلَهُ*
+*(Artinya: Ya Allah, janganlah Engkau halangi kami dari pahalanya dan janganlah Engkau uji kami setelahnya, serta ampunilah kami dan dia).*
 
-*Salam* ke kanan dan kiri.`,
+**Salam:**
+Mengucapkan salam ke kanan dan ke kiri dalam posisi berdiri.`,
       },
     ],
   },
