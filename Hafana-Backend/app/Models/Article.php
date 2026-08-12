@@ -26,4 +26,14 @@ class Article extends Model
         'is_pinned'    => 'boolean',
         'published_at' => 'datetime',
     ];
+    
+    public function getThumbnailUrlAttribute($value)    {
+    if (!$value) return null;
+    if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+        return $value;
+    }
+    return asset($value);
 }
+
+}
+

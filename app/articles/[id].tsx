@@ -24,7 +24,7 @@ import {
   layoutStyles, emptyStyles,
 } from '@/components/styles';
 import { useAppTheme } from '@/context/theme';
-import { Article, fetchArticleById, formatIndonesianDate } from '@/services/api';
+import { Article, fetchArticleById, formatIndonesianDate, getStorageUrl } from '@/services/api';
 
 export default function ArticleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -64,6 +64,8 @@ export default function ArticleDetailScreen() {
       // Ignored
     }
   };
+
+  const heroImageUri = getStorageUrl(article?.thumbnail_url) || article?.thumbnail_url;
 
   return (
     <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
@@ -110,10 +112,10 @@ export default function ArticleDetailScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Hero Image */}
-          {article.thumbnail_url ? (
+          {heroImageUri ? (
             <View style={s.heroBox}>
               <Image
-                source={{ uri: article.thumbnail_url }}
+                source={{ uri: heroImageUri }}
                 style={s.heroImage}
                 resizeMode="cover"
               />
@@ -167,6 +169,29 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
       {blocks.map((block, index) => {
         const trimmed = block.trim();
         if (!trimmed) return null;
+
+        // Inline Image (![alt](url))
+        const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+        if (imgMatch) {
+          const altText = imgMatch[1];
+          const rawUrl = imgMatch[2];
+          const resolvedUri = getStorageUrl(rawUrl) || rawUrl;
+
+          return (
+            <View key={index} style={s.inlineImageBox}>
+              <Image
+                source={{ uri: resolvedUri }}
+                style={s.inlineImage}
+                resizeMode="cover"
+              />
+              {altText ? (
+                <Text style={[s.imageCaption, { color: colors.textSecondary }]}>
+                  {altText}
+                </Text>
+              ) : null}
+            </View>
+          );
+        }
 
         // Headings (### or ## or #)
         if (trimmed.startsWith('#')) {
@@ -338,6 +363,23 @@ const s = StyleSheet.create({
     fontSize: 18,
     lineHeight: 22,
     marginRight: 8,
+  },
+  inlineImageBox: {
+    marginVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    backgroundColor: '#0f172a',
+  },
+  inlineImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: RADIUS.md,
+  },
+  imageCaption: {
+    fontSize: FONT.sizeSm,
+    textAlign: 'center',
+    marginTop: SPACING.xs,
+    fontStyle: 'italic',
   },
   retryBtn: {
     marginTop: SPACING.md,

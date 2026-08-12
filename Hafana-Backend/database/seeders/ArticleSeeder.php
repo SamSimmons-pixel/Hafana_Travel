@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Article;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class ArticleSeeder extends Seeder
 {
@@ -12,133 +11,66 @@ class ArticleSeeder extends Seeder
     {
         $articles = [
             [
-                'title' => 'Tips Memilih Travel Umrah Sunnah Berizin Resmi & Amanah',
-                'slug' => 'tips-memilih-travel-umrah-sunnah-berizin-resmi',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&w=800&q=80',
-                'author' => 'Tim Syariah Hafana',
-                'summary' => 'Panduan lengkap bagi calon jamaah dalam memilih travel umrah yang terdaftar resmi PPIU Kementerian Agama dan membimbing ibadah sesuai sunnah.',
-                'content' => "Memilih penyelenggara perjalanan ibadah umrah (PPIU) yang tepat adalah langkah awal yang sangat krusial demi kenyamanan dan kekhusyukan ibadah di Tanah Suci.
-
-### 1. Pastikan Izin Resmi Kemenag (PPIU)
-Langkah pertama yang paling utama adalah mengecek status izin travel di aplikasi **SIMPU Kemenag**. Travel resmi selalu memiliki nomor izin PPIU yang aktif dan terdaftar secara sah.
-
-### 2. Bimbingan Ibadah Sesuai Sunnah Rasulullah ﷺ
-Ibadah umrah adalah napak tilas perjuangan Rasulullah ﷺ. Pastikan travel menyediakan pembimbing ibadah (muthawwif) yang berpengalaman dan memiliki pemahaman agama yang lurus sesuai Al-Qur'an dan As-Sunnah.
-
-### 3. Kepastian Jadwal Keberangkatan & Tiket PP
-Travel yang amanah akan memberikan kepastian tanggal keberangkatan, maskapai penerbangan (tanpa transit berlebih), dan kode booking tiket pesawat yang valid sejak jauh hari.
-
-### 4. Transparansi Fasilitas Hotel & Bus
-Perhatikan jarak hotel dari Masjidil Haram di Makkah dan Masjid Nabawi di Madinah. Pilihlah travel yang transparan menyampaikan nama hotel dan kualifikasi bintangnya.",
-                'is_published' => true,
-                'is_pinned'    => true,
-                'published_at' => '2026-05-08 09:00:00',
+                "title" => "Kesalahan Jamaah Umrah Pemula",
+                "subtitle" => "Hal-hal yang perlu dihindari agar perjalanan lebih tenang dan fokus beribadah",
+                "author" => "Tim Syariah Hafana",
+                "summary" => "Umrah pertama tentu menjadi pengalaman yang sangat berkesan. Namun, karena belum terbiasa dengan kondisi di Tanah Suci, jamaah pemula terkadang melakukan kesalahan yang sebenarnya dapat dihindari.",
+                "thumbnail_url" => "storage/articles/image1.jpeg",
+                "content" => "**HAFANA TOUR & TRAVEL**\n\n**KESALAHAN JAMAAH UMRAH PEMULA**\n\n*Hal-hal yang perlu dihindari agar perjalanan lebih tenang dan fokus beribadah*\n\nUmrah pertama tentu menjadi pengalaman yang sangat berkesan. Namun, karena belum terbiasa dengan kondisi di Tanah Suci, jamaah pemula terkadang melakukan kesalahan yang sebenarnya dapat dihindari. Kenali kesalahan berikut sebelum berangkat agar waktu, tenaga, dan kesempatan beribadah dapat dimanfaatkan sebaik-baiknya.\n\n1. Terlalu Sibuk Foto dan Membuat Konten\n\nMengabadikan momen di Tanah Suci boleh dilakukan selama tidak melanggar aturan dan tidak mengganggu ibadah. Namun jangan sampai foto menjadi tujuan utama. Ada jamaah yang sibuk mencari sudut foto, selfie berkali-kali, membuat video, bahkan video call saat thawaf. Ingat, tujuan utama kita adalah beribadah.\n\nJangan mengganggu jamaah lain demi mendapatkan foto.\n\nJangan sembarangan memotret atau merekam orang lain, khususnya wanita dan anak-anak, tanpa izin.\n\nJaga privasi dan ikuti aturan keamanan setempat.\n\n2. Waspadai Riya Saat Memamerkan Ibadah\n\nTerlalu bersemangat menunjukkan bahwa kita sedang di depan Ka'bah, thawaf, atau berada di Raudhah dapat menjadi perkara yang perlu diwaspadai. Sebelum mengunggah sesuatu, tanyakan kepada diri sendiri: apakah ini untuk dokumentasi yang wajar atau untuk mendapatkan perhatian manusia? Jaga keikhlasan.\n\n3. Sibuk Ngobrol Saat Waktu Ibadah\n\nBerada bersama keluarga dan teman tentu menyenangkan, tetapi jangan sampai waktu di Masjidil Haram atau Masjid Nabawi justru habis untuk ngobrol. Manfaatkan waktu untuk shalat, thawaf, membaca Al-Qur'an, dzikir, berdoa, mengikuti bimbingan, dan beristirahat secukupnya.\n\n4. Jarang Thawaf di Masjidil Haram\n\nSetelah menyelesaikan umrah wajib, sebagian jamaah merasa seolah tidak ada lagi yang perlu dilakukan. Padahal masih banyak kesempatan untuk beribadah. Jangan sampai waktu di Makkah lebih banyak dihabiskan untuk belanja, makan, foto, ngobrol, dan jalan-jalan daripada beribadah.\n\n5. Terlalu Sibuk City Tour hingga Mengorbankan Shalat Berjamaah\n\nCity tour seperti Thaif memang menarik, tetapi jangan sampai aktivitas perjalanan membuat kita melewatkan kesempatan shalat berjamaah di Masjidil Haram atau ibadah yang lebih utama. Atur aktivitas dengan baik dan dahulukan ibadah.\n\n6. Lupa Mengisi Paket Roaming atau Menyiapkan Internet\n\nSebelum berangkat, pastikan paket roaming sudah aktif atau SIM/eSIM yang digunakan dapat berfungsi di Saudi. Internet dibutuhkan untuk komunikasi, peta, informasi perjalanan, dan kondisi darurat.\n\n7. Lupa Membawa Obat Pribadi\n\nJangan berangkat dengan anggapan semua obat yang biasa digunakan akan mudah ditemukan seperti di Indonesia. Bawa obat pribadi sesuai kebutuhan dan ketentuan perjalanan, dan simpan obat penting di tas yang mudah diakses. Bila perlu, bawa resep atau keterangan medis.\n\n8. Kain Ihram Tertinggal di Koper Bagasi\n\nIni bisa menjadi masalah terutama jika rute perjalanan langsung menuju pelaksanaan umrah. Pastikan kain ihram berada di tempat yang mudah diambil sebelum keberangkatan sesuai arahan tim HAFANA. Jangan memasukkan semua perlengkapan ihram ke koper bagasi tanpa memperhatikan rute perjalanan.\n\n9. Tidak Memahami Larangan Ihram\n\nSetelah berihram, ada larangan-larangan yang wajib diperhatikan. Jamaah pemula dapat keliru karena belum memahami detailnya. Ikuti manasik, pelajari tata cara umrah, dan segera bertanya kepada pembimbing jika ragu atau melakukan kesalahan.\n\n10. Melakukan Amalan yang Tidak Berdasarkan Tuntunan\n\nSemangat beribadah harus disertai ilmu. Jangan mengikuti kebiasaan orang lain tanpa mengetahui dalil dan tuntunannya. Hindari amalan yang tidak memiliki dasar yang benar, termasuk mencari keberkahan pada benda atau tempat tertentu tanpa tuntunan syariat.\n\n11. Percaya Mitos dan Khurafat\n\nJangan mudah mempercayai cerita seperti 'kalau melakukan ini pasti...' atau 'kalau menyentuh ini akan mendapatkan...'. Jika mendengar informasi semacam itu, tanyakan kepada pembimbing atau rujuk kepada sumber ilmu yang terpercaya.\n\n12. Terlalu Mengandalkan Rombongan atau Pembimbing\n\nAdanya mutawwif dan pembimbing bukan berarti jamaah tidak perlu belajar. Ketahui nama hotel, lokasi hotel, pintu atau arah masjid yang biasa digunakan, titik berkumpul, rute kembali ke hotel, serta nomor kontak pembimbing dan tim HAFANA.\n\n13. Tidak Memahami Lokasi dan Jalur Masjidil Haram\n\nMasjidil Haram sangat luas dan ramai. Perhatikan pintu masuk, nomor pintu, arah hotel, titik pertemuan, dan ciri-ciri lokasi. Pelajari rute sejak hari pertama. Jika tersesat, jangan panik dan segera hubungi pembimbing atau tim HAFANA.\n\n14. Memotong Antrean dan Tidak Sabar\n\nJangan menyerobot, mendorong, marah karena berdesakan, atau berdebat karena hal kecil. Jamaah berasal dari berbagai negara dan karakter. Latih kesabaran.\n\n15. Terlalu Banyak Membawa Barang Bawaan\n\nBarang yang terlalu banyak akan merepotkan dan dapat mengganggu kelancaran perjalanan. Bawa barang yang benar-benar diperlukan dan patuhi batas berat bagasi serta kabin yang ditetapkan.\n\n16. Tidak Menjaga Kesehatan\n\nAktivitas umrah membutuhkan stamina. Cukup minum, istirahat, gunakan alas kaki yang nyaman, jangan memaksakan aktivitas, dan atur jadwal agar tenaga tetap tersedia untuk ibadah.\n\n17. Mental dan Hati Kurang Siap\n\nPerjalanan tidak selalu sesuai bayangan: bisa panas, lelah, ramai, antre, atau bertemu orang dengan karakter berbeda. Siapkan mental untuk bersabar dan menjaga akhlak.\n\n18. Terlalu Fokus Belanja\n\nOleh-oleh boleh, tetapi jangan sampai belanja menghabiskan waktu dan tenaga. Jangan sampai kita lebih sibuk mencari barang daripada mencari kesempatan beribadah.\n\n19. Tidak Menjaga Kebersihan\n\nJangan membuang sampah sembarangan, tinggalkan makanan atau minuman di tempat umum, atau mengotori bus dan kamar. Jaga kebersihan sebagai bentuk adab kepada tempat dan jamaah lain.\n\n20. Tidak Mengatur Keuangan\n\nBuat anggaran kebutuhan harian, oleh-oleh, dan dana cadangan. Jangan menghabiskan uang di hari-hari pertama hanya karena banyak melihat barang menarik.\n\n21. Tidak Mengikuti Arahan Pembimbing\n\nPerhatikan pengumuman tentang waktu berkumpul, keberangkatan, meeting point, city tour, waktu shalat, dan perubahan teknis perjalanan. Informasi dari tim harus diperhatikan agar rombongan berjalan lancar.\n\n22. Berdebat pada Hal yang Tidak Perlu\n\nTidak semua perbedaan harus menjadi perdebatan. Jika ada persoalan, sampaikan dengan baik kepada pembimbing atau tim HAFANA. Jaga lisan dan utamakan ketenangan.\n\n23. Jangan merokok\n\nPelanggaran aturan merokok di tempat yang dilarang dapat dikenai sanksi/denda sesuai ketentuan yang berlaku di Arab Saudi termasuk masjid dan area sekitarnya. Jangan menganggap 'hanya satu batang' sebagai hal sepele. Hormati tempat suci, jamaah lain, dan aturan pemerintah setempat.\n\nSelain mengganggu orang lain, asap rokok juga dapat mengganggu jamaah yang sedang beribadah. \n\nKesalahan Terbesar: Lupa Tujuan Utama\n\nKesalahan terbesar bukan sekadar lupa membawa barang. Yang lebih merugikan adalah ketika kesibukan selama perjalanan membuat kita lupa untuk beribadah.\n\nPersiapkan bukan hanya koper dan paspor, tetapi juga ilmu, fisik, mental, dan hati. Ikuti manasik dan arahan pembimbing, jaga adab, patuhi aturan Saudi, serta manfaatkan waktu di Tanah Suci sebaik-baiknya.\n\n**HAFANA Tour & Travel****Teman Ibadah Anda di Tanah Suci**\n\n*Berikut rangkuman ****adab-adab safar umroh**** yang penting diketahui j**amaah, dirangkum dari ceramah manasik dan nasihat para ulama.*",
+                "is_published" => true,
+                "is_pinned" => true,
+                "published_at" => "2026-08-12 10:00:00"
             ],
             [
-                'title' => 'Panduan Kesehatan & Fisik Sebelum Berangkat Umrah',
-                'slug' => 'panduan-kesehatan-fisik-sebelum-berangkat-umrah',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=800&q=80',
-                'author' => 'Dr. Ahmad Hafana',
-                'summary' => 'Persiapan fisik dan kesehatan tubuh sangat penting agar jamaah tetap fit menjalani thawaf, sa\'i, dan ziarah di kota Makkah & Madinah.',
-                'content' => "Ibadah umrah membutuhkan stamina fisik yang prima karena mencakup aktivitas jalan kaki sepanjang Thawaf 7 putaran dan Sa'i antara Shafa dan Marwah sejauh kuran lebih 3,5 kilometer.
-
-### Persiapan Fisik 2 Minggu Sebelum Keberangkatan:
-* **Olahraga Jalan Kaki Rutin**: Lakukan jalan santai 30-45 menit setiap pagi untuk melatih otot kaki dan jantung.
-* **Vaksinasi Wajib**: Lakukan vaksin Meningitis Meningokokus dan vaksinasi influenza di fasilitas kesehatan terdekat.
-* **Membawa Obat Pribadi**: Siapkan obat-obatan pribadi yang biasa dikonsumsi, vitamin C, suplemen daya tahan tubuh, dan pelembab kulit.
-* **Cukup Minum Air Putih**: Udara di Arab Saudi cenderung lebih kering, pastikan minum air zamzam atau air mineral minimal 2-3 liter per hari.",
-                'is_published' => true,
-                'is_pinned'    => true,
-                'published_at' => '2026-04-25 14:30:00',
+                "title" => "Adab Safar",
+                "subtitle" => "Berikut rangkuman adab-adab safar umroh yang penting diketahui jamaah, dirangkum dari ceramah manasik dan nasihat para ulama.",
+                "author" => "Tim Syariah Hafana",
+                "summary" => "Berikut rangkuman adab-adab safar umroh yang penting diketahui jamaah, dirangkum dari ceramah manasik dan nasihat para ulama.",
+                "thumbnail_url" => "storage/articles/image2.jpeg",
+                "content" => "***1. Meminta Nasihat Sebelum Safar***\n\n*Sebelum berangkat umroh, dianjurkan untuk ****meminta wasiat atau nasihat kepada ahli ilmu****. Hal ini dicontohkan para sahabat yang meminta wasiat Rasulullah ﷺ ketika merasa akan berpisah.*\n\n*Praktisnya hari ini, jamaah bisa:*\n\n*Datang ke ustaz*\n\n*Atau menghubungi via telepon / WhatsApp*\n\n*Tujuannya agar hati lebih siap, lurus niat, dan paham adab safar.*\n\n***2. Memberi Tahu Tetangga & Saling Memaafkan***\n\n*Sebelum berangkat:*\n\n*Beri tahu tetangga bahwa kita akan umroh*\n\n*Jika perlu, titipkan rumah atau kunci*\n\n*Minta maaf apabila pernah ada kesalahan*\n\n*Ini penting karena:*\n\n*Tetangga yang akan menjaga rumah*\n\n*Kita tidak pernah tahu apakah bisa pulang kembali atau tidak*\n\n***3. Memperbanyak Taubat & Membersihkan Hati***\n\n*Ibadah umroh sangat dipengaruhi oleh ****kondisi hati****. Hati yang kotor bisa mengurangi kekhusyukan ibadah.*\n\n*Rasulullah ﷺ ketika Isra Mi’raj dibersihkan dadanya terlebih dahulu. Ini menjadi pelajaran bahwa ****bertemu Allah sebaiknya dengan hati yang bersih****.*\n\n*Sebelum berangkat umroh, dianjurkan:*\n\n*Banyak istighfar*\n\n*Memperbaiki hubungan*\n\n*Mengikhlaskan dan memaafkan*\n\n***4. Doa Saat Keluar Rumah***\n\n*Ketika keluar rumah, bacalah:*\n\n***Bismillahi tawakkaltu ‘alallah, laa haula wa laa quwwata illa billah.***\n\n*Keutamaannya:*\n\n*Diberi hidayah*\n\n*Dilindungi*\n\n*Dicukupkan kebutuhannya*\n\n*Bahkan setan menjauh dari orang yang membaca doa ini.*\n\n***5. Doa Naik Kendaraan (Mobil & Pesawat)***\n\n*Saat naik kendaraan:*\n\n*Melangkah naik:** ****Bismillah***\n\n*Duduk:** ****Alhamdulillah***\n\n*Lanjutkan doa naik kendaraan*\n\n*Disunnahkan tersenyum atau tertawa ringan setelah doa, karena Rasulullah ﷺ melakukannya sebagai bentuk pengakuan dosa di hadapan Allah.*\n\n***6. Doa Safar Selama Perjalanan***\n\n*Doa safar dianjurkan dibaca saat perjalanan jauh, termasuk di pesawat:*\n\n*“Ya Allah, kami memohon kepada-Mu dalam safar ini kebaikan dan ketakwaan, serta amalan yang Engkau ridai. Mudahkan perjalanan kami dan Engkau-lah teman dalam safar serta penjaga keluarga kami…”*\n\n*Doa ini memohon:*\n\n*Kemudahan perjalanan*\n\n*Perlindungan dari keburukan safar*\n\n*Keselamatan harta dan keluarga*\n\n***7. Adab Ibadah di Pesawat***\n\n*Selama perjalanan umroh:*\n\n*Perbanyak ibadah*\n\n*Kurangi menonton hiburan*\n\n*Perbanyak dzikir dan membaca Al-Qur’an*\n\n*Shalat sunnah di atas kendaraan ****boleh dilakukan sambil duduk****. Jika masuk waktu shalat wajib:*\n\n*Gunakan air selama masih bisa (baru tayamum jika tidak memungkinkan)*\n\n*Berdiri jika mampu*\n\n*Jika tidak mampu, boleh duduk*\n\n*Shalat boleh dijamak dan diqashar selama safar.*\n\n***8. Dzikir Saat Pesawat Naik & Turun***\n\n*Disunnahkan:*\n\n*Saat pesawat naik:** ****Allahu Akbar***\n\n*Saat turun:** ****Subhanallah***\n\n*Ini adalah tuntunan Rasulullah ﷺ ketika berada di tempat tinggi dan rendah.*\n\n***9. Doa Masuk Negeri Orang (Jeddah, Makkah, Madinah)***\n\n*Saat memasuki negeri atau daerah baru, dianjurkan membaca doa memohon:*\n\n*Kebaikan negeri tersebut*\n\n*Kebaikan penduduknya*\n\n*Perlindungan dari keburukan yang ada di dalamnya*\n\n*Doa ini tidak hanya untuk Jeddah, tapi ****berlaku setiap masuk daerah atau negeri baru****.*\n\n***10. Shalat Musafir di Makkah & Madinah***\n\n*Ketentuan shalat bagi jamaah umroh:*\n\n*Shalat di belakang imam masjid (Nabawi/Masjidil Haram) →** ****wajib sempurna***\n\n*Shalat sendiri di hotel →** ****lebih utama qashar***\n\n*Shalat berjamaah lebih utama daripada qashar, sehingga jika berjamaah di masjid, jamaah mengikuti imam.*\n\n*Musafir:*\n\n*Tidak wajib shalat berjamaah*\n\n*Tidak wajib shalat Jumat*\n\n*Tidak berdosa jika tidak mengikuti Jumat*\n\n***11. Membawa Oleh-Oleh***\n\n*Dianjurkan membawa oleh-oleh:*\n\n*Untuk keluarga*\n\n*Untuk tetangga*\n\n*Sebagai bentuk terima kasih karena telah membantu dan menjaga rumah selama kita safar.*\n\n***Penutup***\n\n*Safar umroh bukan hanya perjalanan fisik, tapi juga perjalanan hati. Dengan memahami adab-adab safar sesuai sunnah, insyaAllah perjalanan umroh menjadi lebih berkah, aman, dan bernilai pahala di sisi Allah.*\n\n*Jika masih bingung atau ingin persiapan umroh lebih matang, silakan konsultasi dengan tim kami agar ibadah lebih tenang dan terarah.*\n\n**HAFANA TOUR & TRAVEL**\n\n**PERSIAPAN SEBELUM UMRAH**",
+                "is_published" => true,
+                "is_pinned" => true,
+                "published_at" => "2026-08-12 10:30:00"
             ],
             [
-                'title' => 'Keutamaan Beribadah di Masjid Nabawi & Ziarah Raudhah',
-                'slug' => 'keutamaan-beribadah-di-masjid-nabawi-ziarah-raudhah',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80',
-                'author' => 'Ustadz Badru Salam, Lc',
-                'summary' => 'Menelusuri keutamaan shalat di Masjid Nabawi Madinah yang berpahala 1.000 kali lipat serta adab mengunjungi Raudhah Syarifah.',
-                'content' => "Rasulullah ﷺ bersabda: *'Shalat di masjidku ini (Masjid Nabawi) lebih utama daripada 1.000 shalat di masjid lainnya, kecuali Masjidil Haram.'* (HR. Bukhari & Muslim).
-
-### Keutamaan Raudhah (Taman Surga)
-Raudhah adalah area yang terletak di antara rumah (makam) Rasulullah ﷺ dan mimbar beliau. Rasulullah ﷺ bersabda: *'Antara rumahku dan mimbarku adalah taman di antara taman-taman surga.'*
-
-### Adab Ziarah di Masjid Nabawi:
-1. Menjaga ketenangan dan keheningan saat berada di dalam masjid.
-2. Membaca shalawat dan salam saat melintasi makam Rasulullah ﷺ dan dua sahabat beliau (Abu Bakar Ash-Shiddiq & Umar bin Khattab).
-3. Berdoa dengan khusyu' tanpa melakukan perbuatan syirik atau meminta-minta kepada penghuni kubur.",
-                'is_published' => true,
-                'is_pinned'    => true,
-                'published_at' => '2026-04-18 10:15:00',
+                "title" => "Persiapan Sebelum Umrah",
+                "subtitle" => "Panduan praktis mempersiapkan dokumen, perlengkapan, fisik, ilmu, dan kebutuhan perjalanan.",
+                "author" => "Tim Syariah Hafana",
+                "summary" => "Menunaikan umrah membutuhkan persiapan yang baik agar perjalanan lebih tenang dan jamaah dapat fokus beribadah. Berikut panduan praktis HAFANA yang dapat dijadikan checklist sebelum berangkat ke Tanah Suci.",
+                "thumbnail_url" => "storage/articles/image1.jpeg",
+                "content" => "*Panduan praktis mempersiapkan dokumen, perlengkapan, fisik, ilmu, dan kebutuhan perjalanan.*\n\nMenunaikan umrah membutuhkan persiapan yang baik agar perjalanan lebih tenang dan jamaah dapat fokus beribadah. Berikut panduan praktis HAFANA yang dapat dijadikan checklist sebelum berangkat ke Tanah Suci.\n\n1. Apa Saja yang Harus Disiapkan Sebelum Umrah?\n\nSecara umum, persiapan umrah dapat dibagi menjadi lima bagian: dokumen perjalanan, perlengkapan, kesehatan dan fisik, ilmu serta kesiapan mental, dan kebutuhan finansial.\n\nPastikan dokumen perjalanan lengkap dan mudah diakses.\n\nSiapkan koper bagasi, tas kabin, dan tas selempang sesuai fungsinya.\n\nPersiapkan pakaian, perlengkapan ibadah, obat pribadi, dan kebutuhan sehari-hari secukupnya.\n\nJaga kondisi fisik dengan istirahat cukup dan mulai membiasakan diri berjalan kaki.\n\nPelajari tata cara umrah, manasik, doa dan adab selama berada di Tanah Suci.\n\nSiapkan uang Riyal secukupnya untuk kebutuhan pribadi dan pengeluaran kecil.\n\n2. Checklist Perlengkapan Umrah\n\nAgar tidak ada yang tertinggal, gunakan pembagian tas berikut.\n\nA. Koper Bagasi HAFANA — maksimal 27 kg\n\n![Panduan Koper Bagasi HAFANA](storage/articles/image1.jpeg)\n\nKoper bagasi digunakan untuk barang-barang yang tidak diperlukan selama penerbangan dan barang yang lebih besar.\n\n**☐ **Pakaian ganti dan jaket/outer.\n\n**☐ **Perlengkapan mandi dalam ukuran kecil.\n\n**☐ **Perlengkapan shalat.\n\n**☐ **Perawatan pribadi/skincare secukupnya.\n\n**☐ **Topi, kacamata, dan payung bila diperlukan.\n\n**☐ **Obat-obatan pribadi.\n\n**☐ **Gunting kuku dan benda tajam lainnya yang tidak boleh dibawa ke kabin.\n\n**☐ **Gembok dan tanda pengenal koper.\n\n**Catatan: **Barang berharga seperti uang, paspor, ponsel, dan dokumen penting jangan disimpan di koper bagasi.\n\nB. Tas/Koper Kabin 18–20 inci — maksimal 7 kg\n\n![Panduan Tas Kabin HAFANA](storage/articles/image2.jpeg)\n\nTas kabin dibawa masuk ke pesawat dan diletakkan di kompartemen atas (overhead compartment).\n\n**☐ **Jaket atau sweater ringan.\n\n**☐ **Snack secukupnya.\n\n**☐ **Elektronik dan charger.\n\n**☐ **Power bank maksimal 20.000 mAh sesuai panduan HAFANA dan wajib dibawa di kabin.\n\n**☐ **Cairan kecil di bawah 100 ml.\n\n**☐ **Obat pribadi/darurat.\n\n**☐ **Sandal atau sepatu yang nyaman.\n\n**☐ **Kain ihram bagi jamaah laki-laki jika diperlukan untuk perjalanan.\n\n**Penting: **Ketentuan ukuran, berat, power bank, cairan, dan barang kabin dapat mengikuti aturan maskapai/bandara. Ikuti ketentuan terbaru yang disampaikan HAFANA sebelum keberangkatan.\n\nC. Tas Selempang HAFANA — selalu bersama jamaah\n\n![Panduan Tas Selempang HAFANA](storage/articles/image3.jpeg)\n\nTas selempang digunakan untuk barang yang paling penting dan perlu mudah dijangkau selama perjalanan, baik di bandara, bus, maupun saat aktivitas ibadah.\n\n**☐ **Paspor.\n\n**☐ **Buku kuning/sertifikat vaksin jika dipersyaratkan.\n\n**☐ **Tiket, visa, atau surat pendukung perjalanan.\n\n**☐ **Handphone.\n\n**☐ **Charger.\n\n**☐ **Power bank kecil (maksimal 20.000 mAh sesuai panduan HAFANA).\n\n**☐ **Headset/handsfree untuk panduan audio.\n\n**☐ **Obat-obatan pribadi.\n\n**☐ **Air mineral dan bekal makanan ringan.\n\n**☐ **Uang secukupnya dan kartu pembayaran.\n\n**☐ **Jam tangan atau aksesori seperlunya.\n\n3. Dokumen yang Wajib Dibawa Saat Umrah\n\nDokumen adalah bagian paling penting dari perjalanan. Simpan dokumen utama di tas selempang dan jangan memasukkannya ke koper bagasi.\n\n**☐ **Paspor sesuai ketentuan perjalanan.\n\n**☐ **Visa umrah atau dokumen perjalanan yang diberikan/diinformasikan oleh HAFANA.\n\n**☐ **Tiket perjalanan.\n\n**☐ **Buku kuning/sertifikat vaksin jika dipersyaratkan.\n\n**☐ **Dokumen atau surat pendukung lain sesuai arahan HAFANA.\n\n**☐ **Simpan salinan/foto dokumen penting sebagai cadangan di ponsel.\n\n**Tips: **Sebelum berangkat, cek kembali seluruh dokumen bersama tim HAFANA. Jangan menunggu sampai hari keberangkatan untuk memastikan kelengkapannya.\n\n4. Persiapan Fisik Sebelum Berangkat Umrah\n\nAktivitas umrah membutuhkan stamina. Jamaah akan banyak berjalan, berdiri, dan beraktivitas di area yang ramai. Persiapkan tubuh secara bertahap.\n\nBiasakan berjalan kaki secara rutin sebelum keberangkatan.\n\nJaga pola tidur agar tubuh tidak mudah lelah.\n\nCukupi kebutuhan air dan makan dengan teratur.\n\nJangan memaksakan aktivitas fisik berat menjelang keberangkatan.\n\nBagi jamaah yang memiliki kondisi khusus atau rutin mengonsumsi obat, siapkan obat pribadi secukupnya dan konsultasikan kebutuhan perjalanan dengan tenaga kesehatan.\n\n5. Persiapan Mental dan Ilmu Sebelum Umrah\n\nUmrah adalah ibadah. Karena itu, persiapan ilmu tidak kalah penting dibanding persiapan barang.\n\nIkuti manasik dan pahami tata cara umrah sebelum berangkat.\n\nPelajari rukun, wajib, sunnah, serta larangan ihram.\n\nPahami tata cara ihram, tawaf, sa'i, dan tahallul.\n\nPelajari adab selama berada di Masjidil Haram dan Masjid Nabawi.\n\nPerbanyak doa, dzikir, dan niatkan perjalanan untuk beribadah kepada Allah.\n\nSiapkan mental untuk menghadapi perjalanan, antrean, cuaca, kelelahan, dan kondisi rombongan yang beragam.\n\nJaga kesabaran dan saling membantu sesama jamaah.\n\n**Ingat: **Tujuan utama perjalanan adalah beribadah. Kenyamanan penting, tetapi jangan sampai terlalu banyak memikirkan barang dan aktivitas tambahan sehingga mengurangi fokus ibadah.\n\n6. Berapa Uang Riyal yang Sebaiknya Dibawa?\n\nTidak ada jumlah yang sama untuk semua jamaah. Kebutuhan uang tunai bergantung pada kebutuhan pribadi, kebiasaan belanja, dan fasilitas yang sudah termasuk dalam paket.\n\nBawa uang tunai secukupnya untuk kebutuhan kecil sehari-hari.\n\nPisahkan uang di beberapa tempat yang aman dan jangan menyimpan semuanya di satu dompet.\n\nGunakan kartu ATM yang sudah berlogo VISA atau MASTERCARD untuk pengambilan di ATM Saudi.\n\nHindari membawa uang tunai berlebihan.\n\nSisihkan anggaran khusus untuk oleh-oleh agar tidak mengganggu kebutuhan utama selama perjalanan.\n\n**Saran praktis: **Tentukan anggaran pribadi sebelum berangkat. Dengan begitu jamaah lebih mudah mengontrol pengeluaran selama di Tanah Suci.\n\n7. Tips Memilih Koper dan Tas untuk Umrah\n\nPilih koper yang kuat, ringan, dan rodanya mudah bergerak.\n\nGunakan koper dengan ukuran sesuai ketentuan bagasi HAFANA/maskapai.\n\nGunakan gembok dan tanda pengenal koper agar mudah dikenali.\n\nJangan mengisi koper sampai melebihi batas berat.\n\nGunakan tas kabin yang praktis dan mudah dimasukkan ke kompartemen atas.\n\nTas selempang sebaiknya ringan karena akan dibawa sepanjang perjalanan.\n\nBeri nama dan nomor kontak pada koper/tas.\n\n8. Apa yang Sebaiknya Tidak Dibawa ke Pesawat?\n\nAgar proses pemeriksaan di bandara berjalan lancar, perhatikan barang yang dimasukkan ke kabin.\n\nBenda tajam seperti gunting atau alat yang berpotensi membahayakan — masukkan ke bagasi jika diperbolehkan oleh aturan penerbangan.\n\nCairan berukuran besar di kabin.\n\nBarang yang dilarang oleh maskapai atau aturan keamanan bandara.\n\nJangan memasukkan power bank ke koper bagasi; bawa di kabin sesuai ketentuan.\n\nJangan membawa barang berlebihan yang membuat tas kabin melewati batas berat.\n\n9. Checklist H-1 Keberangkatan\n\n**☐ **Paspor dan dokumen perjalanan sudah di tas selempang.\n\n**☐ **Ponsel, charger, dan power bank sudah siap.\n\n**☐ **Obat pribadi sudah disiapkan.\n\n**☐ **Koper bagasi tidak melebihi 27 kg.\n\n**☐ **Tas kabin tidak melebihi 7 kg.\n\n**☐ **Barang cair di kabin sudah sesuai ketentuan.\n\n**☐ **Koper sudah diberi tanda/nama dan dikunci.\n\n**☐ **Pakaian dan perlengkapan ibadah sudah lengkap.\n\n**☐ **Uang tunai dan kartu pembayaran sudah disiapkan.\n\n**☐ **Sudah mengikuti arahan terakhir dari tim HAFANA terkait waktu dan tempat berkumpul.\n\n**SELAMAT MENYIAPKAN PERJALANAN IBADAH**\n\n*Semoga Allah memudahkan perjalanan dan menerima amal ibadah kita.*\n\n**HAFANA Tour & Travel****Teman Ibadah Anda di Tanah Suci**\n\n*“Kenapa saya harus memilih Hafana?”*\n\n**Kenapa Pilih HAFANA?**",
+                "is_published" => true,
+                "is_pinned" => true,
+                "published_at" => "2026-08-12 11:00:00"
             ],
             [
-                'title' => 'Doa & Zikir Utama Saat Melaksanakan Thawaf di Makkah',
-                'slug' => 'doa-zikir-utama-saat-melaksanakan-thawaf',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=800&q=80',
-                'author' => 'Ustadz Abu Ya\'la Kurnaedi',
-                'summary' => 'Panduan bacaan doa dan dzikir shahih dari sunnah Nabi saat mengelilingi Ka\'bah pada putaran 1 hingga 7.',
-                'content' => "Thawaf adalah salah satu rukun utama dalam ibadah Umrah dan Haji. Diperbolehkan membaca dzikir, tasbih, tahmid, tahlil, maupun doa kebaikan dunia dan akhirat saat mengelilingi Ka'bah.
-
-### Bacaan Antara Rukun Yamani dan Hajar Aswad:
-Di antara Rukun Yamani dan Hajar Aswad, Rasulullah ﷺ membaca doa berikut:
-
-> *'Rabbanaa aatinaa fid dunyaa hasanah, wa fil aakhirati hasanah, wa qinaa 'adzaaban naar.'*
-> (Wahai Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat serta peliharalah kami dari siksa neraka).
-
-### Syarat Sah Thawaf:
-* Suci dari hadats kecil dan hadats besar (berwudhu).
-* Menutup aurat dengan pakaian ihram yang bersih.
-* Dimulai dari garis lurus Hajar Aswad dan menjadikan Ka'bah di sebelah kiri.",
-                'is_published' => true,
-                'published_at' => '2026-04-10 16:45:00',
-            ],
-            [
-                'title' => 'Tata Cara Larangan & Pelanggaran Ihram yang Wajib Diketahui',
-                'slug' => 'tata-cara-larangan-pelanggaran-ihram',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1565552070098-0073a1c207bc?auto=format&fit=crop&w=800&q=80',
-                'author' => 'Redaksi Hafana',
-                'summary' => 'Mengenal perbuatan yang dilarang saat dalam keadaan berihram beserta denda (fidyah) jika melanggar.',
-                'content' => "Setelah jamaah mengucapkan niat ibadah umrah di Miqat dan mengenakan pakaian ihram, berlaku beberapa larangan ihram hingga selesai tahallul.
-
-### Larangan Khusus Laki-Laki:
-1. Memakai pakaian berjahit yang membentuk lekuk tubuh (seperti kemeja, celana).
-2. Menutup kepala dengan topi, peci, atau penutup kepala yang menempel.
-3. Memakai sepatu yang menutup tumit dan buku lali.
-
-### Larangan Khusus Wanita:
-1. Memakai cadar / niqab yang menutup wajah secara langsung.
-2. Memakai sarung tangan yang menutup telapak tangan.
-
-### Larangan Umum (Laki-laki & Wanita):
-* Memotong kuku dan rambut/bulu tubuh.
-* Memakai wangi-wangian / parfum pada badan atau kain ihram.
-* Menikah atau menikahkan (akad nikah).
-* Berburu atau membunuh hewan darat.",
-                'is_published' => true,
-                'published_at' => '2026-04-02 08:20:00',
-            ],
-            [
-                'title' => 'Perbedaan Umrah Reguler, Umrah VIP, dan Umrah Ramadhan',
-                'slug' => 'perbedaan-umrah-reguler-vip-dan-ramadhan',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?auto=format&fit=crop&w=800&q=80',
-                'author' => 'Tim Syariah Hafana',
-                'summary' => 'Ulasan mengenai fasilitas, durasi perjalanan, serta perbedaan keutamaan paket umrah reguler dan umrah di bulan suci Ramadhan.',
-                'content' => "Hafana Travel menyediakan berbagai pilihan program paket perjalanan umrah yang disesuaikan dengan kebutuhan jamaah dan keluarga.
-
-### 1. Umrah Reguler (9 - 12 Hari)
-Program standar dengan akomodasi hotel bintang 4 atau 5 berjarak dekat dari masjid. Cocok untuk jamaah yang menginginkan perjalanan ibadah yang efisien dan khusyu'.
-
-### 2. Umrah VIP Exclusif
-Fasilitas hotel bintang 5 persis di depan halaman Masjidil Haram (seperti Clock Tower / Fairmont) dan penerbangan langsung *Direct Flight* tanpa transit.
-
-### 3. Umrah Ramadhan
-Menjelang bulan suci Ramadhan, keutamaan ibadah umrah berlipat ganda. Rasulullah ﷺ bersabda: *'Umrah di bulan Ramadhan menandingi pahala ibadah haji bersamaku.'*",
-                'is_published' => true,
-                'published_at' => '2026-03-20 11:00:00',
-            ],
+                "title" => "Kenapa Pilih HAFANA?",
+                "subtitle" => "“Kenapa saya harus memilih Hafana?”",
+                "author" => "Tim Syariah Hafana",
+                "summary" => "Menunaikan ibadah umrah bukan sekadar perjalanan ke Tanah Suci. Dibutuhkan travel yang resmi, amanah, memberikan bimbingan ibadah yang benar, serta mendampingi jamaah sejak persiapan hingga kembali ke tanah air.",
+                "thumbnail_url" => "storage/articles/image3.jpeg",
+                "content" => "**Kenapa Pilih HAFANA?**\n\nMenunaikan ibadah umrah bukan sekadar perjalanan ke Tanah Suci. Dibutuhkan travel yang resmi, amanah, memberikan bimbingan ibadah yang benar, serta mendampingi jamaah sejak persiapan hingga kembali ke tanah air.\n\n**HAFANA Tour & Travel** hadir untuk menjadi teman ibadah Anda di Tanah Suci, dengan komitmen menghadirkan perjalanan umrah yang nyaman, aman, profesional, dan sesuai Al-Qur’an dan As-Sunnah.\n\n**🕋 Sesuai Al-Qur’an & As-Sunnah**\n\nSetiap program HAFANA disusun dengan memperhatikan akidah, ibadah, dan adab sesuai tuntunan Rasulullah ﷺ, di bawah bimbingan **Ustadz Badru Salam, Lc.**\n\n**📋 Resmi & Berizin**\n\nHAFANA merupakan travel umrah resmi di bawah naungan **PT. Haramain Safarindo Hasanah** yang telah memiliki izin **PPIU dari Kementerian Agama Republik Indonesia**.\n\n**Nomor SK PPIU: 26052300381750003**\n\n**👳‍♂️ Dibimbing Para Asatidzah**\n\nJamaah mendapatkan bimbingan ibadah dari para asatidzah yang kompeten dan berpengalaman, termasuk pembimbing dari **Universitas Islam Madinah**.\n\nBimbingan diberikan mulai dari **manasik, pelaksanaan ibadah di Tanah Suci, hingga kepulangan jamaah.**\n\n**🤝 Dikelola Keluarga Ustadz Badru Salam, Lc.**\n\nHAFANA didirikan dan dikelola oleh keluarga besar Ustadz Badru Salam, Lc. Pemilik HAFANA merupakan kakak kandung beliau, sementara pembinaan ibadah berada di bawah bimbingan beliau dan operasional pelayanan dikelola langsung oleh keluarga.\n\nHal ini menjadi bagian dari komitmen kami untuk menjaga amanah dan memberikan pelayanan yang profesional kepada setiap jamaah.\n\n**❤️ Pelayanan yang Amanah & Profesional**\n\nKami berusaha memberikan pelayanan yang ramah, responsif, dan profesional agar jamaah dapat menjalankan ibadah dengan lebih tenang dan nyaman.\n\n**✈️ Pilihan Program yang Beragam**\n\nHAFANA menghadirkan berbagai pilihan program:\n\n**Umrah Reguler**\n\n**Umrah I’tikaf**\n\n**Umrah Khusus (Privat)** untuk keluarga atau kelompok terbatas\n\nSetiap program dirancang dengan memperhatikan kenyamanan perjalanan sekaligus kualitas bimbingan ibadah.\n\n**Bersama HAFANA, InsyaAllah Perjalanan Ibadah Lebih Tenang**\n\nKami tidak hanya ingin mengantarkan Anda ke Tanah Suci, tetapi juga mendampingi perjalanan ibadah Anda agar dapat dilaksanakan dengan ilmu, ketenangan, dan sesuai tuntunan Rasulullah ﷺ.\n\n**HAFANA Tour & Travel***Teman Ibadah Anda di Tanah Suci*\n\n**Sesuai Sunnah • Bimbingan Profesional • Resmi & Berizin • Pelayanan Amanah**\n\n**Konsultasikan rencana umrah Anda bersama HAFANA sekarang.**\n\nKalau untuk **tampilan aplikasi**, saya sarankan artikel ini dibuat dalam bentuk **6 poin keunggulan dengan ikon + paragraf pendek**, supaya tidak terlihat seperti halaman “Tentang Kami” yang terlalu panjang.",
+                "is_published" => true,
+                "is_pinned" => false,
+                "published_at" => "2026-08-12 11:30:00"
+            ]
         ];
 
         foreach ($articles as $art) {
-            Article::updateOrCreate(['slug' => $art['slug']], $art);
+            $slug = \Illuminate\Support\Str::slug($art['title']);
+            Article::updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'title'         => $art['title'],
+                    'author'        => $art['author'],
+                    'summary'       => $art['summary'],
+                    'thumbnail_url' => $art['thumbnail_url'],
+                    'content'       => $art['content'],
+                    'is_published'  => $art['is_published'],
+                    'is_pinned'     => $art['is_pinned'],
+                    'published_at'  => $art['published_at'],
+                ]
+            );
         }
     }
 }
