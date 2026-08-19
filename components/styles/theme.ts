@@ -58,9 +58,9 @@ export const LIGHT_COLORS: ThemeColors = {
 // ── Dark Mode Palette ───────────────────────────────────────────────────────
 export const DARK_COLORS: ThemeColors = {
   // Brand blues in Dark Mode
-  primary: '#223d8dff',        // Vibrant blue accent in dark mode
-  primaryDark: '#1f3579ff',    // Darker shade
-  primaryLight: '#1b2535ff',   // Card background accent
+  primary: '#4976ffff',        // Vibrant blue accent in dark mode
+  primaryDark: '#707fafff',    // Darker shade
+  primaryLight: '#233044ff',   // Card background accent
 
   // App backgrounds
   bg: '#0f172a',             // Dark slate screen background

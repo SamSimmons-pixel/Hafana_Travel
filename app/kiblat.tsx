@@ -68,6 +68,15 @@ export default function KiblatScreen() {
 
       {/* ── IN-APP CHROME CONTAINER CARD ── */}
       <View style={s.contentContainer}>
+
+        {/* Instructions Footer */}
+        <View style={[s.tipCard, { backgroundColor: colors.primaryLight, borderColor: colors.border }]}>
+          <MaterialCommunityIcons name="information-outline" size={18} color={colors.primary} style={{ marginRight: 8, marginTop: 1 }} />
+          <Text style={[s.tipText, { color: colors.textSecondary }]}>
+            Pilih <Text style={{ fontWeight: FONT.weightBold, color: colors.primary }}>"Izinkan Lokasi & Kamera"</Text> saat Chrome terbuka untuk pengalaman navigasi Kiblat 3D yang optimal.
+          </Text>
+        </View>
+        
         {/* Kaabah Icon Card */}
         <View style={[s.mainCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={[s.iconCircle, { backgroundColor: colors.primaryLight }]}>
@@ -106,13 +115,7 @@ export default function KiblatScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Instructions Footer */}
-        <View style={[s.tipCard, { backgroundColor: colors.primaryLight, borderColor: colors.border }]}>
-          <MaterialCommunityIcons name="information-outline" size={18} color={colors.primary} style={{ marginRight: 8, marginTop: 1 }} />
-          <Text style={[s.tipText, { color: colors.textSecondary }]}>
-            Pilih <Text style={{ fontWeight: FONT.weightBold, color: colors.primary }}>"Izinkan Lokasi & Kamera"</Text> saat Chrome terbuka untuk pengalaman navigasi Kiblat 3D yang optimal.
-          </Text>
-        </View>
+        
       </View>
     </SafeAreaView>
   );

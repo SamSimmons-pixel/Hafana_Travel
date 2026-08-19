@@ -162,16 +162,17 @@ export default function ArticleDetailScreen() {
 function ArticleContentBody({ content, colors }: { content: string; colors: any }) {
   if (!content) return null;
 
-  const blocks = content.split('\n\n');
+  // Split content by image tags while capturing the image tags themselves
+  const parts = content.split(/(!\[[^\]]*\]\s*\(\s*[^\s)]+\s*\))/g);
 
   return (
     <View style={s.bodyContainer}>
-      {blocks.map((block, index) => {
-        const trimmed = block.trim();
+      {parts.map((part, index) => {
+        const trimmed = part.trim();
         if (!trimmed) return null;
 
-        // Inline Image (![alt](url))
-        const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+        // Check if this part is an inline image (![alt](url))
+        const imgMatch = trimmed.match(/^!\[([^\]]*)\]\s*\(\s*([^\s)]+)\s*\)$/);
         if (imgMatch) {
           const altText = imgMatch[1];
           const rawUrl = imgMatch[2];
@@ -182,9 +183,9 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
               <Image
                 source={{ uri: resolvedUri }}
                 style={s.inlineImage}
-                resizeMode="cover"
+                resizeMode="contain"
               />
-              {altText ? (
+              {altText && altText.trim() !== 'Gambar' ? (
                 <Text style={[s.imageCaption, { color: colors.textSecondary }]}>
                   {altText}
                 </Text>
@@ -193,69 +194,107 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
           );
         }
 
-        // Headings (### or ## or #)
-        if (trimmed.startsWith('#')) {
-          const headingText = trimmed.replace(/^#+\s*/, '');
-          return (
-            <Text key={index} style={[s.headingText, { color: colors.textPrimary }]}>
-              {headingText}
-            </Text>
-          );
-        }
+        // For non-image text parts, split by double linebreaks or single linebreaks
+        const subBlocks = trimmed.split(/\n\s*\n/);
+        return (
+          <React.Fragment key={index}>
+            {subBlocks.map((subBlock, subIdx) => {
+              const subTrimmed = subBlock.trim();
+              if (!subTrimmed) return null;
 
-        // Blockquotes (> quote)
-        if (trimmed.startsWith('>')) {
-          const quoteText = trimmed.replace(/^>\s*/, '').replace(/^['"]|['"]$/g, '');
-          return (
-            <View key={index} style={[s.quoteBox, { backgroundColor: colors.surfaceAlt, borderColor: colors.primary }]}>
-              <Text style={[s.quoteText, { color: colors.textPrimary }]}>{quoteText}</Text>
-            </View>
-          );
-        }
-
-        // Bullet lists (* item or - item or 1. item)
-        if (/^[\*\-\d\.]\s+/.test(trimmed)) {
-          const lines = trimmed.split('\n');
-          return (
-            <View key={index} style={s.listContainer}>
-              {lines.map((line, lIdx) => {
-                const clean = line.replace(/^[\*\-\d\.]\s+/, '');
+              // Headings (### or ## or #)
+              if (subTrimmed.startsWith('#')) {
+                const headingText = subTrimmed.replace(/^#+\s*/, '');
                 return (
-                  <View key={lIdx} style={s.bulletRow}>
-                    <Text style={[s.bulletDot, { color: colors.primary }]}>•</Text>
-                    <Text style={[s.paragraphText, { color: colors.textPrimary, flex: 1 }]}>
-                      {formatFormattedText(clean)}
+                  <Text key={subIdx} style={[s.headingText, { color: colors.textPrimary }]}>
+                    {formatFormattedText(headingText)}
+                  </Text>
+                );
+              }
+
+              // Blockquotes (> quote)
+              if (subTrimmed.startsWith('>')) {
+                const quoteText = subTrimmed.replace(/^>\s*/, '').replace(/^['"]|['"]$/g, '');
+                return (
+                  <View key={subIdx} style={[s.quoteBox, { backgroundColor: colors.surfaceAlt, borderColor: colors.primary }]}>
+                    <Text style={[s.quoteText, { color: colors.textPrimary }]}>
+                      {formatFormattedText(quoteText)}
                     </Text>
                   </View>
                 );
-              })}
-            </View>
-          );
-        }
+              }
 
-        // Normal paragraph
-        return (
-          <Text key={index} style={[s.paragraphText, { color: colors.textPrimary }]}>
-            {formatFormattedText(trimmed)}
-          </Text>
+              // Bullet lists (* item or - item or 1. item)
+              if (/^[\*\-\d\.]\s+/.test(subTrimmed)) {
+                const lines = subTrimmed.split('\n');
+                return (
+                  <View key={subIdx} style={s.listContainer}>
+                    {lines.map((line, lIdx) => {
+                      const clean = line.replace(/^[\*\-\d\.]\s+/, '');
+                      return (
+                        <View key={lIdx} style={s.bulletRow}>
+                          <Text style={[s.bulletDot, { color: colors.primary }]}>•</Text>
+                          <Text style={[s.paragraphText, { color: colors.textPrimary, flex: 1 }]}>
+                            {formatFormattedText(clean)}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                );
+              }
+
+              // Normal paragraph
+              return (
+                <Text key={subIdx} style={[s.paragraphText, { color: colors.textPrimary }]}>
+                  {formatFormattedText(subTrimmed)}
+                </Text>
+              );
+            })}
+          </React.Fragment>
         );
       })}
     </View>
   );
 }
 
-/** Helper to render bold text inside paragraphs (**bold**) */
+/** Helper to render bold, italic, bold-italic text */
 function formatFormattedText(text: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  if (!text) return null;
+  const regex = /(\*\*\*[\s\S]+?\*\*\*|\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g;
+  const parts = text.split(regex);
+
   return parts.map((part, idx) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
+    if (!part) return null;
+
+    // ***bold italic***
+    if (part.startsWith('***') && part.endsWith('***') && part.length > 6) {
+      return (
+        <Text key={idx} style={{ fontWeight: FONT.weightBold, fontStyle: 'italic' }}>
+          {part.slice(3, -3)}
+        </Text>
+      );
+    }
+
+    // **bold**
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
       return (
         <Text key={idx} style={{ fontWeight: FONT.weightBold }}>
           {part.slice(2, -2)}
         </Text>
       );
     }
-    return part;
+
+    // *italic*
+    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+      return (
+        <Text key={idx} style={{ fontStyle: 'italic' }}>
+          {part.slice(1, -1)}
+        </Text>
+      );
+    }
+
+    return <Text key={idx}>{part}</Text>;
   });
 }
 
@@ -368,11 +407,12 @@ const s = StyleSheet.create({
     marginVertical: SPACING.md,
     borderRadius: RADIUS.md,
     overflow: 'hidden',
-    backgroundColor: '#0f172a',
+    alignItems: 'center',
   },
   inlineImage: {
     width: '100%',
-    height: 200,
+    aspectRatio: 16 / 9,
+    maxHeight: 380,
     borderRadius: RADIUS.md,
   },
   imageCaption: {

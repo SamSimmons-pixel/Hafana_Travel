@@ -4,7 +4,7 @@
  *
  * Shared by ALL 8 categories. Receives category ID from route param.
  * Shows real-time search + list of items with chevron.
- * Floating accessibility button same as main screen.
+ * Fully theme-responsive (Light/Dark mode).
  */
 
 import React, { useMemo, useState } from 'react';
@@ -68,13 +68,13 @@ export default function DoaCategoryScreen() {
   }
 
   return (
-    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.surface }]}>
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.surface} />
 
       {/* ── APP BAR ── */}
       <View style={[s.appBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn} accessibilityLabel="Kembali">
+          <MaterialCommunityIcons name="arrow-left" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={[s.appBarTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {cat.label}
@@ -83,7 +83,7 @@ export default function DoaCategoryScreen() {
       </View>
 
       {/* ── SEARCH BAR ── */}
-      <View style={s.searchWrapper}>
+      <View style={[s.searchWrapper, { backgroundColor: colors.surface }]}>
         <View style={[s.searchBar, { backgroundColor: colors.bg, borderColor: colors.border }]}>
           <TextInput
             style={[s.searchInput, { color: colors.textPrimary }]}
@@ -101,12 +101,12 @@ export default function DoaCategoryScreen() {
       <FlatList
         data={filteredItems}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={s.listContent}
+        contentContainerStyle={[s.listContent, { backgroundColor: colors.bg }]}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={[s.divider, { backgroundColor: colors.border }]} />}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={s.listItem}
+            style={[s.listItem, { backgroundColor: colors.surface }]}
             onPress={() => handleItemPress(item)}
             activeOpacity={0.7}
           >
@@ -128,7 +128,6 @@ export default function DoaCategoryScreen() {
           </View>
         }
       />
-      
     </SafeAreaView>
   );
 }
@@ -140,15 +139,12 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
   },
   backBtn: { padding: SPACING.xs },
   appBarTitle: {
-    color: COLORS.textPrimary,
     fontSize: FONT.sizeLg,
-    fontWeight: FONT.weightBlack,
+    fontWeight: FONT.weightBold,
     flex: 1,
     textAlign: 'center',
   },
@@ -156,20 +152,18 @@ const s = StyleSheet.create({
   searchWrapper: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surface,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.bg,
     borderRadius: RADIUS.pill,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm + 2,
+    borderWidth: 1,
     gap: SPACING.sm,
   },
   searchInput: {
     flex: 1,
-    color: COLORS.textPrimary,
     fontSize: FONT.sizeBase,
     paddingVertical: 0,
   },
@@ -183,35 +177,16 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.lg,
-    backgroundColor: COLORS.surface,
   },
   itemTitle: {
     flex: 1,
-    color: COLORS.textPrimary,
     fontSize: FONT.sizeBase,
     fontWeight: FONT.weightMedium,
-    lineHeight: 20,
+    lineHeight: 22,
     marginRight: SPACING.sm,
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.borderLight,
     marginLeft: SPACING.xl,
-  },
-
-  // Floating accessibility button — left edge
-  floatingBtn: {
-    position: 'absolute',
-    left: 0,
-    top: '50%',
-    zIndex: 99,
-  },
-  floatingBtnInner: {
-    backgroundColor: 'rgba(180,190,200,0.75)',
-    paddingVertical: 12,
-    paddingLeft: 8,
-    paddingRight: 6,
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
   },
 });

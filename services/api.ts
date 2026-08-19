@@ -19,7 +19,10 @@ export function getStorageUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
   const baseUrl = LARAVEL_API_URL.replace('/api', '');
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  let cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  if (cleanPath.startsWith('storage/')) {
+    cleanPath = cleanPath.replace(/^storage\//, '');
+  }
   return `${baseUrl}/storage/${cleanPath}`;
 }
 
@@ -220,3 +223,28 @@ export async function fetchArticleById(id: string | number): Promise<Article> {
   const res = await apiRequest<{ status: string; data: Article }>(`/articles/${id}`);
   return res.data;
 }
+
+// ─────────────────────────────────────────────────────────────
+// Khutbah Jum'at Live Status
+// ─────────────────────────────────────────────────────────────
+
+export interface KhutbahLiveVideo {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  url: string;
+  scheduledAt: string | null;
+  isIndonesian: boolean;
+}
+
+export interface KhutbahLiveResponse {
+  status: 'live' | 'upcoming' | 'none' | 'error';
+  live: KhutbahLiveVideo | null;
+  upcoming: KhutbahLiveVideo[];
+  error?: string;
+}
+
+export async function fetchKhutbahLive(): Promise<KhutbahLiveResponse> {
+  return await apiRequest<KhutbahLiveResponse>('/khutbah/live');
+}
+

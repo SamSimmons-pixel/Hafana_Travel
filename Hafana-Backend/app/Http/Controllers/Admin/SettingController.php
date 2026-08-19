@@ -25,8 +25,14 @@ class SettingController extends Controller
 
         if ($request->hasFile('app_logo')) {
             $oldLogo = Setting::get('app_logo');
-            if ($oldLogo) {
+            if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
                 Storage::disk('public')->delete($oldLogo);
+            }
+
+            // Ensure only 1 setting image file exists in storage/settings
+            $existingFiles = Storage::disk('public')->files('settings');
+            if (!empty($existingFiles)) {
+                Storage::disk('public')->delete($existingFiles);
             }
 
             $path = $request->file('app_logo')->store('settings', 'public');

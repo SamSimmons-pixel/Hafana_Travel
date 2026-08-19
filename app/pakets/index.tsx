@@ -7,7 +7,7 @@
  * filter by city with a horizontal chip list.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -22,7 +22,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import {
@@ -66,12 +66,23 @@ function formatRupiah(amount: number): string {
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function SemuaPaketScreen() {
   const router = useRouter();
+  const { autoFocus } = useLocalSearchParams<{ autoFocus?: string }>();
+  const searchInputRef = useRef<TextInput>(null);
   const { isDarkMode, colors } = useAppTheme();
   const [pakets, setPakets]         = useState<Paket[]>([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery]           = useState('');
   const [cityFilter, setCityFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (autoFocus === 'true' || autoFocus === '1') {
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFocus]);
 
   const fetchPakets = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -127,12 +138,14 @@ export default function SemuaPaketScreen() {
       <View style={[s.searchWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} style={{ marginRight: SPACING.sm }} />
         <TextInput
+          ref={searchInputRef}
           style={[s.searchInput, { color: colors.textPrimary }]}
           placeholder="Cari nama paket, kota, maskapai..."
           placeholderTextColor={colors.textMuted}
           value={query}
           onChangeText={setQuery}
           returnKeyType="search"
+          autoFocus={autoFocus === 'true' || autoFocus === '1'}
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')}>

@@ -69,8 +69,12 @@ class ArticleController extends Controller
         ]);
 
         if ($request->hasFile('thumbnail_file')) {
+            $oldThumb = $article->getRawOriginal('thumbnail_url');
+            if ($oldThumb) {
+                Article::deleteStorageFile($oldThumb);
+            }
             $path = $request->file('thumbnail_file')->store('articles', 'public');
-            $validated['thumbnail_url'] = url('storage/' . $path);
+            $validated['thumbnail_url'] = 'storage/' . $path;
         }
 
         $validated['is_published'] = $request->has('is_published');
@@ -85,6 +89,21 @@ class ArticleController extends Controller
     {
         $article->update(['is_pinned' => !$article->is_pinned]);
         return back()->with('success', 'Status Pin Halaman Utama berhasil diperbarui');
+    }
+
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|max:5120',
+        ]);
+
+        $path = $request->file('image')->store('articles', 'public');
+
+        return response()->json([
+            'success'  => true,
+            'url'      => 'storage/' . $path,
+            'full_url' => asset('storage/' . $path),
+        ]);
     }
 
     public function destroy(Article $article)

@@ -30,4 +30,13 @@ class Paket extends Model
             'harga' => 'decimal:2',
         ];
     }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Paket $paket) {
+            if ($paket->gambar) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($paket->gambar);
+            }
+        });
+    }
 }

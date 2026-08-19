@@ -67,6 +67,9 @@ class PaketController extends Controller
         ]);
 
         if ($request->hasFile('gambar')) {
+            if ($paket->gambar) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($paket->gambar);
+            }
             $validated['gambar'] = $request->file('gambar')->store('pakets', 'public');
         }
 

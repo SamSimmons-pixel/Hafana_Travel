@@ -36,6 +36,11 @@ Route::get('pakets/{id}', [\App\Http\Controllers\Api\PaketController::class, 'sh
 Route::get('articles', [\App\Http\Controllers\Api\ArticleController::class, 'index']);
 Route::get('articles/{id}', [\App\Http\Controllers\Api\ArticleController::class, 'show']);
 
+// ──────────────────────────────────────────────────────
+// 📺 KHUTBAH JUM'AT LIVE ROUTES (Public - mobile app)
+// ──────────────────────────────────────────────────────
+Route::get('khutbah/live', [\App\Http\Controllers\Api\KhutbahController::class, 'liveStatus']);
+
 
 // // ──────────────────────────────────────────────────────
 // // 🌍 DESTINATION ROUTES (Public access)

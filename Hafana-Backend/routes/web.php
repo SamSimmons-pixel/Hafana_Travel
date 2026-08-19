@@ -62,6 +62,8 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
     Route::resource('admins', AdminCrewController::class);
 
     // Article management
+    Route::post('articles/upload-image', [\App\Http\Controllers\Admin\ArticleController::class, 'uploadImage'])
+        ->name('articles.upload-image');
     Route::resource('articles', \App\Http\Controllers\Admin\ArticleController::class);
     Route::post('articles/{article}/toggle-pin', [\App\Http\Controllers\Admin\ArticleController::class, 'togglePin'])
         ->name('articles.toggle-pin');

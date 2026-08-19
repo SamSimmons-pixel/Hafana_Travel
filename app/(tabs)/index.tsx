@@ -55,7 +55,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { isDarkMode, toggleTheme, colors } = useAppTheme();
-  const [searchQuery, setSearchQuery] = useState('');
   const [pakets, setPakets] = useState<Paket[]>([]);
   const [loadingPakets, setLoading] = useState(true);
   const [appLogo, setAppLogo] = useState<string | null>(null);
@@ -142,10 +141,7 @@ export default function HomeScreen() {
     }
   };
 
-  const filtered = pakets.filter(p =>
-    p.nama_paket.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.kota_keberangkatan.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = pakets;
 
   return (
     <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
@@ -204,21 +200,21 @@ export default function HomeScreen() {
         </View>
 
         {/* ── SEARCH BAR ── */}
-        <View style={[s.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.push({ pathname: '/pakets' as any, params: { autoFocus: 'true' } })}
+          style={[s.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
           <MaterialCommunityIcons
             name={UI_ICONS.search.name}
             size={UI_ICONS.search.size}
             color={colors.textMuted}
             style={{ marginRight: SPACING.sm }}
           />
-          <TextInput
-            style={[s.searchInput, { color: colors.textPrimary }]}
-            placeholder="Sedang cari paket apa?"
-            placeholderTextColor={colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+          <Text style={[s.searchInput, { color: colors.textMuted }]}>
+            Sedang cari paket apa?
+          </Text>
+        </TouchableOpacity>
 
         {/* ── MENU GRID ── */}
         <View style={[cardStyles.padded, s.menuCard, { backgroundColor: colors.surface }]}>
