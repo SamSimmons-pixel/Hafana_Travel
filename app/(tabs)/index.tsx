@@ -1,270 +1,409 @@
 /**
  * Home Screen — app/(tabs)/index.tsx
+ * Hafana Umrah Travel — Main Menu
  *
- * 🎓 LESSON: This file = your routes/web.php + HomeController + home.blade.php
- *
- * Because Expo Router is FILE-BASED (like Laravel, but even simpler):
- *   - This file lives at:  app/(tabs)/index.tsx
- *   - It maps to the URL:  / (the root tab)
- *
- * In Laravel:
- *   Route::get('/', [HomeController::class, 'index']); → home.blade.php
- *
- * In Expo Router:
- *   The file itself IS the route. No route file needed!
+ * All icons use MaterialCommunityIcons (solid, single-color vector font).
+ * Styles sourced from @/components/styles — edit theme.ts to retheme.
  */
 
-// ─────────────────────────────────────────────
-// 🎓 LESSON: Imports = PHP `use` statements
-//
-// In Laravel:
-//   use App\Models\Destination;
-//   use App\Http\Controllers\Controller;
-//
-// In React Native:
-//   import { View, Text } from 'react-native';  ← from npm package
-//   import DestinationCard from '@/components/destination-card'; ← our own file
-//
-// The `@/` prefix = the root of the project (configured in tsconfig.json)
-// Same as Laravel's App\ namespace prefix!
-// ─────────────────────────────────────────────
 import {
+  COLORS, FONT,
+  MENU_ICONS,
+  RADIUS,
+  SHADOW,
+  SPACING,
+  UI_ICONS,
+  cardStyles,
+  emptyStyles,
+  layoutStyles, sectionStyles,
+  textStyles,
+} from '@/components/styles';
+import { useAuth } from '@/context/auth';
+import { useAppTheme } from '@/context/theme';
+import { Article, apiRequest, fetchArticles, formatIndonesianDate, getStorageUrl } from '@/services/api';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  StatusBar,
 } from 'react-native';
-import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import DestinationCard from '@/components/destination-card';
 
-// ─────────────────────────────────────────────
-// 🎓 LESSON: Data = Your Eloquent Collection / JSON Response
-//
-// In a real app, this would come from an API (like your Laravel API).
-// For now, we hard-code it — same as returning a static array from a controller:
-//
-// Laravel:  return view('home', ['destinations' => Destination::all()]);
-// React:    const destinations = [...]; (data defined locally for now)
-// ─────────────────────────────────────────────
-const destinations = [
-  {
-    id: 1,
-    name: 'Bali',
-    country: 'Indonesia',
-    price: 1200,
-    rating: 4.9,
-    duration: '7 Days',
-    image: require('@/assets/images/bali.png'),
-  },
-  {
-    id: 2,
-    name: 'Paris',
-    country: 'France',
-    price: 2500,
-    rating: 4.7,
-    duration: '5 Days',
-    image: require('@/assets/images/paris.png'),
-  },
-  {
-    id: 3,
-    name: 'Maldives',
-    country: 'Maldives',
-    price: 3800,
-    rating: 5.0,
-    duration: '10 Days',
-    image: require('@/assets/images/maldives.png'),
-  },
-];
+// ── Types ────────────────────────────────────────────────────────────────────
+interface Paket {
+  id: number;
+  nama_paket: string;
+  kota_keberangkatan: string;
+  tanggal_berangkat: string;
+  durasi_hari: number;
+  harga: number;
+  maskapai: string;
+  gambar: string | null;
+}
 
-// Category filter data
-const categories = ['All', 'Beach', 'Mountain', 'City', 'Cultural'];
-
-// ─────────────────────────────────────────────
-// 🎓 LESSON: The Screen Component = Controller Method + View
-//
-// In Laravel, your HomeController@index does:
-//   1. Fetches data
-//   2. Returns a view with that data
-//
-// In React Native, the component does:
-//   1. Holds state (like session/request data)
-//   2. Returns JSX (the visual output)
-// ─────────────────────────────────────────────
+// ── Screen ───────────────────────────────────────────────────────────────────
 export default function HomeScreen() {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+  const { isDarkMode, toggleTheme, colors } = useAppTheme();
+  const [pakets, setPakets] = useState<Paket[]>([]);
+  const [loadingPakets, setLoading] = useState(true);
+  const [appLogo, setAppLogo] = useState<string | null>(null);
 
-  // ─────────────────────────────────────────────
-  // 🎓 LESSON: useState = A reactive PHP variable
-  //
-  // In PHP/Blade:
-  //   $activeCategory = 'All';
-  //   // But changing it doesn't update the UI automatically!
-  //
-  // In React:
-  //   const [activeCategory, setActiveCategory] = useState('All');
-  //   // When you call setActiveCategory('Beach'), the UI AUTOMATICALLY re-renders!
-  //   // This is React's superpower — no page refresh needed (like Vue/Alpine.js)
-  //
-  // Syntax: const [value, setter] = useState(initialValue);
-  //   - value: read the current state (like echo $activeCategory)
-  //   - setter: change the state  (like $activeCategory = 'Beach')
-  // ─────────────────────────────────────────────
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [articles, setArticles]               = useState<Article[]>([]);
+  const [loadingArticles, setLoadingArticles] = useState(true);
+  const [articleError, setArticleError]       = useState(false);
+
+  const loadArticles = async () => {
+    setLoadingArticles(true);
+    setArticleError(false);
+    try {
+      const res = await fetchArticles(1, 3);
+      setArticles(res.data);
+    } catch {
+      setArticleError(true);
+    } finally {
+      setLoadingArticles(false);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [paketsRes, settingsRes] = await Promise.all([
+          apiRequest<{ data: Paket[] }>('/pakets'),
+          apiRequest<{ data: { app_logo: string | null } }>('/settings').catch(() => null),
+        ]);
+        setPakets(paketsRes.data);
+        if (settingsRes?.data?.app_logo) {
+          setAppLogo(getStorageUrl(settingsRes.data.app_logo));
+        }
+      } catch {
+        setPakets([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+
+    loadArticles();
+  }, []);
+
+  const handleMenuPress = (id: string) => {
+    if (id === 'semua_paket') {
+      router.push('/pakets' as any);
+      return;
+    }
+    if (id === 'doa_dzikir') {
+      router.push('/doa' as any);
+      return;
+    }
+    if (id === 'gallery') {
+      router.push('/gallery' as any);
+      return;
+    }
+    if (id === 'khutbah') {
+      router.push('/khutbah' as any);
+      return;
+    }
+    if (id === 'waktu_sholat') {
+      router.push('/waktu-sholat' as any);
+      return;
+    }
+    if (id === 'konversi_valas') {
+      router.push('/currency');
+      return;
+    }
+    if (id === 'kiblat') {
+      router.push('/kiblat' as any);
+      return;
+    }
+    if (id === 'alquran') {
+      router.push('/quran' as any);
+      return;
+    }
+    Alert.alert('Segera Hadir', 'Fitur ini akan segera tersedia.');
+  };
+
+  const handleAvatarPress = () => {
+    if (user) {
+      router.push('/(tabs)/profile' as any);
+    } else {
+      router.push('/login');
+    }
+  };
+
+  const filtered = pakets;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Hide status bar or style it */}
-      <StatusBar barStyle="light-content" backgroundColor="#0a0a1a" />
+    <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={layoutStyles.scrollContent}>
 
-      {/* 🎓 ScrollView = <div style="overflow-y: scroll"> in HTML/CSS */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* ── HEADER ── */}
-        <View style={styles.header}>
-          <View>
-            {/* 🎓 JSX Text — All text MUST be wrapped in <Text>. No loose strings! */}
-            <Text style={styles.greeting}>Good Morning 👋</Text>
-            <Text style={styles.headerTitle}>Where to next?</Text>
+        {/* ── TOP BAR ── */}
+        <View style={[s.topBar, { backgroundColor: colors.surface }]}>
+          <View style={layoutStyles.row}>
+            {appLogo ? (
+              <Image source={{ uri: appLogo }} style={s.logoImage} />
+            ) : (
+              <View style={[s.logoCircle, { backgroundColor: colors.primary }]}>
+                <Text style={s.logoText}>HF</Text>
+              </View>
+            )}
+            <View style={{ marginLeft: SPACING.sm }}>
+              <Text style={[s.brandName, { color: colors.textPrimary }]}>Hafana Travel</Text>
+              <Text style={[s.brandSub, { color: colors.textSecondary }]}>Umrah & Haji</Text>
+            </View>
           </View>
-          {/* Avatar circle */}
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>AB</Text>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {/* 🌙 Theme Toggle Button (sebelah user profile avatar) */}
+            <TouchableOpacity
+              onPress={toggleTheme}
+              style={[s.themeToggleBtn, { backgroundColor: isDarkMode ? colors.surfaceAlt : colors.primaryLight }]}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons
+                name={isDarkMode ? 'weather-sunny' : 'weather-night'}
+                size={20}
+                color={isDarkMode ? '#f59e0b' : colors.primary}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleAvatarPress} style={user ? [s.avatarBtn, { backgroundColor: colors.primary }] : [s.loginHeaderBtn, { backgroundColor: colors.primary }]} activeOpacity={0.8}>
+              {user ? (
+                <Text style={s.avatarInitials}>
+                  {user.name ? user.name.substring(0, 2).toUpperCase() : 'JM'}
+                </Text>
+              ) : (
+                <View style={layoutStyles.row}>
+                  <MaterialCommunityIcons name="login" size={16} color="#ffffff" style={{ marginRight: 4 }} />
+                  <Text style={s.loginHeaderBtnText}>Masuk</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
+        </View>
+
+        {/* ── GREETING BANNER ── */}
+        <View style={[s.greeting, { backgroundColor: isDarkMode ? '#1e293b' : colors.primaryDark }]}>
+          <Text style={s.greetingHi}>Assalamu'alaikum</Text>
+          <Text style={s.greetingName}>{user?.name ?? 'Jemaah'}</Text>
         </View>
 
         {/* ── SEARCH BAR ── */}
-        {/*
-          🎓 LESSON: TextInput = <input type="text"> in HTML
-          The `value` and `onChangeText` = v-model in Vue / wire:model in Livewire
-          When user types, setSearchQuery runs → searchQuery updates → UI re-renders
-        */}
-        <View style={styles.searchContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search destinations..."
-            placeholderTextColor="rgba(255,255,255,0.4)"
-            value={searchQuery}
-            onChangeText={setSearchQuery}  // Called on every keystroke
-          />
-        </View>
-
-        {/* ── CATEGORY FILTERS ── */}
-        {/*
-          🎓 LESSON: Horizontal ScrollView = overflow-x: scroll in CSS
-          The `horizontal` prop makes it scroll left/right
-        */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
-          contentContainerStyle={styles.categoriesContent}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.push({ pathname: '/pakets' as any, params: { autoFocus: 'true' } })}
+          style={[s.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
-          {/*
-            🎓 LESSON: .map() = @foreach in Blade
-            In Blade:
-              @foreach($categories as $category)
-                <button>{{ $category }}</button>
-              @endforeach
+          <MaterialCommunityIcons
+            name={UI_ICONS.search.name}
+            size={UI_ICONS.search.size}
+            color={colors.textMuted}
+            style={{ marginRight: SPACING.sm }}
+          />
+          <Text style={[s.searchInput, { color: colors.textMuted }]}>
+            Sedang cari paket apa?
+          </Text>
+        </TouchableOpacity>
 
-            In React:
-              {categories.map((category) => (
-                <TouchableOpacity key={...}>
-                  <Text>{category}</Text>
-                </TouchableOpacity>
-              ))}
-
-            ⚠️ The `key` prop is REQUIRED in lists — like a unique ID for each item.
-            In Blade you'd use $loop->index, here use the item itself or its id.
-          */}
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryChip,
-                // 🎓 Conditional styling — like @class(['active' => $activeCategory === $category])
-                activeCategory === category && styles.categoryChipActive,
-              ]}
-              onPress={() => setActiveCategory(category)}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  activeCategory === category && styles.categoryTextActive,
-                ]}
+        {/* ── MENU GRID ── */}
+        <View style={[cardStyles.padded, s.menuCard, { backgroundColor: colors.surface }]}>
+          <View style={s.menuGrid}>
+            {MENU_ICONS.items.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={s.menuItem}
+                onPress={() => handleMenuPress(item.id)}
+                activeOpacity={0.7}
               >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* ── FEATURED DESTINATIONS ── */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>✈️ Featured Destinations</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/*
-            🎓 Horizontal card list — scrolls left/right like a carousel
-            This ScrollView wraps our DestinationCard components
-          */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.cardsContainer}
-          >
-            {/*
-              🎓 LESSON: Rendering a list of components with .map()
-              Each item in `destinations` array gets its own <DestinationCard />
-              
-              This is like:
-                @foreach($destinations as $destination)
-                  <x-destination-card
-                    :name="$destination['name']"
-                    :price="$destination['price']"
-                    ...
+                <View style={[s.menuIconBox, { backgroundColor: colors.primaryLight }]}>
+                  <MaterialCommunityIcons
+                    name={item.icon}
+                    size={MENU_ICONS.iconSize}
+                    color={colors.primary}
                   />
-                @endforeach
-            */}
-            {destinations.map((destination) => (
-              <DestinationCard
-                key={destination.id}
-                name={destination.name}
-                country={destination.country}
-                price={destination.price}
-                rating={destination.rating}
-                duration={destination.duration}
-                image={destination.image}
-                onPress={() => alert(`You tapped on ${destination.name}!`)}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* ── POPULAR SECTION ── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔥 Most Popular</Text>
-          <View style={styles.popularGrid}>
-            {destinations.slice(0, 2).map((dest) => (
-              <TouchableOpacity key={dest.id} style={styles.popularCard}>
-                <View style={styles.popularInfo}>
-                  <Text style={styles.popularName}>{dest.name}</Text>
-                  <Text style={styles.popularCountry}>{dest.country}</Text>
                 </View>
-                <Text style={styles.popularPrice}>${dest.price.toLocaleString()}</Text>
+                <Text style={[s.menuLabel, { color: colors.textPrimary }]}>{item.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        {/* ── PAKET SECTION ── */}
+        <View style={{ marginTop: SPACING.xl }}>
+          <View style={sectionStyles.header}>
+            <Text style={[sectionStyles.title, { color: colors.textPrimary }]}>Paket</Text>
+            <TouchableOpacity onPress={() => handleMenuPress('semua_paket')}>
+              <Text style={[sectionStyles.link, { color: colors.primary }]}>Lihat Semua</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loadingPakets ? (
+            <ActivityIndicator color={colors.primary} style={{ marginTop: 24 }} />
+          ) : filtered.length === 0 ? (
+            <View style={emptyStyles.container}>
+              <MaterialCommunityIcons
+                name="mosque"
+                size={40}
+                color={colors.primary}
+                style={{ marginBottom: SPACING.md }}
+              />
+              <Text style={[emptyStyles.title, { color: colors.textPrimary }]}>Belum ada paket tersedia</Text>
+              <Text style={[emptyStyles.subtitle, { color: colors.textSecondary }]}>Admin belum menambahkan paket Umrah</Text>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: SPACING.page, gap: SPACING.md }}
+            >
+              {filtered.map((paket) => (
+                <TouchableOpacity
+                  key={paket.id}
+                  style={[s.paketCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  onPress={() => router.push(`/pakets/${paket.id}` as any)}
+                  activeOpacity={0.85}
+                >
+                  {/* Card Image / Placeholder */}
+                  <View style={s.paketImageBox}>
+                    {paket.gambar && getStorageUrl(paket.gambar) ? (
+                      <Image
+                        source={{ uri: getStorageUrl(paket.gambar)! }}
+                        style={s.paketImage}
+                      />
+                    ) : (
+                      <View style={[s.paketImagePlaceholder, { backgroundColor: colors.primaryLight }]}>
+                        <MaterialCommunityIcons
+                          name="mosque"
+                          size={44}
+                          color={colors.primary}
+                        />
+                      </View>
+                    )}
+                    <View style={[s.paketBadge, { backgroundColor: colors.primary }]}>
+                      <Text style={s.paketBadgeText}>UMROH</Text>
+                    </View>
+                  </View>
+
+                  {/* Card Info */}
+                  <View style={s.paketInfo}>
+                    <Text style={[s.paketNama, { color: colors.textPrimary }]} numberOfLines={2}>{paket.nama_paket}</Text>
+                    <View style={{ gap: 5, marginBottom: SPACING.sm }}>
+                      <View style={layoutStyles.row}>
+                        <MaterialCommunityIcons
+                          name={UI_ICONS.calendar.name}
+                          size={UI_ICONS.calendar.size}
+                          color={colors.textSecondary}
+                          style={{ marginRight: 4 }}
+                        />
+                        <Text style={{ color: colors.textSecondary, fontSize: FONT.sizeSm }}>Berangkat {formatDate(paket.tanggal_berangkat)}</Text>
+                      </View>
+                      <View style={layoutStyles.row}>
+                        <MaterialCommunityIcons
+                          name={UI_ICONS.flight.name}
+                          size={UI_ICONS.flight.size}
+                          color={colors.textSecondary}
+                          style={{ marginRight: 4 }}
+                        />
+                        <Text style={{ color: colors.textSecondary, fontSize: FONT.sizeSm }}>
+                          Dari{' '}
+                          <Text style={{ color: colors.primary, fontWeight: FONT.weightBold }}>
+                            {paket.kota_keberangkatan.toUpperCase()}
+                          </Text>
+                        </Text>
+                      </View>
+                      <View style={layoutStyles.row}>
+                        <MaterialCommunityIcons
+                          name={UI_ICONS.clock.name}
+                          size={UI_ICONS.clock.size}
+                          color={colors.textSecondary}
+                          style={{ marginRight: 4 }}
+                        />
+                        <Text style={{ color: colors.textSecondary, fontSize: FONT.sizeSm }}>Paket {paket.durasi_hari} Hari</Text>
+                      </View>
+                    </View>
+                    <Text style={[s.paketHarga, { color: colors.primary }]}>
+                      Rp {Number(paket.harga).toLocaleString('id-ID')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        {/* ── ARTIKEL SECTION ── */}
+        <View style={{ marginHorizontal: SPACING.lg, marginTop: SPACING.xl, marginBottom: SPACING.xxl }}>
+          <View style={layoutStyles.spaceBetween}>
+            <Text style={[sectionStyles.title, { color: colors.textPrimary }]}>Artikel</Text>
+            <TouchableOpacity onPress={() => router.push('/articles' as any)} activeOpacity={0.8}>
+              <Text style={[sectionStyles.link, { color: colors.primary }]}>Lihat Semua</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loadingArticles ? (
+            <View style={{ gap: SPACING.md, marginTop: SPACING.md }}>
+              {[1, 2, 3].map((i) => (
+                <View key={i} style={[s.articleCardSkeleton, { backgroundColor: colors.surface, borderColor: colors.border }]} />
+              ))}
+            </View>
+          ) : articleError ? (
+            <View style={[s.articleErrorCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={colors.textMuted} />
+              <Text style={{ color: colors.textSecondary, fontSize: FONT.sizeSm, marginTop: 4, marginBottom: SPACING.sm }}>
+                Gagal memuat artikel
+              </Text>
+              <TouchableOpacity
+                style={[s.retryBtn, { backgroundColor: colors.primary }]}
+                onPress={loadArticles}
+                activeOpacity={0.85}
+              >
+                <Text style={s.retryBtnText}>Coba Lagi</Text>
+              </TouchableOpacity>
+            </View>
+          ) : articles.length === 0 ? (
+            <Text style={{ color: colors.textMuted, marginTop: SPACING.md, fontSize: FONT.sizeSm }}>
+              Belum ada artikel terbaru.
+            </Text>
+          ) : (
+            <View style={{ gap: SPACING.md, marginTop: SPACING.md }}>
+              {articles.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[s.articleCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  onPress={() => router.push(`/articles/${item.id}` as any)}
+                  activeOpacity={0.88}
+                >
+                  <Image
+                    source={{ uri: item.thumbnail_url }}
+                    style={s.articleThumb}
+                    resizeMode="cover"
+                  />
+                  <View style={s.articleInfo}>
+                    <Text style={[s.articleTitle, { color: colors.textPrimary }]} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                    <Text style={[s.articleAuthor, { color: colors.textMuted }]}>
+                      Posted by {item.author}
+                    </Text>
+                    <Text style={[s.articleDate, { color: colors.textMuted }]}>
+                      {formatIndonesianDate(item.published_at)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
       </ScrollView>
@@ -272,158 +411,195 @@ export default function HomeScreen() {
   );
 }
 
-// ─────────────────────────────────────────────
-// 🎓 STYLES — Your CSS (Scoped to this component only)
-// Rule: camelCase, numbers instead of px, flexbox everywhere
-// ─────────────────────────────────────────────
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,                      // Fill the whole screen (like height: 100vh)
-    backgroundColor: '#0a0a1a',   // Deep dark navy — our app's bg color
-  },
-  scrollContent: {
-    paddingBottom: 32,
-  },
-  // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  greeting: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  headerTitle: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#6C63FF',
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function formatDate(dateStr: string): string {
+  try {
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'short', year: 'numeric',
+    });
+  } catch { return dateStr; }
+}
+
+// ── Screen-local styles ───────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  themeToggleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(108, 99, 255, 0.5)',
+    marginRight: 4,
   },
-  avatarText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.lg,
+    backgroundColor: COLORS.surface,
   },
-  // Search
-  searchContainer: {
+  logoCircle: {
+    width: 44, height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  logoImage: {
+    width: 44, height: 44,
+    borderRadius: 10,
+    resizeMode: 'contain',
+  },
+  logoText: { color: COLORS.surface, fontWeight: FONT.weightBlack, fontSize: FONT.sizeMd },
+  brandName: { color: COLORS.textPrimary, fontSize: 15, fontWeight: FONT.weightBlack },
+  brandSub: { color: COLORS.primary, fontSize: FONT.sizeXs, fontWeight: FONT.weightMedium },
+  avatarBtn: {
+    width: 40, height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  avatarInitials: { color: COLORS.surface, fontWeight: FONT.weightBold, fontSize: FONT.sizeMd },
+  loginHeaderBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  loginHeaderBtnText: { color: COLORS.surface, fontWeight: FONT.weightBold, fontSize: FONT.sizeSm },
+
+  greeting: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: 18,
+  },
+  greetingHi: { color: 'rgba(255,255,255,0.85)', fontSize: FONT.sizeMd, marginBottom: 2 },
+  greetingName: { color: COLORS.surface, fontSize: 22, fontWeight: FONT.weightBlack },
+
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginHorizontal: 24,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 24,
+    backgroundColor: COLORS.surface,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
+    ...SHADOW.card,
   },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: 10,
+  searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: FONT.sizeBase },
+
+  menuCard: {
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
   },
-  searchInput: {
+  menuGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+  menuItem: { width: '22%', alignItems: 'center' },
+  menuIconBox: {
+    width: 58, height: 58,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: SPACING.xs + 2,
+  },
+  menuLabel: {
+    color: COLORS.textPrimary,
+    fontSize: FONT.sizeXs,
+    textAlign: 'center',
+    fontWeight: FONT.weightMedium,
+    lineHeight: 15,
+  },
+
+  paketCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    width: 240,
+    overflow: 'hidden',
+    ...SHADOW.card,
+    shadowOpacity: 0.07,
+    elevation: 3,
+  },
+  paketImageBox: {
+    height: 130,
+    backgroundColor: COLORS.primaryLight,
+    position: 'relative',
+  },
+  paketImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  paketImagePlaceholder: {
     flex: 1,
-    color: '#fff',
-    fontSize: 15,
-  },
-  // Categories
-  categoriesContainer: {
-    marginBottom: 28,
-  },
-  categoriesContent: {
-    paddingHorizontal: 24,
-    gap: 10,
-  },
-  categoryChip: {
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  categoryChipActive: {
-    backgroundColor: '#6C63FF',
-    borderColor: '#6C63FF',
-  },
-  categoryText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  categoryTextActive: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  // Sections
-  section: {
-    marginBottom: 28,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    marginBottom: 16,
+    backgroundColor: COLORS.primaryLight,
   },
-  sectionTitle: {
+  paketBadge: {
+    position: 'absolute', top: 10, right: 10,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.sm, paddingVertical: 3,
+    borderRadius: SPACING.xs,
+  },
+  paketBadgeText: { color: COLORS.surface, fontSize: 10, fontWeight: FONT.weightBlack, letterSpacing: 0.5 },
+  paketInfo: { padding: SPACING.md },
+  paketNama: { color: COLORS.textPrimary, fontSize: FONT.sizeMd, fontWeight: FONT.weightBold, marginBottom: SPACING.sm, lineHeight: 18 },
+  paketHarga: { color: COLORS.primary, fontSize: FONT.sizeBase, fontWeight: FONT.weightBlack },
+
+  articleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.sm + 2,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    gap: SPACING.md,
+    ...SHADOW.card,
+  },
+  articleThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: RADIUS.md,
+  },
+  articleInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  articleTitle: {
+    fontSize: FONT.sizeSm + 1,
+    fontWeight: FONT.weightBold,
+    lineHeight: 19,
+    marginBottom: 4,
+  },
+  articleAuthor: {
+    fontSize: FONT.sizeXs,
+    marginBottom: 2,
+  },
+  articleDate: {
+    fontSize: FONT.sizeXs,
+  },
+  articleCardSkeleton: {
+    height: 92,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    opacity: 0.6,
+  },
+  articleErrorCard: {
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    marginTop: SPACING.md,
+  },
+  retryBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+  },
+  retryBtnText: {
     color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  seeAll: {
-    color: '#6C63FF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  cardsContainer: {
-    paddingHorizontal: 24,
-  },
-  // Popular
-  popularGrid: {
-    paddingHorizontal: 24,
-    gap: 12,
-  },
-  popularCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.09)',
-  },
-  popularInfo: {
-    gap: 2,
-  },
-  popularName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  popularCountry: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 13,
-  },
-  popularPrice: {
-    color: '#FFD700',
-    fontSize: 16,
-    fontWeight: '800',
+    fontWeight: FONT.weightBold,
+    fontSize: FONT.sizeSm,
   },
 });
