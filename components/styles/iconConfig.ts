@@ -53,7 +53,7 @@ export const MENU_ICONS = {
     // ── Row 2 ──
     {
       id: 'waktu_sholat',
-      label: 'Waktu Sholat\n(Saudi)',
+      label: 'Waktu Sholat',
       icon: 'clock-time-four-outline' as const,
     },
     {

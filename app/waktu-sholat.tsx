@@ -1,26 +1,29 @@
 /**
- * Waktu Sholat (Saudi) Screen — app/waktu-sholat.tsx
+ * Waktu Sholat Screen — app/waktu-sholat.tsx
  * Hafana Umrah Travel
  *
- * Prayer times widget (IslamicFinder) + real-time Saudi clock (zeitverschiebung)
- * embedded via a single react-native-webview call with a custom themed HTML page.
+ * Dynamic location-based prayer times (Aladhan API - Umm Al-Qura method)
+ * using expo-location + real-time Saudi clock.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
-  Linking,
+  Alert,
+  Platform,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   StatusBar,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
+import * as Location from 'expo-location';
 
 import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
@@ -28,52 +31,66 @@ import {
 } from '@/components/styles';
 import { useAppTheme } from '@/context/theme';
 
-// ── Widget URLs ────────────────────────────────────────────────────────────────
-
-const PRAYER_URL =
-  'https://www.islamicfinder.org/id/prayer-widget/46527572/shafi/4/0.5/18.5/10';
-
-const CLOCK_URL =
+// ── Widget Clock URL (Saudi Arabia) ──────────────────────────────────────────
+const SAUDI_CLOCK_URL =
   'https://www.zeitverschiebung.net/clock-widget-iframe-v2?language=en&size=small&timezone=Asia%2FRiyadh&show=hour_minute';
 
-// ── Themed HTML page that wraps BOTH widgets ───────────────────────────────────
-// Primary brand color is #254091 (from theme.ts)
+interface AddressData {
+  city: string;
+  province: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+}
 
-const buildHtml = (isDark: boolean) => {
-  const bg        = isDark ? '#1e293b' : '#ffffff';
-  const surface   = isDark ? '#0f172a' : '#f2f6fa';
-  const primary   = '#254091';
-  const text      = isDark ? '#f8fafc' : '#1a2a3a';
-  const subtext   = isDark ? '#94a3b8' : '#6b7f91';
-  const border    = isDark ? '#334155' : '#dde8f0';
-  const accent    = isDark ? '#1b2535' : '#eef3fb';
+interface PrayerTimings {
+  Imsak: string;
+  Fajr: string;
+  Sunrise: string;
+  Dhuhr: string;
+  Asr: string;
+  Maghrib: string;
+  Isha: string;
+  [key: string]: string;
+}
 
-  return `
+interface HijriDateInfo {
+  day: string;
+  monthEn: string;
+  monthAr: string;
+  year: string;
+  readable: string;
+}
+
+const PRAYER_LIST = [
+  { key: 'Imsak',   label: 'Imsak',   icon: 'weather-night' },
+  { key: 'Fajr',    label: 'Subuh',   icon: 'weather-sunset-up' },
+  { key: 'Sunrise', label: 'Terbit',  icon: 'white-balance-sunny' },
+  { key: 'Dhuhr',   label: 'Dzuhur',  icon: 'weather-sunny' },
+  { key: 'Asr',     label: 'Ashar',   icon: 'weather-partly-cloudy' },
+  { key: 'Maghrib', label: 'Maghrib', icon: 'weather-sunset-down' },
+  { key: 'Isha',    label: 'Isya',    icon: 'weather-night-partly-cloudy' },
+];
+
+const buildClockHtml = (isDark: boolean) => `
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html, body {
       width: 100%;
-      background: ${bg};
-      font-family: 'Inter', -apple-system, sans-serif;
-      color: ${text};
-      overflow-x: hidden;
-      padding-bottom: 16px;
+      height: 100%;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
     }
-
-    /* ── Real-time Clock Card ── */
     .clock-card {
-      background: linear-gradient(135deg, ${primary} 0%, #172757 100%);
+      background: linear-gradient(135deg, #254091 0%, #172757 100%);
       border-radius: 16px;
-      margin: 12px 12px 0;
-      padding: 16px;
+      padding: 16px 18px;
       position: relative;
       overflow: hidden;
     }
@@ -85,162 +102,168 @@ const buildHtml = (isDark: boolean) => {
       border-radius: 50%;
       background: rgba(255,255,255,0.06);
     }
-    .clock-card::after {
-      content: '';
-      position: absolute;
-      bottom: -20px; left: 40px;
-      width: 80px; height: 80px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.04);
-    }
     .clock-label {
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 1.2px;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.65);
+      color: rgba(255,255,255,0.7);
       margin-bottom: 4px;
     }
     .clock-city {
       font-size: 15px;
       font-weight: 800;
       color: #ffffff;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .clock-embed {
       background: transparent;
       border: none;
       width: 100%;
-      height: 90px;
+      height: 85px;
       display: block;
       filter: ${isDark ? 'invert(1) hue-rotate(180deg) saturate(0.8)' : 'invert(1) brightness(2)'};
-    }
-
-    /* ── Divider ── */
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 12px 12px 0;
-    }
-    .divider-line { flex: 1; height: 1px; background: ${border}; }
-    .divider-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: ${subtext};
-      white-space: nowrap;
-    }
-
-    /* ── Prayer Widget Card ── */
-    .prayer-card {
-      background: ${bg};
-      border-radius: 16px;
-      margin: 10px 12px 0;
-      overflow: hidden;
-      border: 1px solid ${border};
-    }
-    .prayer-header {
-      background: ${accent};
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid ${border};
-    }
-    .mosque-icon { font-size: 16px; }
-    .prayer-header-text {
-      font-size: 12px;
-      font-weight: 700;
-      color: ${primary};
-      letter-spacing: 0.3px;
-    }
-    .prayer-method {
-      margin-left: auto;
-      font-size: 10px;
-      color: ${subtext};
-      font-weight: 600;
-      background: ${border};
-      padding: 2px 8px;
-      border-radius: 20px;
-    }
-    .prayer-embed {
-      width: 100%;
-      height: 358px;
-      border: none;
-      display: block;
-    }
-
-    /* ── Source note ── */
-    .source-note {
-      font-size: 10px;
-      color: ${subtext};
-      text-align: center;
-      padding: 8px 12px 0;
-      letter-spacing: 0.2px;
     }
   </style>
 </head>
 <body>
-
-  <!-- Real-time Saudi Clock -->
   <div class="clock-card">
-    <div class="clock-label">Waktu Saat Ini</div>
-    <div class="clock-city">🇸🇦 Makkah · Arab Saudi (AST/UTC+3)</div>
+    <div class="clock-label">WAKTU SAAT INI</div>
+    <div class="clock-city">🇸🇦 Makkah · Arab Saudi (AST / UTC+3)</div>
     <iframe
       class="clock-embed"
-      src="${CLOCK_URL}"
+      src="${SAUDI_CLOCK_URL}"
       frameborder="0"
       scrolling="no"
       seamless
       title="Saudi Arabia Real-Time Clock"
     ></iframe>
   </div>
-
-  <!-- Divider -->
-  <div class="divider">
-    <div class="divider-line"></div>
-    <div class="divider-label">Jadwal Waktu Sholat</div>
-    <div class="divider-line"></div>
-  </div>
-
-  <!-- Prayer Times Widget -->
-  <div class="prayer-card">
-    <div class="prayer-header">
-      <span class="mosque-icon">🕌</span>
-      <span class="prayer-header-text">Makkah Al-Mukarramah</span>
-      <span class="prayer-method">Shafi'i</span>
-    </div>
-    <iframe
-      id="iframe"
-      class="prayer-embed"
-      title="prayerWidget"
-      scrolling="no"
-      src="${PRAYER_URL}"
-    ></iframe>
-  </div>
-
-  <div class="source-note">Sumber: IslamicFinder · zeitverschiebung.net</div>
-
 </body>
 </html>
 `;
-};
-
-// ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function WaktuSholatScreen() {
   const router = useRouter();
   const { isDarkMode, colors } = useAppTheme();
-  const [loading, setLoading]  = useState(true);
-  const [error, setError]      = useState(false);
-  const [key, setKey]          = useState(0); // used to force WebView reload
 
-  const openInBrowser = () =>
-    Linking.openURL('https://www.islamicfinder.org/id/prayer-times/?city=mecca&country=Saudi+Arabia&state=').catch(() => {});
+  const [loading, setLoading]           = useState(true);
+  const [refreshing, setRefreshing]     = useState(false);
+  const [errorMsg, setErrorMsg]         = useState<string | null>(null);
+  const [address, setAddress]           = useState<AddressData | null>(null);
+  const [prayerTimes, setPrayerTimes]   = useState<PrayerTimings | null>(null);
+  const [hijriDate, setHijriDate]       = useState<HijriDateInfo | null>(null);
+  const [nextPrayerKey, setNextPrayer]  = useState<string | null>(null);
 
-  const WEBVIEW_HEIGHT = 570; // clock (~140) + prayer widget (~358) + chrome (~72)
+  // Fetch location and prayer times using Aladhan API with Umm Al-Qura method (method=4)
+  const fetchLocationAndPrayers = async (isManualRefresh = false) => {
+    if (isManualRefresh) setRefreshing(true);
+    else setLoading(true);
+    setErrorMsg(null);
+
+    try {
+      // 1. Request foreground location permission
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      
+      let lat = -6.2088; // Default Jakarta fallback
+      let lng = 106.8456;
+      let city = 'Jakarta';
+      let province = 'DKI Jakarta';
+      let country = 'Indonesia';
+
+      if (status === 'granted') {
+        try {
+          const userLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          lat = userLocation.coords.latitude;
+          lng = userLocation.coords.longitude;
+
+          // 2. Reverse geocode
+          const geoAddress = await Location.reverseGeocodeAsync({
+            latitude: lat,
+            longitude: lng,
+          });
+
+          if (geoAddress && geoAddress.length > 0) {
+            const place = geoAddress[0];
+            city = place.city || place.subregion || place.district || 'Kota Anda';
+            province = place.region || '';
+            country = place.country || 'Indonesia';
+          }
+        } catch {
+          // If GPS fix fails, fallback gracefully
+          city = 'Lokasi Terdeteksi';
+        }
+      } else {
+        setErrorMsg('Izin lokasi ditolak. Menampilkan estimasi waktu sholat.');
+      }
+
+      setAddress({
+        city,
+        province,
+        country,
+        latitude: lat,
+        longitude: lng,
+      });
+
+      // 3. Fetch Prayer Times from AlAdhan API with Umm Al-Qura method (method=4)
+      const response = await fetch(
+        `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=4`
+      );
+      const json = await response.json();
+
+      if (json.code === 200 && json.data) {
+        setPrayerTimes(json.data.timings);
+
+        if (json.data.date) {
+          const hijri = json.data.date.hijri;
+          setHijriDate({
+            day: hijri?.day || '',
+            monthEn: hijri?.month?.en || '',
+            monthAr: hijri?.month?.ar || '',
+            year: hijri?.year || '',
+            readable: json.data.date.readable || '',
+          });
+        }
+
+        determineNextPrayer(json.data.timings);
+      } else {
+        setErrorMsg('Gagal mengambil jadwal sholat dari server Aladhan.');
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Terjadi kesalahan saat memuat waktu sholat. Periksa internet Anda.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Determine the next upcoming prayer time
+  const determineNextPrayer = (timings: PrayerTimings) => {
+    if (!timings) return;
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const mainPrayers = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+    for (const key of mainPrayers) {
+      const timeStr = timings[key];
+      if (timeStr) {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const prayerMinutes = hours * 60 + minutes;
+        if (prayerMinutes > currentMinutes) {
+          setNextPrayer(key);
+          return;
+        }
+      }
+    }
+    setNextPrayer('Fajr'); // Next day Fajr
+  };
+
+  useEffect(() => {
+    fetchLocationAndPrayers();
+  }, []);
 
   return (
     <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
@@ -254,94 +277,209 @@ export default function WaktuSholatScreen() {
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn} accessibilityLabel="Kembali">
           <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[s.appBarTitle, { color: colors.textPrimary }]}>Waktu Sholat (Saudi)</Text>
-        <View style={{ width: 36 }} />
+        <Text style={[s.appBarTitle, { color: colors.textPrimary }]}>Waktu Sholat</Text>
+        <TouchableOpacity
+          onPress={() => fetchLocationAndPrayers(true)}
+          style={s.refreshBtn}
+          accessibilityLabel="Perbarui Jadwal"
+          disabled={loading || refreshing}
+        >
+          {refreshing ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <MaterialCommunityIcons name="refresh" size={22} color={colors.primary} />
+          )}
+        </TouchableOpacity>
       </View>
 
-      {/* ── FULL-HEIGHT BODY ── */}
-      <View style={[s.body, { backgroundColor: colors.bg }]}>
-        {/* Combined themed WebView */}
-        <View style={[s.webviewCard, { backgroundColor: colors.surface }]}>
-
-          {/* Loading overlay */}
-          {loading && !error && (
-            <View style={[s.overlay, { backgroundColor: colors.surface }]}>
-              <View style={[s.loaderIconBox, { backgroundColor: colors.primaryLight }]}>
-                <MaterialCommunityIcons name="clock-time-four-outline" size={36} color={colors.primary} />
-              </View>
-              <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: SPACING.md }} />
-              <Text style={[s.loaderTitle, { color: colors.textPrimary }]}>Memuat Waktu Sholat</Text>
-              <Text style={[s.loaderSub, { color: colors.textSecondary }]}>
-                Menghubungkan ke server IslamicFinder…
-              </Text>
-            </View>
-          )}
-
-          {/* Error overlay */}
-          {error && (
-            <View style={[s.overlay, { backgroundColor: colors.surface }]}>
-              <MaterialCommunityIcons name="wifi-off" size={52} color={colors.textMuted} />
-              <Text style={[s.errorTitle, { color: colors.textPrimary }]}>Gagal Memuat</Text>
-              <Text style={[s.errorSub, { color: colors.textSecondary }]}>
-                Periksa koneksi internet lalu coba lagi.
-              </Text>
-              <TouchableOpacity
-                style={[s.retryBtn, { backgroundColor: colors.primary }]}
-                onPress={() => { setError(false); setLoading(true); setKey(k => k + 1); }}
-              >
-                <MaterialCommunityIcons name="refresh" size={16} color="#fff" />
-                <Text style={s.retryBtnText}>Coba Lagi</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* WebView — native only */}
-          {!error && Platform.OS !== 'web' && (
+      {/* ── SCROLL CONTENT ── */}
+      <ScrollView
+        contentContainerStyle={s.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchLocationAndPrayers(true)}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
+        {/* 1. Real-time Saudi Arabia Clock Card (Kept as requested) */}
+        <View style={s.clockWrapper}>
+          {Platform.OS !== 'web' ? (
             <WebView
-              key={key}
-              style={[s.webview, loading ? s.invisible : null]}
+              style={s.clockWebview}
               originWhitelist={['*']}
-              source={{ html: buildHtml(isDarkMode), baseUrl: 'https://www.islamicfinder.org' }}
+              source={{ html: buildClockHtml(isDarkMode) }}
               scrollEnabled={false}
               javaScriptEnabled
               domStorageEnabled
-              mixedContentMode="always"
-              onLoadEnd={() => setLoading(false)}
-              onError={() => { setLoading(false); setError(true); }}
             />
-          )}
-
-          {/* Web browser fallback */}
-          {!error && Platform.OS === 'web' && (
-            <div style={{ padding: '12px' }}>
+          ) : (
+            <div style={{
+              background: 'linear-gradient(135deg, #254091 0%, #172757 100%)',
+              borderRadius: '16px',
+              padding: '16px',
+              color: '#fff',
+            }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, opacity: 0.7, marginBottom: '4px' }}>WAKTU SAAT INI</div>
+              <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '8px' }}>🇸🇦 Makkah · Arab Saudi (AST / UTC+3)</div>
               <iframe
                 title="Saudi Clock"
-                src={CLOCK_URL}
-                style={{ width: '100%', height: 90, border: 'none', display: 'block', marginBottom: 12 }}
-                scrolling="no"
-              />
-              <iframe
-                title="Prayer Widget"
-                src={PRAYER_URL}
-                style={{ width: '100%', height: 358, border: 'none', display: 'block' }}
+                src={SAUDI_CLOCK_URL}
+                style={{ width: '100%', height: '85px', border: 'none', filter: 'invert(1) brightness(2)' }}
                 scrolling="no"
               />
             </div>
           )}
         </View>
 
-        {/* ── INFO FOOTER ── */}
-        <View style={[s.infoRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <MaterialCommunityIcons name="shield-check-outline" size={14} color={colors.primary} />
-          <Text style={[s.infoText, { color: colors.textSecondary }]}>
-            Data dari <Text style={{ fontWeight: '700', color: colors.textPrimary }}>IslamicFinder</Text>
-            {' '}· Metode <Text style={{ fontWeight: '700', color: colors.textPrimary }}>Shafi'i</Text>
-          </Text>
-          <TouchableOpacity onPress={openInBrowser}>
-            <MaterialCommunityIcons name="open-in-new" size={14} color={colors.primary} />
-          </TouchableOpacity>
+        {/* 2. User Location & Hijri Date Card */}
+        <View style={[s.locationCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={s.locationTopRow}>
+            <View style={[s.locationIconBox, { backgroundColor: colors.primaryLight }]}>
+              <MaterialCommunityIcons name="map-marker-radius-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.locationTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                {address ? `${address.city}${address.province ? `, ${address.province}` : ''}` : 'Mendeteksi Lokasi...'}
+              </Text>
+              <Text style={[s.locationSub, { color: colors.textSecondary }]}>
+                {address?.country || 'Indonesia'} · <Text style={{ color: colors.primary, fontWeight: FONT.weightBold }}>Metode Umm Al-Qura</Text>
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[s.gpsBtn, { backgroundColor: colors.primaryLight }]}
+              onPress={() => fetchLocationAndPrayers(true)}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons name="crosshairs-gps" size={16} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Hijri & Gregorian Date Row */}
+          {hijriDate ? (
+            <View style={[s.dateBanner, { backgroundColor: colors.surfaceAlt || colors.bg }]}>
+              <View style={s.dateCol}>
+                <Text style={[s.dateLabel, { color: colors.textMuted }]}>Kalender Hijriyah</Text>
+                <Text style={[s.dateValue, { color: colors.textPrimary }]}>
+                  🌙 {hijriDate.day} {hijriDate.monthEn} {hijriDate.year} H
+                </Text>
+              </View>
+              <View style={s.dateColRight}>
+                <Text style={[s.dateLabel, { color: colors.textMuted }]}>Masehi</Text>
+                <Text style={[s.dateValue, { color: colors.textSecondary }]}>
+                  {hijriDate.readable}
+                </Text>
+              </View>
+            </View>
+          ) : null}
         </View>
-      </View>
+
+        {/* Error message notice if any */}
+        {errorMsg ? (
+          <View style={[s.errorBox, { backgroundColor: colors.surface }]}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#ef4444" />
+            <Text style={s.errorText}>{errorMsg}</Text>
+          </View>
+        ) : null}
+
+        {/* 3. Dynamic Prayer Times List */}
+        <View style={[s.prayerSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[s.prayerHeaderRow, { borderBottomColor: colors.border }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MaterialCommunityIcons name="mosque" size={18} color={colors.primary} />
+              <Text style={[s.prayerSectionTitle, { color: colors.textPrimary }]}>Jadwal Waktu Sholat</Text>
+            </View>
+            <Text style={[s.methodBadge, { color: colors.primary, backgroundColor: colors.primaryLight }]}>
+              Umm Al-Qura
+            </Text>
+          </View>
+
+          {loading && !prayerTimes ? (
+            <View style={s.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[s.loadingText, { color: colors.textSecondary }]}>
+                Mengambil jadwal sholat untuk lokasi Anda...
+              </Text>
+            </View>
+          ) : prayerTimes ? (
+            <View style={s.prayerList}>
+              {PRAYER_LIST.map((item, idx) => {
+                const isNext = nextPrayerKey === item.key;
+                const timeValue = prayerTimes[item.key] || '--:--';
+
+                return (
+                  <View
+                    key={item.key}
+                    style={[
+                      s.prayerRow,
+                      { borderBottomColor: colors.border },
+                      idx === PRAYER_LIST.length - 1 ? { borderBottomWidth: 0 } : null,
+                      isNext ? [s.nextPrayerRow, { backgroundColor: colors.primaryLight, borderColor: colors.primary }] : null,
+                    ]}
+                  >
+                    <View style={s.prayerLeft}>
+                      <View
+                        style={[
+                          s.prayerIconBox,
+                          { backgroundColor: isNext ? colors.primary : (colors.surfaceAlt || colors.bg) },
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name={item.icon as any}
+                          size={18}
+                          color={isNext ? '#ffffff' : colors.primary}
+                        />
+                      </View>
+                      <View>
+                        <Text
+                          style={[
+                            s.prayerName,
+                            { color: colors.textPrimary },
+                            isNext ? { fontWeight: FONT.weightBlack, color: colors.primary } : null,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                        <Text style={[s.prayerKeySub, { color: colors.textMuted }]}>
+                          {item.key}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={s.prayerRight}>
+                      {isNext ? (
+                        <View style={[s.nextBadge, { backgroundColor: colors.primary }]}>
+                          <Text style={s.nextBadgeText}>Berikutnya</Text>
+                        </View>
+                      ) : null}
+                      <Text
+                        style={[
+                          s.prayerTime,
+                          { color: colors.textPrimary },
+                          isNext ? { color: colors.primary, fontSize: 18 } : null,
+                        ]}
+                      >
+                        {timeValue}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          ) : null}
+        </View>
+
+        {/* 4. Footer Source Note */}
+        <View style={[s.footerNote, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <MaterialCommunityIcons name="information-outline" size={16} color={colors.primary} />
+          <Text style={[s.footerNoteText, { color: colors.textSecondary }]}>
+            Jadwal sholat dihitung otomatis via <Text style={{ fontWeight: FONT.weightBold, color: colors.textPrimary }}>Aladhan API</Text> menggunakan metode <Text style={{ fontWeight: FONT.weightBold, color: colors.textPrimary }}>Umm Al-Qura University, Makkah</Text> berdasarkan koordinat GPS perangkat Anda.
+          </Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -358,6 +496,7 @@ const s = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backBtn: { padding: SPACING.xs },
+  refreshBtn: { padding: SPACING.xs },
   appBarTitle: {
     flex: 1,
     textAlign: 'center',
@@ -365,91 +504,208 @@ const s = StyleSheet.create({
     fontWeight: FONT.weightBlack,
   },
 
-  body: {
-    flex: 1,
+  scrollContent: {
     padding: SPACING.lg,
-    paddingBottom: SPACING.md,
+    paddingBottom: SPACING.xxl,
     gap: SPACING.md,
   },
 
-  webviewCard: {
-    flex: 1,
+  /* Clock Card */
+  clockWrapper: {
+    height: 155,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     ...SHADOW.card,
   },
-
-  webview: {
-    flex: 1,
+  clockWebview: {
     width: '100%',
+    height: '100%',
     backgroundColor: 'transparent',
   },
-  invisible: {
-    opacity: 0,
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
+
+  /* Location Card */
+  locationCard: {
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    gap: SPACING.md,
+    ...SHADOW.card,
+  },
+  locationTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  locationIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationTitle: {
+    fontSize: FONT.sizeBase,
+    fontWeight: FONT.weightBold,
+    letterSpacing: -0.2,
+  },
+  locationSub: {
+    fontSize: FONT.sizeXs,
+    marginTop: 2,
+  },
+  gpsBtn: {
+    padding: SPACING.sm,
+    borderRadius: RADIUS.pill,
   },
 
-  // Loader & Error share this overlay
-  overlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
+  /* Hijri Date Banner */
+  dateBanner: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    zIndex: 10,
-    padding: SPACING.xxl,
+    justifyContent: 'space-between',
+    padding: SPACING.sm + 2,
+    borderRadius: RADIUS.md,
   },
-  loaderIconBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+  dateCol: {
+    flex: 1,
   },
-  loaderTitle: {
-    fontSize: FONT.sizeLg,
+  dateColRight: {
+    alignItems: 'flex-end',
+  },
+  dateLabel: {
+    fontSize: 10,
+    fontWeight: FONT.weightSemi,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  dateValue: {
+    fontSize: FONT.sizeSm,
     fontWeight: FONT.weightBold,
-    marginTop: SPACING.xs,
   },
-  loaderSub: {
-    fontSize: FONT.sizeMd,
-    textAlign: 'center',
-  },
-  errorTitle: {
-    fontSize: FONT.sizeLg,
-    fontWeight: FONT.weightBold,
-    marginTop: SPACING.sm,
-  },
-  errorSub: {
-    fontSize: FONT.sizeMd,
-    textAlign: 'center',
-  },
-  retryBtn: {
+
+  /* Error Box */
+  errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    paddingVertical: 10,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: RADIUS.lg,
-    marginTop: SPACING.xs,
-    ...SHADOW.button,
+    padding: SPACING.sm + 2,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: '#fca5a5',
   },
-  retryBtnText: {
-    color: '#fff',
-    fontWeight: FONT.weightBold,
-    fontSize: FONT.sizeBase,
+  errorText: {
+    color: '#ef4444',
+    fontSize: FONT.sizeXs,
+    flex: 1,
   },
 
-  infoRow: {
+  /* Prayer Times Section */
+  prayerSection: {
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...SHADOW.card,
+  },
+  prayerHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+  },
+  prayerSectionTitle: {
+    fontSize: FONT.sizeBase,
+    fontWeight: FONT.weightBold,
+  },
+  methodBadge: {
+    fontSize: 10,
+    fontWeight: FONT.weightBold,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.pill,
+  },
+
+  loadingContainer: {
+    padding: SPACING.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+  },
+  loadingText: {
+    fontSize: FONT.sizeSm,
+    textAlign: 'center',
+  },
+
+  prayerList: {
+    paddingVertical: 2,
+  },
+  prayerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+  },
+  nextPrayerRow: {
+    borderRadius: RADIUS.md,
+    marginHorizontal: 6,
+    marginVertical: 3,
+    borderWidth: 1.5,
+    paddingHorizontal: SPACING.md,
+  },
+  prayerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  prayerIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  prayerName: {
+    fontSize: FONT.sizeBase,
+    fontWeight: FONT.weightBold,
+  },
+  prayerKeySub: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  prayerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  nextBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: RADIUS.pill,
+  },
+  nextBadgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: FONT.weightBold,
+  },
+  prayerTime: {
+    fontSize: 16,
+    fontWeight: FONT.weightBlack,
+    letterSpacing: 0.5,
+  },
+
+  /* Footer Note */
+  footerNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: SPACING.sm,
     padding: SPACING.md,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
   },
-  infoText: {
+  footerNoteText: {
     flex: 1,
     fontSize: FONT.sizeXs,
     lineHeight: 18,

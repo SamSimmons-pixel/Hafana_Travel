@@ -359,6 +359,96 @@
             align-items: center !important;
             justify-content: space-between !important;
         }
+
+        /* ── Rich Text Editor (with Draggable Images) ── */
+        .editor-container {
+            width: 100%;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            overflow: hidden;
+            transition: border-color .18s;
+        }
+        .editor-container:focus-within {
+            border-color: var(--primary);
+        }
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg);
+            border-bottom: 1.5px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .editor-toolbar button, .editor-toolbar .image-upload-btn, .editor-toolbar select {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background .15s, border-color .15s;
+        }
+        .editor-toolbar select {
+            width: auto;
+            padding: 5px 10px;
+        }
+        .editor-toolbar button:hover, .editor-toolbar .image-upload-btn:hover, .editor-toolbar select:hover {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+        .editor-toolbar .btn-active {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border-color: var(--primary);
+        }
+        #editor {
+            min-height: 380px;
+            max-height: 650px;
+            padding: 16px 20px;
+            outline: none;
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--surface);
+            overflow-y: auto;
+        }
+        #editor[placeholder]:empty:before {
+            content: attr(placeholder);
+            color: var(--text-muted);
+            pointer-events: none;
+            display: block;
+        }
+        /* Draggable image inside editor */
+        #editor img {
+            max-width: 100%;
+            height: auto;
+            cursor: grab;
+            border: 2px dashed transparent;
+            border-radius: 8px;
+            transition: border-color 0.2s, opacity 0.2s, box-shadow 0.2s;
+            display: block;
+            margin: 12px 0;
+            user-select: none;
+        }
+        #editor img:hover {
+            border: 2px dashed var(--primary);
+            box-shadow: 0 4px 12px rgba(0,174,239,0.15);
+        }
+        #editor img:active {
+            cursor: grabbing;
+        }
+        /* Drag over visual effect for paragraphs or drop targets */
+        .drag-over {
+            border-top: 3px solid var(--primary) !important;
+        }
     </style>
 </head>
 <body>

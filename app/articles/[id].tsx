@@ -158,24 +158,25 @@ export default function ArticleDetailScreen() {
   );
 }
 
-/** Render Markdown / Rich Text Body */
+/** Render Markdown / Rich Text / HTML Body */
 function ArticleContentBody({ content, colors }: { content: string; colors: any }) {
   if (!content) return null;
 
-  // Split content by image tags while capturing the image tags themselves
-  const parts = content.split(/(!\[[^\]]*\]\s*\(\s*[^\s)]+\s*\))/g);
+  // Split content by both Markdown (![alt](url)) and HTML (<img ...>) image tags
+  const imageRegex = /(!\[[^\]]*\]\s*\(\s*[^\s)]+\s*\)|<img\b[^>]*\/?>)/gi;
+  const parts = content.split(imageRegex);
 
   return (
     <View style={s.bodyContainer}>
       {parts.map((part, index) => {
-        const trimmed = part.trim();
+        const trimmed = part ? part.trim() : '';
         if (!trimmed) return null;
 
-        // Check if this part is an inline image (![alt](url))
-        const imgMatch = trimmed.match(/^!\[([^\]]*)\]\s*\(\s*([^\s)]+)\s*\)$/);
-        if (imgMatch) {
-          const altText = imgMatch[1];
-          const rawUrl = imgMatch[2];
+        // 1. Check if this part is a Markdown image (![alt](url))
+        const mdImgMatch = trimmed.match(/^!\[([^\]]*)\]\s*\(\s*([^\s)]+)\s*\)$/i);
+        if (mdImgMatch) {
+          const altText = mdImgMatch[1];
+          const rawUrl = mdImgMatch[2];
           const resolvedUri = getStorageUrl(rawUrl) || rawUrl;
 
           return (
@@ -194,15 +195,62 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
           );
         }
 
-        // For non-image text parts, split by double linebreaks or single linebreaks
-        const subBlocks = trimmed.split(/\n\s*\n/);
+        // 2. Check if this part is an HTML image (<img src="..." alt="..." />)
+        const htmlImgMatch = trimmed.match(/^<img\b[^>]*src=["']([^"']+)["'][^>]*\/?>/i);
+        if (htmlImgMatch) {
+          const rawUrl = htmlImgMatch[1];
+          const altMatch = trimmed.match(/alt=["']([^"']*)["']/i);
+          const altText = altMatch ? altMatch[1] : '';
+          const resolvedUri = getStorageUrl(rawUrl) || rawUrl;
+
+          return (
+            <View key={index} style={s.inlineImageBox}>
+              <Image
+                source={{ uri: resolvedUri }}
+                style={s.inlineImage}
+                resizeMode="contain"
+              />
+              {altText && altText.trim() !== 'Gambar' ? (
+                <Text style={[s.imageCaption, { color: colors.textSecondary }]}>
+                  {altText}
+                </Text>
+              ) : null}
+            </View>
+          );
+        }
+
+        // 3. Process text blocks (either HTML or Markdown)
+        // Normalize HTML block tags into clean paragraph splits if HTML is present
+        let normalizedText = trimmed;
+        const hasHtml = /<\/?(p|div|h[1-6]|blockquote|li|ul|ol|br)[^>]*>/i.test(normalizedText);
+
+        if (hasHtml) {
+          // Replace <br> with newline
+          normalizedText = normalizedText.replace(/<br\s*\/?>/gi, '\n');
+          // Replace block closing tags with double newlines
+          normalizedText = normalizedText.replace(/<\/(p|div|h[1-6]|blockquote|li)>/gi, '\n\n');
+          // Remove remaining opening block tags
+          normalizedText = normalizedText.replace(/<(p|div|ul|ol)[^>]*>/gi, '');
+        }
+
+        const subBlocks = normalizedText.split(/\n\s*\n/);
         return (
           <React.Fragment key={index}>
             {subBlocks.map((subBlock, subIdx) => {
               const subTrimmed = subBlock.trim();
               if (!subTrimmed) return null;
 
-              // Headings (### or ## or #)
+              // Check for HTML headings <h2>, <h3>, <h4> or Markdown #
+              const hMatch = subTrimmed.match(/^<h([1-6])[^>]*>([\s\S]*)/i);
+              if (hMatch) {
+                const headingContent = hMatch[2].replace(/<\/h[1-6]>/gi, '');
+                return (
+                  <Text key={subIdx} style={[s.headingText, { color: colors.textPrimary }]}>
+                    {formatFormattedText(headingContent)}
+                  </Text>
+                );
+              }
+
               if (subTrimmed.startsWith('#')) {
                 const headingText = subTrimmed.replace(/^#+\s*/, '');
                 return (
@@ -212,11 +260,11 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
                 );
               }
 
-              // Blockquotes (> quote)
-              if (subTrimmed.startsWith('>')) {
-                const quoteText = subTrimmed.replace(/^>\s*/, '').replace(/^['"]|['"]$/g, '');
+              // Check for HTML <blockquote> or Markdown >
+              if (/^<blockquote[^>]*>/i.test(subTrimmed)) {
+                const quoteText = subTrimmed.replace(/<\/?blockquote[^>]*>/gi, '');
                 return (
-                  <View key={subIdx} style={[s.quoteBox, { backgroundColor: colors.surfaceAlt, borderColor: colors.primary }]}>
+                  <View key={subIdx} style={[s.quoteBox, { backgroundColor: colors.surfaceAlt || colors.bg, borderColor: colors.primary }]}>
                     <Text style={[s.quoteText, { color: colors.textPrimary }]}>
                       {formatFormattedText(quoteText)}
                     </Text>
@@ -224,13 +272,25 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
                 );
               }
 
-              // Bullet lists (* item or - item or 1. item)
-              if (/^[\*\-\d\.]\s+/.test(subTrimmed)) {
+              if (subTrimmed.startsWith('>')) {
+                const quoteText = subTrimmed.replace(/^>\s*/, '').replace(/^['"]|['"]$/g, '');
+                return (
+                  <View key={subIdx} style={[s.quoteBox, { backgroundColor: colors.surfaceAlt || colors.bg, borderColor: colors.primary }]}>
+                    <Text style={[s.quoteText, { color: colors.textPrimary }]}>
+                      {formatFormattedText(quoteText)}
+                    </Text>
+                  </View>
+                );
+              }
+
+              // Check for HTML <li> or Markdown bullet/numbered list
+              if (/<li[^>]*>/i.test(subTrimmed) || /^[\*\-\d\.]\s+/.test(subTrimmed)) {
                 const lines = subTrimmed.split('\n');
                 return (
                   <View key={subIdx} style={s.listContainer}>
                     {lines.map((line, lIdx) => {
-                      const clean = line.replace(/^[\*\-\d\.]\s+/, '');
+                      const clean = line.replace(/<\/?li[^>]*>/gi, '').replace(/^[\*\-\d\.]\s+/, '').trim();
+                      if (!clean) return null;
                       return (
                         <View key={lIdx} style={s.bulletRow}>
                           <Text style={[s.bulletDot, { color: colors.primary }]}>•</Text>
@@ -258,16 +318,92 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
   );
 }
 
-/** Helper to render bold, italic, bold-italic text */
+/** Decode HTML Entities like &nbsp;, &amp;, &quot;, &lt;, &gt;, &#39; */
+function decodeHtmlEntities(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+/** Helper to render bold, italic, underline, font-size in both Markdown and HTML */
 function formatFormattedText(text: string) {
   if (!text) return null;
-  const regex = /(\*\*\*[\s\S]+?\*\*\*|\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g;
-  const parts = text.split(regex);
+
+  // Clean raw entities
+  const decoded = decodeHtmlEntities(text);
+
+  // Match Markdown bold/italic as well as HTML tags: <b>, <strong>, <i>, <em>, <u>, <s>, <strike>, <font ...>
+  const regex = /(\*\*\*[\s\S]+?\*\*\*|\*\*[\s\S]+?\*\*|\*[\s\S]+?\*|<(?:b|strong|i|em|u|s|strike|font\b[^>]*)>[\s\S]*?<\/(?:b|strong|i|em|u|s|strike|font)>)/gi;
+  const parts = decoded.split(regex);
 
   return parts.map((part, idx) => {
     if (!part) return null;
 
-    // ***bold italic***
+    // 1. HTML <b> or <strong>
+    const strongMatch = part.match(/^<(?:b|strong)>([\s\S]*?)<\/(?:b|strong)>$/i);
+    if (strongMatch) {
+      return (
+        <Text key={idx} style={{ fontWeight: FONT.weightBold }}>
+          {formatFormattedText(strongMatch[1])}
+        </Text>
+      );
+    }
+
+    // 2. HTML <i> or <em>
+    const emMatch = part.match(/^<(?:i|em)>([\s\S]*?)<\/(?:i|em)>$/i);
+    if (emMatch) {
+      return (
+        <Text key={idx} style={{ fontStyle: 'italic' }}>
+          {formatFormattedText(emMatch[1])}
+        </Text>
+      );
+    }
+
+    // 3. HTML <u>
+    const uMatch = part.match(/^<u>([\s\S]*?)<\/u>$/i);
+    if (uMatch) {
+      return (
+        <Text key={idx} style={{ textDecorationLine: 'underline' }}>
+          {formatFormattedText(uMatch[1])}
+        </Text>
+      );
+    }
+
+    // 4. HTML <s> or <strike>
+    const sMatch = part.match(/^<(?:s|strike)>([\s\S]*?)<\/(?:s|strike)>$/i);
+    if (sMatch) {
+      return (
+        <Text key={idx} style={{ textDecorationLine: 'line-through' }}>
+          {formatFormattedText(sMatch[1])}
+        </Text>
+      );
+    }
+
+    // 5. HTML <font size="...">
+    const fontMatch = part.match(/^<font\b[^>]*size=["']?(\d+)["']?[^>]*>([\s\S]*?)<\/font>$/i);
+    if (fontMatch) {
+      const sizeVal = parseInt(fontMatch[1], 10);
+      let fontSize: number = FONT.sizeBase;
+      if (sizeVal === 1) fontSize = 11;
+      else if (sizeVal === 2) fontSize = 13;
+      else if (sizeVal === 3) fontSize = 15;
+      else if (sizeVal === 5) fontSize = 18;
+      else if (sizeVal === 7) fontSize = 22;
+
+      return (
+        <Text key={idx} style={{ fontSize, lineHeight: fontSize * 1.5 }}>
+          {formatFormattedText(fontMatch[2])}
+        </Text>
+      );
+    }
+
+    // 6. Markdown ***bold italic***
     if (part.startsWith('***') && part.endsWith('***') && part.length > 6) {
       return (
         <Text key={idx} style={{ fontWeight: FONT.weightBold, fontStyle: 'italic' }}>
@@ -276,7 +412,7 @@ function formatFormattedText(text: string) {
       );
     }
 
-    // **bold**
+    // 7. Markdown **bold**
     if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
       return (
         <Text key={idx} style={{ fontWeight: FONT.weightBold }}>
@@ -285,7 +421,7 @@ function formatFormattedText(text: string) {
       );
     }
 
-    // *italic*
+    // 8. Markdown *italic*
     if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
       return (
         <Text key={idx} style={{ fontStyle: 'italic' }}>
@@ -294,7 +430,9 @@ function formatFormattedText(text: string) {
       );
     }
 
-    return <Text key={idx}>{part}</Text>;
+    // Strip any residual unknown html tags
+    const cleanPlain = part.replace(/<[^>]+>/g, '');
+    return <Text key={idx}>{cleanPlain}</Text>;
   });
 }
 
