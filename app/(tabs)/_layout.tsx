@@ -35,7 +35,6 @@ function RodjaTabButton({ onPress, accessibilityState, colors }: any) {
           style={s.rodjaLogo}
           resizeMode="cover"
         />
-        <View style={s.liveDotIndicator} />
       </View>
       <Text
         style={[
