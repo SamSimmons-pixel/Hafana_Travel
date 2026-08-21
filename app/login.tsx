@@ -2,11 +2,11 @@
  * Login Screen — app/login.tsx
  * Hafana Umrah Travel — Verification & Authentication
  *
- * Allows Jemaah to verify Visa & Birthdate to access profile & group info.
- * Includes a "Masuk sebagai Tamu" option so unauthenticated users can freely browse the app.
+ * Allows Jemaah to verify Nama Lengkap & Tanggal Lahir (via DatePicker)
+ * Autocomplete dropdown helps jemaah pick their registered name and group.
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -22,9 +22,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useAuth } from '@/context/auth';
 import { useAppTheme } from '@/context/theme';
 import { apiRequest, getStorageUrl } from '@/services/api';
+import { NameSearchResult } from '@/types/auth';
 import {
   COLORS, FONT, RADIUS, SPACING, SHADOW,
   cardStyles, inputStyles, buttonStyles, textStyles,
@@ -35,11 +37,18 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
   const { isDarkMode, colors } = useAppTheme();
 
-  const [nomor_visa, setNomorVisa]       = useState('');
-  const [tanggal_lahir, setTanggalLahir] = useState('');
-  const [loading, setLoading]            = useState(false);
-  const [errorMessage, setErrorMessage]  = useState<string | null>(null);
-  const [appLogo, setAppLogo]            = useState<string | null>(null);
+  const [name, setName]                               = useState('');
+  const [tanggal_lahir, setTanggalLahir]             = useState('');
+  const [selectedDate, setSelectedDate]               = useState<Date>(new Date(1995, 0, 1));
+  const [showDatePicker, setShowDatePicker]           = useState(false);
+  const [loading, setLoading]                        = useState(false);
+  const [errorMessage, setErrorMessage]              = useState<string | null>(null);
+  const [appLogo, setAppLogo]                        = useState<string | null>(null);
+
+  // Autocomplete dropdown
+  const [suggestions, setSuggestions]                 = useState<NameSearchResult[]>([]);
+  const [searchingNames, setSearchingNames]           = useState(false);
+  const [showDropdown, setShowDropdown]               = useState(false);
 
   // Fetch system logo from backend settings
   useEffect(() => {
@@ -55,28 +64,78 @@ export default function LoginScreen() {
     })();
   }, []);
 
+  // Search registered names on typing
+  const handleNameChange = (val: string) => {
+    const upper = val.toUpperCase();
+    setName(upper);
+    if (errorMessage) setErrorMessage(null);
+
+    if (upper.trim().length >= 2) {
+      setSearchingNames(true);
+      setShowDropdown(true);
+      apiRequest<NameSearchResult[]>(`/users/search-names?query=${encodeURIComponent(upper.trim())}`)
+        .then((res) => {
+          setSuggestions(Array.isArray(res) ? res : []);
+        })
+        .catch(() => {
+          setSuggestions([]);
+        })
+        .finally(() => {
+          setSearchingNames(false);
+        });
+    } else {
+      setSuggestions([]);
+      setShowDropdown(false);
+    }
+  };
+
+  const handleSelectName = (item: NameSearchResult) => {
+    setName(item.name.toUpperCase());
+    setShowDropdown(false);
+    setSuggestions([]);
+  };
+
+  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (date) {
+      setSelectedDate(date);
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      setTanggalLahir(`${yyyy}-${mm}-${dd}`);
+      if (errorMessage) setErrorMessage(null);
+    }
+  };
+
   const handleLogin = async () => {
     setErrorMessage(null);
-    if (!nomor_visa.trim() || !tanggal_lahir.trim()) {
-      const msg = 'Silakan masukkan Nomor Visa dan Tanggal Lahir.';
+    setShowDropdown(false);
+
+    if (!name.trim() || !tanggal_lahir.trim()) {
+      const msg = 'Silakan masukkan Nama Lengkap dan pilih Tanggal Lahir.';
       setErrorMessage(msg);
       Alert.alert('Perhatian', msg);
       return;
     }
+
     setLoading(true);
     try {
-      const { error } = await signIn(nomor_visa.trim(), tanggal_lahir.trim());
+      const { error } = await signIn(name.trim().toUpperCase(), tanggal_lahir.trim());
       if (error) {
-        const notFoundMsg = 'Akun tidak ditemukan. Nomor Visa atau Tanggal Lahir tidak terdaftar.';
+        const notFoundMsg = typeof error === 'string'
+          ? error
+          : 'Akun tidak ditemukan atau group tidak aktif. Periksa kembali nama & tanggal lahir Anda.';
         setErrorMessage(notFoundMsg);
-        Alert.alert('Akun Tidak Ditemukan', notFoundMsg);
+        Alert.alert('Login Gagal', notFoundMsg);
       } else {
         router.replace('/(tabs)');
       }
     } catch (err: any) {
       const notFoundMsg = err.message || 'Akun tidak ditemukan. Periksa kembali data Anda.';
       setErrorMessage(notFoundMsg);
-      Alert.alert('Akun Tidak Ditemukan', notFoundMsg);
+      Alert.alert('Login Gagal', notFoundMsg);
     } finally {
       setLoading(false);
     }
@@ -98,20 +157,14 @@ export default function LoginScreen() {
       >
         {/* ── Header Blue Band ── */}
         <View style={[s.header, { backgroundColor: colors.primary }]}>
-          {/* Back/Close button for guest browse */}
           <TouchableOpacity style={s.skipHeaderBtn} onPress={handleGuestBrowse} activeOpacity={0.8}>
-            <MaterialCommunityIcons name="arrow-left" size={20} color="#ffffff" style={{ marginRight: 4 }} />
+            <MaterialCommunityIcons name="arrow-left" size={16} color="#ffffff" style={{ marginRight: 4 }} />
             <Text style={s.skipHeaderBtnText}>Jelajahi App</Text>
           </TouchableOpacity>
 
-          {/* System Logo from Backend / Fallback */}
           <View style={s.logoCircle}>
             {appLogo ? (
-              <Image
-                source={{ uri: appLogo }}
-                style={s.logoImage}
-                resizeMode="contain"
-              />
+              <Image source={{ uri: appLogo }} style={s.logoImage} resizeMode="contain" />
             ) : (
               <View style={s.logoFallback}>
                 <Text style={s.logoText}>HF</Text>
@@ -126,56 +179,102 @@ export default function LoginScreen() {
         <View style={[cardStyles.padded, s.card, { backgroundColor: colors.surface }]}>
           <Text style={[textStyles.heading, { marginBottom: SPACING.xs, color: colors.textPrimary }]}>Verifikasi Data Jemaah</Text>
           <Text style={[textStyles.muted, { marginBottom: SPACING.lg, lineHeight: 18, color: colors.textSecondary }]}>
-            Masukkan Nomor Visa dan Tanggal Lahir untuk memverifikasi dokumen dan rombongan Anda.
+            Masukkan Nama Lengkap dan Tanggal Lahir untuk memverifikasi data jemaah & rombongan Anda.
           </Text>
 
-          {/* Notifikasi Akun Tidak Ditemukan / Error Banner */}
           {errorMessage ? (
             <View style={[s.errorBanner, { backgroundColor: isDarkMode ? '#451a1a' : '#fef2f2', borderColor: '#f87171' }]}>
               <MaterialCommunityIcons name="alert-circle" size={20} color="#ef4444" style={{ marginRight: SPACING.xs }} />
-              <Text style={s.errorBannerText}>
-                {errorMessage}
-              </Text>
+              <Text style={s.errorBannerText}>{errorMessage}</Text>
             </View>
           ) : null}
 
-          {/* Nomor Visa */}
-          <View style={{ marginBottom: SPACING.lg }}>
-            <Text style={[inputStyles.label, { color: colors.textSecondary }]}>Nomor Visa</Text>
+          {/* Input Nama Lengkap (Uppercase + Autocomplete) */}
+          <View style={{ marginBottom: SPACING.md, zIndex: 10 }}>
+            <Text style={[inputStyles.label, { color: colors.textSecondary }]}>Nama Lengkap Jemaah (Kapital)</Text>
             <View style={[inputStyles.wrapper, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-              <MaterialCommunityIcons name="card-account-details" size={18} color={colors.textMuted} style={{ marginRight: SPACING.sm }} />
+              <MaterialCommunityIcons name="account" size={18} color={colors.textMuted} style={{ marginRight: SPACING.sm }} />
               <TextInput
-                style={[inputStyles.field, { color: colors.textPrimary }]}
-                value={nomor_visa}
-                onChangeText={(val) => {
-                  setNomorVisa(val);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                placeholder="Contoh: 6169281080"
+                style={[inputStyles.field, { color: colors.textPrimary, textTransform: 'uppercase' }]}
+                value={name}
+                onChangeText={handleNameChange}
+                placeholder="CONTOH: AHMAD SYAHPUTRA"
                 placeholderTextColor={colors.textMuted}
-                autoCapitalize="none"
+                autoCapitalize="characters"
                 autoCorrect={false}
               />
+              {searchingNames && (
+                <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 6 }} />
+              )}
             </View>
+
+            {/* Suggestions Dropdown */}
+            {showDropdown && suggestions.length > 0 && (
+              <View style={[s.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                {suggestions.map((item, index) => (
+                  <TouchableOpacity
+                    key={`${item.name}-${index}`}
+                    style={[
+                      s.dropdownItem,
+                      { borderBottomColor: colors.border },
+                      index === suggestions.length - 1 && { borderBottomWidth: 0 },
+                    ]}
+                    onPress={() => handleSelectName(item)}
+                  >
+                    <MaterialCommunityIcons name="account-check" size={18} color={COLORS.primary} style={{ marginRight: 8, marginTop: 2 }} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.dropdownName, { color: colors.textPrimary }]}>{item.name}</Text>
+                      {item.group_name ? (
+                        <Text style={[s.dropdownGroup, { color: colors.textMuted }]}>
+                          👥 {item.group_name}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
 
-          {/* Tanggal Lahir */}
+          {/* Tanggal Lahir (Calendar Picker) */}
           <View style={{ marginBottom: SPACING.xl }}>
             <Text style={[inputStyles.label, { color: colors.textSecondary }]}>Tanggal Lahir</Text>
-            <View style={[inputStyles.wrapper, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+            <TouchableOpacity
+              style={[inputStyles.wrapper, { backgroundColor: colors.bg, borderColor: colors.border }]}
+              onPress={() => setShowDatePicker(true)}
+              activeOpacity={0.8}
+            >
               <MaterialCommunityIcons name="calendar" size={18} color={colors.textMuted} style={{ marginRight: SPACING.sm }} />
-              <TextInput
-                style={[inputStyles.field, { color: colors.textPrimary }]}
-                value={tanggal_lahir}
-                onChangeText={(val) => {
-                  setTanggalLahir(val);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                placeholder="YYYY-MM-DD  (cth: 1995-02-10)"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numbers-and-punctuation"
+              <Text
+                style={[
+                  inputStyles.field,
+                  { color: tanggal_lahir ? colors.textPrimary : colors.textMuted, paddingVertical: 12 },
+                ]}
+              >
+                {tanggal_lahir ? tanggal_lahir : 'Pilih Tanggal Lahir (Kalender)'}
+              </Text>
+              <MaterialCommunityIcons name="calendar-cursor" size={18} color={COLORS.primary} />
+            </TouchableOpacity>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                maximumDate={new Date()}
+                minimumDate={new Date(1920, 0, 1)}
+                onChange={handleDateChange}
               />
-            </View>
+            )}
+
+            {Platform.OS === 'ios' && showDatePicker && (
+              <TouchableOpacity
+                style={{ alignSelf: 'flex-end', marginTop: 6, padding: 6 }}
+                onPress={() => setShowDatePicker(false)}
+              >
+                <Text style={{ color: colors.primary, fontWeight: '700' }}>Selesai</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Login Button */}
@@ -191,7 +290,6 @@ export default function LoginScreen() {
             }
           </TouchableOpacity>
 
-          {/* Guest Browse Button */}
           <TouchableOpacity
             style={s.guestBrowseBtn}
             onPress={handleGuestBrowse}
@@ -199,30 +297,6 @@ export default function LoginScreen() {
           >
             <Text style={[s.guestBrowseBtnText, { color: colors.primary }]}>Masuk sebagai Tamu (Nanti Saja)</Text>
           </TouchableOpacity>
-
-          {/* Demo Hint */}
-          <View style={s.demoBox}>
-            <Text style={[textStyles.tiny, { marginBottom: SPACING.sm, fontWeight: FONT.weightSemi, color: colors.textSecondary }]}>💡 Contoh Jemaah Admin Panel:</Text>
-            {[
-              { label: 'Abdul Latif Ramadhani', visa: '6169281080', dob: '1995-02-10' },
-              { label: 'Aisyah Nurul Sari', visa: '6169281119', dob: '1993-01-01' },
-            ].map((acc) => (
-              <TouchableOpacity
-                key={acc.visa}
-                style={[s.demoChip, { backgroundColor: isDarkMode ? colors.surfaceAlt : COLORS.primaryLight, borderColor: isDarkMode ? colors.border : '#b3e0f7' }]}
-                onPress={() => {
-                  setNomorVisa(acc.visa);
-                  setTanggalLahir(acc.dob);
-                  setErrorMessage(null);
-                }}
-              >
-                <Text style={[s.demoChipText, { color: colors.textPrimary }]}>
-                  {acc.label} · Visa: <Text style={{ fontWeight: FONT.weightBold }}>{acc.visa}</Text>
-                  {' '}· Lahir: <Text style={{ fontWeight: FONT.weightBold }}>{acc.dob}</Text>
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
         </View>
 
         <Text style={[s.footer, { backgroundColor: colors.surface, color: colors.textMuted }]}>
@@ -248,111 +322,114 @@ const s = StyleSheet.create({
     left: SPACING.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: SPACING.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: RADIUS.pill,
   },
   skipHeaderBtnText: {
-    color: COLORS.surface,
-    fontSize: FONT.sizeSm,
-    fontWeight: FONT.weightBold,
+    color: '#ffffff',
+    fontSize: FONT.sizeXs,
+    fontWeight: FONT.weightSemi,
   },
   logoCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.md,
-    marginTop: 20,
-    overflow: 'hidden',
     ...SHADOW.card,
   },
   logoImage: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 60,
+    height: 60,
   },
   logoFallback: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: COLORS.primaryDark,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoText: {
-    color: '#ffffff',
-    fontSize: FONT.sizeXl,
+    fontSize: 22,
     fontWeight: FONT.weightBlack,
-    letterSpacing: 1,
+    color: COLORS.primaryDark,
   },
-  brandTitle: { color: COLORS.surface, fontSize: FONT.sizeXxl, fontWeight: FONT.weightBlack, letterSpacing: 0.5 },
-  brandSub:   { color: 'rgba(255,255,255,0.8)', fontSize: FONT.sizeMd, marginTop: SPACING.xs },
-
+  brandTitle: {
+    fontSize: FONT.sizeXxl,
+    fontWeight: FONT.weightBlack,
+    color: '#ffffff',
+    marginBottom: 2,
+  },
+  brandSub: {
+    fontSize: FONT.sizeSm,
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontWeight: FONT.weightMedium,
+  },
   card: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-    borderTopLeftRadius: RADIUS.xxl,
-    borderTopRightRadius: RADIUS.xxl,
-    padding: SPACING.xxl,
-    shadowOpacity: 0,
-    elevation: 0,
+    marginHorizontal: SPACING.lg,
+    marginTop: -20,
+    borderRadius: RADIUS.lg,
+    ...SHADOW.strong,
+    marginBottom: SPACING.xl,
   },
-
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.md,
     borderWidth: 1,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
     marginBottom: SPACING.lg,
   },
   errorBannerText: {
-    flex: 1,
-    fontSize: FONT.sizeSm,
-    fontWeight: FONT.weightMedium,
     color: '#ef4444',
+    fontSize: FONT.sizeXs,
+    fontWeight: FONT.weightMedium,
+    flex: 1,
     lineHeight: 18,
   },
-
+  dropdown: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+    ...SHADOW.card,
+    maxHeight: 200,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  dropdownName: {
+    fontSize: FONT.sizeSm,
+    fontWeight: '700',
+  },
+  dropdownGroup: {
+    fontSize: FONT.sizeXs,
+    marginTop: 2,
+  },
   guestBrowseBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.md,
     marginTop: SPACING.md,
+    paddingVertical: SPACING.sm,
+    alignItems: 'center',
   },
   guestBrowseBtnText: {
-    color: COLORS.textSecondary,
-    fontSize: FONT.sizeBase,
+    fontSize: FONT.sizeSm,
     fontWeight: FONT.weightSemi,
   },
-
-  demoBox: {
-    marginTop: SPACING.xl,
-    paddingTop: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  demoChip: {
-    backgroundColor: COLORS.primaryLight,
-    borderRadius: RADIUS.sm + 2,
-    padding: SPACING.sm + 2,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: '#b3e0f7',
-  },
-  demoChipText: { color: COLORS.textPrimary, fontSize: FONT.sizeSm },
-
   footer: {
-    backgroundColor: COLORS.bg,
     textAlign: 'center',
-    color: COLORS.textMuted,
     fontSize: FONT.sizeXs,
-    paddingVertical: SPACING.xl,
-    paddingHorizontal: SPACING.xxl,
+    paddingVertical: SPACING.lg,
+    marginTop: 'auto',
   },
 });
+
+

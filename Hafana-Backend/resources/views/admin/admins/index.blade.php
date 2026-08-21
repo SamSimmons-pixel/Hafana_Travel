@@ -10,7 +10,9 @@
             Tambah atau hapus akses akun Admin/Crew yang dapat login ke dashboard web backend.
         </p>
     </div>
-    <a href="{{ route('admin.admins.create') }}" class="btn-primary">+ Tambah Admin Baru</a>
+    @if(auth('admin')->user()->isAdmin())
+        <a href="{{ route('admin.admins.create') }}" class="btn-primary">+ Tambah Admin Baru</a>
+    @endif
 </div>
 
 <div class="table-wrap">
@@ -20,6 +22,7 @@
                 <th>#</th>
                 <th>Nama Admin</th>
                 <th>Email Admin</th>
+                <th>Role / Hak Akses</th>
                 <th>Tanggal Dibuat</th>
                 <th>Aksi</th>
             </tr>
@@ -30,17 +33,27 @@
                 <td>{{ $loop->iteration }}</td>
                 <td><strong>{{ $adm->name }}</strong></td>
                 <td><code>{{ $adm->email }}</code></td>
+                <td>
+                    @if($adm->role === 'admin')
+                        <span class="badge badge-success">👑 Full Admin</span>
+                    @else
+                        <span class="badge badge-info">🛡️ Sub Admin</span>
+                    @endif
+                </td>
                 <td>{{ $adm->created_at->format('d M Y, H:i') }}</td>
                 <td>
                     <div class="actions">
-                        <a href="{{ route('admin.admins.edit', $adm) }}" class="btn-action btn-edit">✏️ Edit</a>
-                        @if(Auth::guard('admin')->id() !== $adm->id)
+                        @if(auth('admin')->user()->isAdmin() || auth('admin')->id() === $adm->id)
+                            <a href="{{ route('admin.admins.edit', $adm) }}" class="btn-action btn-edit">✏️ Edit</a>
+                        @endif
+
+                        @if(auth('admin')->user()->isAdmin() && Auth::guard('admin')->id() !== $adm->id)
                             <form method="POST" action="{{ route('admin.admins.destroy', $adm) }}" style="margin:0" onsubmit="return confirm('Hapus akun admin {{ addslashes($adm->name) }}?')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn-action btn-delete">🗑️ Hapus</button>
                             </form>
-                        @else
+                        @elseif(Auth::guard('admin')->id() === $adm->id)
                             <span class="badge badge-info">Anda (Sedang Login)</span>
                         @endif
                     </div>
@@ -48,10 +61,11 @@
             </tr>
             @empty
             <tr>
-                <td colspan="5" class="empty">Belum ada data Admin.</td>
+                <td colspan="6" class="empty">Belum ada data Admin.</td>
             </tr>
             @endforelse
         </tbody>
     </table>
 </div>
 @endsection
+

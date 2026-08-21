@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UserController;
+
 
 // Login
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle: 10,1');
@@ -12,6 +14,13 @@ Route::post('auth/logout', [AuthController::class, 'logout'])->middleware('throt
 
 // Get user profile (protected by auth middleware below)
 Route::get('user', [AuthController::class, 'me'])->middleware('auth:sanctum');
+
+// Autocomplete search names for login dropdown (public)
+Route::get('users/search-names', [AuthController::class, 'searchNames']);
+
+// Update phone number (authenticated)
+Route::patch('user/phone', [UserController::class, 'updatePhone'])->middleware('auth:sanctum');
+
 
 // ──────────────────────────────────────────────────────
 // ⚙️ SETTINGS ROUTE (Public - mobile app)

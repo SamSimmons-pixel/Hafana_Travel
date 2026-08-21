@@ -59,9 +59,11 @@ class UserController extends Controller
             'nomor_visa'    => 'required|string|max:100|unique:users,nomor_visa',
             'tanggal_lahir' => 'required|date',
             'nomor_paspor'  => 'nullable|string|max:100',
-            'no_hp'         => 'nullable|string|max:50',
+            'no_hp'         => 'nullable|string|regex:/^[0-9]+$/|max:50',
             'group_id'      => 'nullable|exists:groups,id',
         ]);
+
+        $validated['name'] = strtoupper(trim($validated['name']));
 
         $user = User::create($validated);
 
@@ -93,9 +95,11 @@ class UserController extends Controller
             'nomor_visa'    => 'required|string|max:100|unique:users,nomor_visa,' . $user->id,
             'tanggal_lahir' => 'required|date',
             'nomor_paspor'  => 'nullable|string|max:100',
-            'no_hp'         => 'nullable|string|max:50',
+            'no_hp'         => 'nullable|string|regex:/^[0-9]+$/|max:50',
             'group_id'      => 'nullable|exists:groups,id',
         ]);
+
+        $validated['name'] = strtoupper(trim($validated['name']));
 
         $user->update($validated);
 
@@ -113,6 +117,10 @@ class UserController extends Controller
      */
     public function destroy(User $user, Request $request): RedirectResponse
     {
+        if (auth('admin')->user()->isSubAdmin()) {
+            return back()->with('error', 'Sub Admin tidak memiliki akses untuk menghapus akun Jemaah.');
+        }
+
         $name = $user->name;
         $groupId = $user->group_id;
 

@@ -2,7 +2,10 @@
  * Khutbah Jum'at Screen — app/khutbah.tsx
  * Hafana Umrah Travel
  *
- * Displays live / upcoming Al-Haramain Sermons (Indonesian) via YouTube.
+ * 3-State Thematic System:
+ * - State 1: Standby / Belum Ada Jadwal Siaran (Muted Slate / Cool Navy Theme)
+ * - State 2: Terjadwal / Upcoming Live Stream Ditemukan (Warm Amber Gold Theme)
+ * - State 3: Siaran Langsung Berlangsung + Terjemahan Indonesia (Emerald Green & Red Pulse Theme)
  */
 
 import React, { useState, useCallback, useRef } from 'react';
@@ -29,25 +32,7 @@ import {
   layoutStyles,
 } from '@/components/styles';
 import { useAppTheme } from '@/context/theme';
-import { LARAVEL_API_URL } from '@/services/api';
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface LiveVideo {
-  videoId: string;
-  title: string;
-  thumbnail: string;
-  url: string;
-  scheduledAt: string | null;
-  isIndonesian: boolean;
-}
-
-interface KhutbahLiveResponse {
-  status: 'live' | 'upcoming' | 'none' | 'error';
-  live: LiveVideo | null;
-  upcoming: LiveVideo[];
-  error?: string;
-}
+import { LARAVEL_API_URL, KhutbahLiveResponse, KhutbahLiveVideo } from '@/services/api';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -76,10 +61,12 @@ export default function KhutbahScreen() {
   const router = useRouter();
   const { isDarkMode, colors } = useAppTheme();
 
+  const [selectedMosque, setSelectedMosque] = useState<'haram' | 'nabawi'>('haram');
   const [data, setData] = useState<KhutbahLiveResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
   // Animation for live pulse badge
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -104,9 +91,9 @@ export default function KhutbahScreen() {
       });
       const json: KhutbahLiveResponse = await res.json();
       setData(json);
-      if (json.status === 'live') startPulse();
+      if (json.status === 'live' || json.state_id === 3) startPulse();
     } catch (err) {
-      setData({ status: 'error', live: null, upcoming: [], error: String(err) });
+      setData({ status: 'error', state_id: 1, live: null, upcoming: [], error: String(err) });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -124,23 +111,55 @@ export default function KhutbahScreen() {
     Linking.openURL(url).catch(() => {});
   };
 
-  // ── Render helpers ──────────────────────────────────────────────────────────
+  // ── Active Mosque & State Calculation ──────────────────────────────────────
 
-  const renderLive = (video: LiveVideo) => (
-    <View style={[s.liveCard, { backgroundColor: colors.surface }]}>
-      {/* Live badge */}
-      <View style={s.liveBadgeRow}>
-        <Animated.View style={[s.pulseDot, { transform: [{ scale: pulseAnim }] }]} />
-        <Text style={s.liveBadgeText}>LIVE SEKARANG</Text>
+  const activeMosqueName = selectedMosque === 'haram' ? 'Masjidil Haram (Makkah)' : 'Masjid Nabawi (Madinah)';
+  const activeMosqueData = selectedMosque === 'haram' ? data?.masjidil_haram : data?.masjid_nabawi;
+
+  const currentLive = activeMosqueData?.live || (data?.live && (data.live.masjid === selectedMosque || !data.live.masjid) ? data.live : null);
+  const currentUpcoming = (activeMosqueData?.upcoming && activeMosqueData.upcoming.length > 0)
+    ? activeMosqueData.upcoming
+    : (data?.upcoming?.filter(u => u.masjid === selectedMosque || !u.masjid) ?? []);
+
+  // Compute 3-State ID for active mosque:
+  // State 3: Live stream active (Indonesian translation)
+  // State 2: Upcoming stream detected on channel
+  // State 1: No upcoming or live stream found (Standby)
+  let activeStateId: 1 | 2 | 3 = 1;
+  if (currentLive) {
+    activeStateId = 3;
+  } else if (currentUpcoming.length > 0) {
+    activeStateId = 2;
+  } else {
+    activeStateId = 1;
+  }
+
+  // Active video to play in-app
+  const activeVideo = currentLive || (selectedVideoId ? currentUpcoming.find(v => v.videoId === selectedVideoId) : (currentUpcoming[0] || null));
+  const activePlayingId = activeVideo?.videoId || currentLive?.videoId || null;
+
+  // ── Render State Views ─────────────────────────────────────────────────────
+
+  // STATE 3: LIVE STREAMING BERLANGSUNG (Emerald Green & Red Pulse Theme)
+  const renderState3Live = (video: KhutbahLiveVideo) => (
+    <View style={[s.stateCard, s.stateCard3, { backgroundColor: isDarkMode ? '#052e16' : '#f0fdf4', borderColor: '#22c55e' }]}>
+      {/* State Header Banner */}
+      <View style={s.stateHeaderRow}>
+        <View style={[s.statePill, { backgroundColor: '#ef4444' }]}>
+          <Animated.View style={[s.liveDotWhite, { transform: [{ scale: pulseAnim }] }]} />
+          <Text style={s.statePillTextLight}>STATE 3 • LIVE SEKARANG</Text>
+        </View>
+        <View style={[s.langBadge, { backgroundColor: isDarkMode ? '#14532d' : '#dcfce7' }]}>
+          <Text style={[s.langBadgeText, { color: '#16a34a' }]}>🇮🇩 Bahasa Indonesia</Text>
+        </View>
       </View>
 
-      {/* Title */}
-      <Text style={[s.videoTitle, { color: colors.textPrimary }]} numberOfLines={3}>
+      <Text style={[s.state3Title, { color: isDarkMode ? '#ffffff' : '#14532d' }]} numberOfLines={3}>
         {video.title}
       </Text>
 
-      {/* Video Player — Metro picks .native.tsx or .web.tsx automatically */}
-      <View style={[s.playerWrapper, { backgroundColor: '#000' }]}>
+      {/* Embedded Player */}
+      <View style={[s.playerWrapper, { backgroundColor: '#000000' }]}>
         <YoutubePlayerWrapper
           height={220}
           play={playing}
@@ -151,70 +170,130 @@ export default function KhutbahScreen() {
         />
       </View>
 
-      {/* Play / Watch buttons */}
-      {!playing && (
-        <TouchableOpacity
-          style={[s.playBtn, { backgroundColor: colors.primary }]}
-          onPress={() => setPlaying(true)}
-          accessibilityLabel="Putar siaran langsung"
-        >
-          <MaterialCommunityIcons name="play-circle" size={20} color="#fff" />
-          <Text style={s.playBtnText}>Putar Siaran Langsung</Text>
-        </TouchableOpacity>
-      )}
+      {/* Action Buttons */}
+      <View style={{ gap: SPACING.sm }}>
+        {!playing ? (
+          <TouchableOpacity
+            style={[s.mainActionBtn, { backgroundColor: '#16a34a' }]}
+            onPress={() => setPlaying(true)}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="play-circle" size={20} color="#ffffff" />
+            <Text style={s.mainActionBtnText}>Putar Siaran Langsung di Aplikasi</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[s.mainActionBtn, { backgroundColor: '#dc2626' }]}
+            onPress={() => setPlaying(false)}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="pause-circle" size={20} color="#ffffff" />
+            <Text style={s.mainActionBtnText}>Jeda Siaran</Text>
+          </TouchableOpacity>
+        )}
 
-      <TouchableOpacity
-        style={[s.ytBtn, { borderColor: colors.border }]}
-        onPress={() => openYouTube(video.url)}
-        accessibilityLabel="Tonton di YouTube"
-      >
-        <MaterialCommunityIcons name="youtube" size={20} color="#FF0000" />
-        <Text style={[s.ytBtnText, { color: colors.textPrimary }]}>Tonton di YouTube</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[s.secondaryActionBtn, { borderColor: isDarkMode ? '#22c55e' : '#86efac' }]}
+          onPress={() => openYouTube(video.url)}
+          activeOpacity={0.7}
+        >
+          <MaterialCommunityIcons name="youtube" size={20} color="#FF0000" />
+          <Text style={[s.secondaryActionBtnText, { color: isDarkMode ? '#ffffff' : '#166534' }]}>
+            Buka di YouTube
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
-  const renderUpcoming = (items: LiveVideo[]) => (
-    <View style={s.upcomingSection}>
-      {/* "Not started" notice */}
-      <View style={[s.notStartedBanner, { backgroundColor: colors.warningBg ?? '#fff3cd' }]}>
-        <MaterialCommunityIcons name="clock-alert-outline" size={22} color={colors.warning ?? '#856404'} />
-        <Text style={[s.notStartedText, { color: colors.warning ?? '#856404' }]}>
-          Siaran belum dimulai. Pantau terus atau refresh halaman ini.
+  // STATE 2: SIARAN TERJADWAL (Warm Amber Gold Theme)
+  const renderState2Upcoming = (items: KhutbahLiveVideo[]) => (
+    <View style={s.state2Container}>
+      {/* State Header Banner */}
+      <View style={[s.stateHeaderBanner, { backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', borderColor: '#f59e0b' }]}>
+        <View style={s.stateHeaderRow}>
+          <View style={[s.statePill, { backgroundColor: '#d97706' }]}>
+            <MaterialCommunityIcons name="calendar-clock" size={14} color="#ffffff" />
+            <Text style={s.statePillTextLight}>STATE 2 • SIARAN TERJADWAL</Text>
+          </View>
+          <Text style={[s.stateHeaderSub, { color: isDarkMode ? '#fbbf24' : '#b45309' }]}>
+            Upcoming Live
+          </Text>
+        </View>
+
+        <Text style={[s.state2BannerTitle, { color: isDarkMode ? '#fef3c7' : '#92400e' }]}>
+          Jadwal Siaran Khutbah Ditemukan
+        </Text>
+        <Text style={[s.state2BannerDesc, { color: isDarkMode ? '#fde68a' : '#78350f' }]}>
+          Kanal Al-Haramain Sermons telah merilis jadwal siaran langsung untuk {activeMosqueName}. Siaran akan otomatis live saat waktu khutbah tiba.
         </Text>
       </View>
 
-      <Text style={[s.sectionLabel, { color: colors.textPrimary }]}>
-        🕋 Jadwal Siaran Mendatang
+      {/* Selected Video Player if user tapped to play upcoming/preview */}
+      {selectedVideoId && activeVideo ? (
+        <View style={[s.stateCard, { backgroundColor: colors.surface, borderColor: '#d97706', borderWidth: 2, marginBottom: SPACING.md }]}>
+          <View style={s.stateHeaderRow}>
+            <Text style={[s.videoTitle, { color: colors.textPrimary, flex: 1 }]} numberOfLines={2}>
+              {activeVideo.title}
+            </Text>
+          </View>
+          <View style={[s.playerWrapper, { backgroundColor: '#000000' }]}>
+            <YoutubePlayerWrapper
+              height={220}
+              play={playing}
+              videoId={activeVideo.videoId}
+              onChangeState={(state: string) => {
+                if (state === 'ended') setPlaying(false);
+              }}
+            />
+          </View>
+        </View>
+      ) : null}
+
+      <Text style={[s.sectionTitle, { color: colors.textPrimary }]}>
+        📅 Daftar Siaran Terjadwal ({items.length})
       </Text>
 
       {items.map((item, idx) => (
         <TouchableOpacity
           key={item.videoId + idx}
-          style={[s.upcomingCard, { backgroundColor: colors.surface }]}
-          onPress={() => openYouTube(item.url)}
+          style={[
+            s.upcomingCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: activePlayingId === item.videoId ? '#d97706' : colors.border,
+              borderWidth: activePlayingId === item.videoId ? 2 : 1,
+            },
+          ]}
+          onPress={() => {
+            setSelectedVideoId(item.videoId);
+            setPlaying(true);
+          }}
           activeOpacity={0.8}
-          accessibilityLabel={`Jadwal siaran ${item.title}`}
         >
-          <View style={[s.upcomingIconBox, { backgroundColor: colors.primaryLight }]}>
-            <MaterialCommunityIcons name="calendar-clock" size={26} color={colors.primary} />
+          <View style={[s.upcomingIconBox, { backgroundColor: isDarkMode ? '#451a03' : '#fef3c7' }]}>
+            <MaterialCommunityIcons
+              name={activePlayingId === item.videoId ? 'play' : 'calendar-clock'}
+              size={26}
+              color="#d97706"
+            />
           </View>
           <View style={s.upcomingInfo}>
-            <Text style={[s.upcomingTitle, { color: colors.textPrimary }]} numberOfLines={3}>
+            <Text style={[s.upcomingTitle, { color: colors.textPrimary }]} numberOfLines={2}>
               {item.title}
             </Text>
             {item.scheduledAt ? (
               <View style={s.upcomingMetaRow}>
-                <MaterialCommunityIcons name="clock-outline" size={13} color={colors.textSecondary} />
-                <Text style={[s.upcomingMeta, { color: colors.textSecondary }]}>
+                <MaterialCommunityIcons name="clock-outline" size={13} color="#d97706" />
+                <Text style={[s.upcomingMeta, { color: isDarkMode ? '#fbbf24' : '#b45309', fontWeight: '700' }]}>
                   {' '}{formatScheduled(item.scheduledAt)}
                 </Text>
               </View>
             ) : null}
             <View style={s.upcomingMetaRow}>
-              <MaterialCommunityIcons name="youtube" size={13} color="#FF0000" />
-              <Text style={[s.upcomingMetaLink, { color: colors.primary }]}>
-                {' '}Tonton di YouTube
+              <MaterialCommunityIcons name="play-circle-outline" size={13} color="#d97706" />
+              <Text style={[s.upcomingMetaLink, { color: '#d97706' }]}>
+                {' '}Putar di aplikasi / pasang pengingat
               </Text>
             </View>
           </View>
@@ -224,15 +303,45 @@ export default function KhutbahScreen() {
     </View>
   );
 
-  const renderNone = () => (
-    <View style={[s.emptyBox, { backgroundColor: colors.surface }]}>
-      <MaterialCommunityIcons name="television-off" size={52} color={colors.textMuted} />
-      <Text style={[s.emptyTitle, { color: colors.textPrimary }]}>
-        Belum Ada Siaran
-      </Text>
-      <Text style={[s.emptySubtitle, { color: colors.textSecondary }]}>
-        Saat ini tidak ada siaran langsung atau jadwal siaran Khutbah Jum'at dalam Bahasa Indonesia dari Al-Haramain.
-      </Text>
+  // STATE 1: STANDBY / BELUM ADA JADWAL SIARAN (Muted Slate / Cool Navy Theme)
+  const renderState1Standby = () => (
+    <View style={[s.stateCard, s.stateCard1, { backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc', borderColor: isDarkMode ? '#334155' : '#cbd5e1' }]}>
+      {/* State Header Banner */}
+      <View style={s.stateHeaderRow}>
+        <View style={[s.statePill, { backgroundColor: isDarkMode ? '#475569' : '#64748b' }]}>
+          <MaterialCommunityIcons name="clock-outline" size={14} color="#ffffff" />
+          <Text style={s.statePillTextLight}>STATE 1 • BELUM ADA JADWAL (STANDBY)</Text>
+        </View>
+        <Text style={[s.stateHeaderSub, { color: colors.textMuted }]}>Offline</Text>
+      </View>
+
+      <View style={s.state1Center}>
+        <View style={[s.state1IconCircle, { backgroundColor: isDarkMode ? '#334155' : '#e2e8f0' }]}>
+          <MaterialCommunityIcons name="mosque" size={44} color={isDarkMode ? '#94a3b8' : '#64748b'} />
+        </View>
+        <Text style={[s.state1Title, { color: colors.textPrimary }]}>
+          Belum Ada Jadwal Siaran Khutbah
+        </Text>
+        <Text style={[s.state1Desc, { color: colors.textSecondary }]}>
+          Kanal Al-Haramain Sermons belum merilis jadwal siaran langsung mendatang untuk {activeMosqueName}.
+        </Text>
+      </View>
+
+      {/* Routine Schedule Guide */}
+      <View style={[s.guideBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={s.guideRow}>
+          <MaterialCommunityIcons name="information-outline" size={18} color={colors.primary} />
+          <Text style={[s.guideTitle, { color: colors.textPrimary }]}>
+            Informasi Waktu Pelaksanaan
+          </Text>
+        </View>
+        <Text style={[s.guideText, { color: colors.textSecondary }]}>
+          • Siaran rutin disiarkan setiap hari <Text style={{ fontWeight: '700' }}>Jum'at</Text> siang waktu Saudi (sekitar pukul <Text style={{ fontWeight: '700' }}>16:00 - 17:30 WIB</Text>).
+        </Text>
+        <Text style={[s.guideText, { color: colors.textSecondary }]}>
+          • Jadwal siaran biasanya muncul di YouTube beberapa jam sebelum waktu sholat Jum'at dimulai.
+        </Text>
+      </View>
     </View>
   );
 
@@ -242,7 +351,7 @@ export default function KhutbahScreen() {
         <View style={s.loaderBox}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[s.loaderText, { color: colors.textSecondary }]}>
-            Memeriksa siaran langsung…
+            Memeriksa status siaran langsung…
           </Text>
         </View>
       );
@@ -250,23 +359,30 @@ export default function KhutbahScreen() {
 
     if (!data || data.status === 'error') {
       return (
-        <View style={[s.emptyBox, { backgroundColor: colors.surface }]}>
-          <MaterialCommunityIcons name="wifi-off" size={52} color={colors.textMuted} />
-          <Text style={[s.emptyTitle, { color: colors.textPrimary }]}>Gagal Memuat</Text>
-          <Text style={[s.emptySubtitle, { color: colors.textSecondary }]}>
-            Periksa koneksi internet Anda lalu tekan tombol refresh.
+        <View style={[s.stateCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <MaterialCommunityIcons name="wifi-off" size={48} color={colors.textMuted} style={{ alignSelf: 'center', marginBottom: 12 }} />
+          <Text style={[s.state1Title, { color: colors.textPrimary, textAlign: 'center' }]}>Gagal Memuat Status</Text>
+          <Text style={[s.state1Desc, { color: colors.textSecondary, textAlign: 'center' }]}>
+            Periksa koneksi internet Anda lalu tekan tombol perbarui.
           </Text>
         </View>
       );
     }
 
-    return (
-      <>
-        {data.status === 'live' && data.live ? renderLive(data.live) : null}
-        {data.upcoming.length > 0 ? renderUpcoming(data.upcoming) : null}
-        {data.status !== 'live' && data.upcoming.length === 0 ? renderNone() : null}
-      </>
-    );
+    switch (activeStateId) {
+      case 3:
+        return (
+          <>
+            {currentLive ? renderState3Live(currentLive) : null}
+            {currentUpcoming.length > 0 ? renderState2Upcoming(currentUpcoming) : null}
+          </>
+        );
+      case 2:
+        return renderState2Upcoming(currentUpcoming);
+      case 1:
+      default:
+        return renderState1Standby();
+    }
   };
 
   return (
@@ -279,27 +395,175 @@ export default function KhutbahScreen() {
           <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[s.appBarTitle, { color: colors.textPrimary }]}>Khutbah Jum'at</Text>
-        {/* Refresh button */}
+        
+        {/* Right Header Buttons: YouTube Channel Redirection + Refresh */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <TouchableOpacity
+            style={s.headerIconBtn}
+            onPress={() => openYouTube('https://www.youtube.com/@Al-haramain-Sermons/streams')}
+            activeOpacity={0.7}
+            accessibilityLabel="Buka Saluran YouTube Al-Haramain"
+          >
+            <MaterialCommunityIcons name="youtube" size={24} color="#FF0000" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={s.headerIconBtn}
+            onPress={() => fetchLiveStatus(true)}
+            disabled={refreshing || loading}
+            activeOpacity={0.7}
+            accessibilityLabel="Refresh data siaran"
+          >
+            {refreshing ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <MaterialCommunityIcons name="refresh" size={22} color={colors.primary} />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* ── MOSQUE SWITCHER TABS ── */}
+      <View style={[s.mosqueSwitcherContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={s.refreshHeaderBtn}
-          onPress={() => fetchLiveStatus(true)}
-          disabled={refreshing || loading}
-          accessibilityLabel="Refresh data siaran"
+          style={[
+            s.mosqueTabBtn,
+            selectedMosque === 'haram' && [s.mosqueTabBtnActive, { backgroundColor: colors.primary }],
+          ]}
+          onPress={() => {
+            setSelectedMosque('haram');
+            setSelectedVideoId(null);
+            setPlaying(false);
+          }}
+          activeOpacity={0.8}
         >
-          {refreshing ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <MaterialCommunityIcons name="refresh" size={22} color={colors.primary} />
-          )}
+          <MaterialCommunityIcons
+            name="star-crescent"
+            size={18}
+            color={selectedMosque === 'haram' ? '#ffffff' : colors.textSecondary}
+          />
+          <Text
+            style={[
+              s.mosqueTabBtnText,
+              { color: selectedMosque === 'haram' ? '#ffffff' : colors.textSecondary },
+              selectedMosque === 'haram' && s.mosqueTabBtnTextActive,
+            ]}
+          >
+            Masjidil Haram
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            s.mosqueTabBtn,
+            selectedMosque === 'nabawi' && [s.mosqueTabBtnActive, { backgroundColor: colors.primary }],
+          ]}
+          onPress={() => {
+            setSelectedMosque('nabawi');
+            setSelectedVideoId(null);
+            setPlaying(false);
+          }}
+          activeOpacity={0.8}
+        >
+          <MaterialCommunityIcons
+            name="mosque"
+            size={18}
+            color={selectedMosque === 'nabawi' ? '#ffffff' : colors.textSecondary}
+          />
+          <Text
+            style={[
+              s.mosqueTabBtnText,
+              { color: selectedMosque === 'nabawi' ? '#ffffff' : colors.textSecondary },
+              selectedMosque === 'nabawi' && s.mosqueTabBtnTextActive,
+            ]}
+          >
+            Masjid Nabawi
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* ── CHANNEL BANNER ── */}
-      <View style={[s.channelBanner, { backgroundColor: colors.primaryLight }]}>
-        <MaterialCommunityIcons name="account-voice" size={18} color={colors.primary} />
-        <Text style={[s.channelBannerText, { color: colors.primary }]}>
-          Al-Haramain Sermons — Siaran Langsung Indonesia
-        </Text>
+      {/* ── 3-STATE STATUS TRACKER (Traffic Light Workflow Tracker) ── */}
+      <View style={[s.trackerContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <View style={s.trackerRow}>
+          {/* Step 1: Standby */}
+          <View
+            style={[
+              s.trackerPill,
+              activeStateId === 1
+                ? [s.trackerPillActive, { backgroundColor: isDarkMode ? '#334155' : '#e2e8f0', borderColor: '#64748b' }]
+                : { backgroundColor: 'transparent', borderColor: 'transparent' },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="clock-outline"
+              size={13}
+              color={activeStateId === 1 ? (isDarkMode ? '#ffffff' : '#334155') : colors.textMuted}
+            />
+            <Text
+              style={[
+                s.trackerPillText,
+                { color: activeStateId === 1 ? (isDarkMode ? '#ffffff' : '#334155') : colors.textMuted },
+                activeStateId === 1 && { fontWeight: '800' },
+              ]}
+            >
+              1. Standby
+            </Text>
+          </View>
+
+          <MaterialCommunityIcons name="chevron-right" size={14} color={colors.textMuted} />
+
+          {/* Step 2: Terjadwal */}
+          <View
+            style={[
+              s.trackerPill,
+              activeStateId === 2
+                ? [s.trackerPillActive, { backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', borderColor: '#d97706' }]
+                : { backgroundColor: 'transparent', borderColor: 'transparent' },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="calendar-clock"
+              size={13}
+              color={activeStateId === 2 ? '#d97706' : colors.textMuted}
+            />
+            <Text
+              style={[
+                s.trackerPillText,
+                { color: activeStateId === 2 ? '#d97706' : colors.textMuted },
+                activeStateId === 2 && { fontWeight: '800' },
+              ]}
+            >
+              2. Terjadwal
+            </Text>
+          </View>
+
+          <MaterialCommunityIcons name="chevron-right" size={14} color={colors.textMuted} />
+
+          {/* Step 3: Live Now */}
+          <View
+            style={[
+              s.trackerPill,
+              activeStateId === 3
+                ? [s.trackerPillActive, { backgroundColor: isDarkMode ? '#052e16' : '#dcfce7', borderColor: '#16a34a' }]
+                : { backgroundColor: 'transparent', borderColor: 'transparent' },
+            ]}
+          >
+            {activeStateId === 3 ? (
+              <Animated.View style={[s.miniLiveDot, { transform: [{ scale: pulseAnim }] }]} />
+            ) : (
+              <MaterialCommunityIcons name="broadcast" size={13} color={colors.textMuted} />
+            )}
+            <Text
+              style={[
+                s.trackerPillText,
+                { color: activeStateId === 3 ? '#16a34a' : colors.textMuted },
+                activeStateId === 3 && { fontWeight: '800' },
+              ]}
+            >
+              3. Live ID
+            </Text>
+          </View>
+        </View>
       </View>
 
       {/* ── SCROLLABLE CONTENT ── */}
@@ -317,13 +581,14 @@ export default function KhutbahScreen() {
       >
         {renderContent()}
 
-        {/* Manual refresh button at bottom */}
+        {/* Manual Refresh Button */}
         {!loading && (
           <TouchableOpacity
             style={[s.refreshBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
             onPress={() => fetchLiveStatus(true)}
             disabled={refreshing}
             accessibilityLabel="Perbarui status siaran"
+            activeOpacity={0.7}
           >
             <MaterialCommunityIcons name="refresh" size={18} color={colors.primary} />
             <Text style={[s.refreshBtnText, { color: colors.primary }]}>
@@ -339,7 +604,6 @@ export default function KhutbahScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  // App Bar
   appBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -355,33 +619,81 @@ const s = StyleSheet.create({
     fontSize: FONT.sizeLg,
     fontWeight: FONT.weightBlack,
   },
-  refreshHeaderBtn: {
+  headerIconBtn: {
     padding: SPACING.xs,
-    width: 36,
+    minWidth: 32,
     alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  // Channel Banner
-  channelBanner: {
+  // Mosque Switcher Tabs
+  mosqueSwitcherContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
+    gap: SPACING.sm,
+    borderBottomWidth: 1,
   },
-  channelBannerText: {
+  mosqueTabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: RADIUS.md,
+    backgroundColor: 'transparent',
+  },
+  mosqueTabBtnActive: {
+    ...SHADOW.card,
+  },
+  mosqueTabBtnText: {
     fontSize: FONT.sizeSm,
-    fontWeight: FONT.weightSemi,
-    marginLeft: SPACING.xs,
+    fontWeight: '600',
+  },
+  mosqueTabBtnTextActive: {
+    fontWeight: '800',
   },
 
-  // Scroll
+  // 3-State Status Tracker Bar
+  trackerContainer: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xs + 2,
+    borderBottomWidth: 1,
+  },
+  trackerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  trackerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1.5,
+  },
+  trackerPillActive: {
+    ...SHADOW.card,
+  },
+  trackerPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  miniLiveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#ef4444',
+  },
+
+  // Scroll Content
   scroll: {
     padding: SPACING.lg,
     paddingBottom: 40,
   },
-
-  // Loader
   loaderBox: {
     alignItems: 'center',
     paddingTop: 80,
@@ -392,36 +704,61 @@ const s = StyleSheet.create({
     marginTop: SPACING.sm,
   },
 
-  // Live Card
-  liveCard: {
+  // State Card Base
+  stateCard: {
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOW.card,
     borderWidth: 2,
-    borderColor: '#e53e3e',
+    ...SHADOW.card,
+    marginBottom: SPACING.lg,
   },
-  liveBadgeRow: {
+  stateHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  statePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
-    gap: SPACING.xs,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.pill,
   },
-  pulseDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#e53e3e',
+  statePillTextLight: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
-  liveBadgeText: {
-    color: '#e53e3e',
-    fontSize: FONT.sizeSm,
-    fontWeight: FONT.weightBlack,
-    letterSpacing: 1,
+  stateHeaderSub: {
+    fontSize: 12,
+    fontWeight: '700',
   },
-  videoTitle: {
+  langBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.sm,
+  },
+  langBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // State 3: Live Theme
+  stateCard3: {
+    borderColor: '#22c55e',
+  },
+  liveDotWhite: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ffffff',
+  },
+  state3Title: {
     fontSize: FONT.sizeLg,
-    fontWeight: FONT.weightBold,
+    fontWeight: '800',
     marginBottom: SPACING.md,
     lineHeight: 24,
   },
@@ -430,36 +767,21 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: SPACING.md,
   },
-  webPlayerFallback: {
-    padding: SPACING.lg,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    marginBottom: SPACING.md,
-  },
-  webPlayerFallbackText: {
-    fontSize: FONT.sizeSm,
-    textAlign: 'center',
-    marginTop: SPACING.xs,
-  },
-  playBtn: {
+  mainActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
     paddingVertical: 14,
     borderRadius: RADIUS.lg,
-    marginBottom: SPACING.sm,
     ...SHADOW.button,
   },
-  playBtnText: {
-    color: '#fff',
-    fontSize: FONT.sizeLg,
-    fontWeight: FONT.weightBold,
+  mainActionBtnText: {
+    color: '#ffffff',
+    fontSize: FONT.sizeBase,
+    fontWeight: '800',
   },
-  ytBtn: {
+  secondaryActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -468,32 +790,34 @@ const s = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1.5,
   },
-  ytBtnText: {
-    fontSize: FONT.sizeBase,
-    fontWeight: FONT.weightSemi,
+  secondaryActionBtnText: {
+    fontSize: FONT.sizeSm,
+    fontWeight: '700',
   },
 
-  // Upcoming Section
-  upcomingSection: {
+  // State 2: Upcoming Theme
+  state2Container: {
     gap: SPACING.md,
   },
-  notStartedBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: SPACING.sm,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
+  stateHeaderBanner: {
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    borderWidth: 1.5,
     marginBottom: SPACING.sm,
+    ...SHADOW.card,
   },
-  notStartedText: {
-    flex: 1,
-    fontSize: FONT.sizeMd,
-    fontWeight: FONT.weightSemi,
+  state2BannerTitle: {
+    fontSize: FONT.sizeLg,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  state2BannerDesc: {
+    fontSize: FONT.sizeSm,
     lineHeight: 20,
   },
-  sectionLabel: {
+  sectionTitle: {
     fontSize: FONT.sizeLg,
-    fontWeight: FONT.weightBold,
+    fontWeight: '800',
     marginBottom: SPACING.xs,
   },
   upcomingCard: {
@@ -505,19 +829,19 @@ const s = StyleSheet.create({
     ...SHADOW.card,
   },
   upcomingIconBox: {
-    width: 52,
-    height: 52,
+    width: 50,
+    height: 50,
     borderRadius: RADIUS.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
   upcomingInfo: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
   upcomingTitle: {
     fontSize: FONT.sizeBase,
-    fontWeight: FONT.weightBold,
+    fontWeight: '700',
     lineHeight: 20,
   },
   upcomingMetaRow: {
@@ -530,29 +854,62 @@ const s = StyleSheet.create({
   },
   upcomingMetaLink: {
     fontSize: FONT.sizeXs,
-    fontWeight: FONT.weightSemi,
+    fontWeight: '600',
+  },
+  videoTitle: {
+    fontSize: FONT.sizeBase,
+    fontWeight: '700',
   },
 
-  // Empty / None
-  emptyBox: {
+  // State 1: Standby Theme
+  stateCard1: {},
+  state1Center: {
     alignItems: 'center',
-    borderRadius: RADIUS.xl,
-    padding: SPACING.xxl,
-    gap: SPACING.md,
-    ...SHADOW.card,
+    paddingVertical: SPACING.md,
+    gap: SPACING.sm,
   },
-  emptyTitle: {
-    fontSize: FONT.sizeXl,
-    fontWeight: FONT.weightBold,
+  state1IconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  state1Title: {
+    fontSize: FONT.sizeLg,
+    fontWeight: '800',
     textAlign: 'center',
   },
-  emptySubtitle: {
-    fontSize: FONT.sizeMd,
+  state1Desc: {
+    fontSize: FONT.sizeSm,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
+    paddingHorizontal: SPACING.md,
+  },
+  guideBox: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    gap: 6,
+  },
+  guideRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  guideTitle: {
+    fontSize: FONT.sizeSm,
+    fontWeight: '800',
+  },
+  guideText: {
+    fontSize: FONT.sizeXs,
+    lineHeight: 18,
   },
 
-  // Refresh button at bottom
+  // Bottom Refresh Button
   refreshBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -565,6 +922,7 @@ const s = StyleSheet.create({
   },
   refreshBtnText: {
     fontSize: FONT.sizeBase,
-    fontWeight: FONT.weightSemi,
+    fontWeight: '700',
   },
 });
+

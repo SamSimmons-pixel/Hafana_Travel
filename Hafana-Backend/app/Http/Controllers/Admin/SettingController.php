@@ -19,6 +19,10 @@ class SettingController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        if (auth('admin')->user()->isSubAdmin()) {
+            return back()->with('error', 'Sub Admin tidak memiliki akses untuk mengubah logo atau pengaturan sistem.');
+        }
+
         $request->validate([
             'app_logo' => 'nullable|image|max:2048', // 2MB max
         ]);

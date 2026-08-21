@@ -3,6 +3,7 @@ export interface GroupInfo {
   id: number;
   nama_group: string;
   keterangan?: string | null;
+  is_active: boolean;
 }
 
 export interface User {
@@ -24,6 +25,11 @@ export interface AuthResponse {
 }
 
 export interface LoginPayload {
-  nomor_visa: string;
+  name: string;        // Full name (uppercase)
   tanggal_lahir: string;
 }
+
+export interface NameSearchResult {
+  name: string;
+  group_name: string;
+}

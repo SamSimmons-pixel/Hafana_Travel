@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -89,6 +90,9 @@ class GroupController extends Controller
             } catch (\Exception $e) {
                 $dobFormatted = $dob;
             }
+
+            // Force uppercase for all names
+            $name = strtoupper(trim($name));
 
             $user = User::where('nomor_visa', $visa)->first();
 
@@ -231,14 +235,40 @@ class GroupController extends Controller
     }
 
     /**
-     * Delete entire group and all associated users
+     * Toggle group active/inactive status.
+     */
+    public function toggleActive(Group $group): RedirectResponse
+    {
+        $group->update(['is_active' => !$group->is_active]);
+        $status = $group->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        return back()->with('success', "Group '{$group->nama_group}' berhasil {$status}.");
+    }
+
+    /**
+     * Export group members as PDF.
+     * Each phone number links to wa.me for easy WhatsApp contact save.
+     */
+    public function exportPdf(Group $group)
+    {
+        $users = $group->users()->orderBy('name')->get();
+        $pdf = Pdf::loadView('admin.groups.pdf', compact('group', 'users'))
+            ->setPaper('a4', 'portrait');
+        $filename = 'Jemaah-' . str_replace(' ', '-', $group->nama_group) . '.pdf';
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Delete entire group and all associated users.
+     * Only full admins can delete.
      */
     public function destroy(Group $group): RedirectResponse
     {
+        if (auth('admin')->user()->isSubAdmin()) {
+            return back()->with('error', 'Sub Admin tidak memiliki akses untuk menghapus Group.');
+        }
+
         $nama = $group->nama_group;
         $count = $group->users()->count();
-
-        // Cascade delete is handled by database foreign key constraint
         $group->delete();
 
         return redirect()->route('admin.groups.index')

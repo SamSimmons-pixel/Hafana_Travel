@@ -31,6 +31,16 @@
                 @error('password')<p class="error-msg">{{ $message }}</p>@enderror
             </div>
 
+            <div class="form-group">
+                <label>Role / Hak Akses *</label>
+                <select name="role" required>
+                    <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>👑 Full Admin (Semua Akses & Hapus Data)</option>
+                    <option value="sub_admin" {{ old('role') === 'sub_admin' ? 'selected' : '' }}>🛡️ Sub Admin (Hanya Lihat & Edit, Tidak Bisa Hapus Data)</option>
+                </select>
+                @error('role')<p class="error-msg">{{ $message }}</p>@enderror
+            </div>
+
+
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Simpan Akun Admin</button>
                 <a href="{{ route('admin.admins.index') }}" class="btn-secondary">Batal</a>

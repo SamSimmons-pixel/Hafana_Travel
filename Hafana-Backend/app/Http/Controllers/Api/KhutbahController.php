@@ -57,87 +57,267 @@ class KhutbahController extends Controller
         // Extract ytInitialData JSON from the YouTube page
         preg_match('/var ytInitialData\s*=\s*(\{.+?\});/', $html, $matches);
         if (empty($matches[1])) {
-            // Try alternative pattern
             preg_match('/ytInitialData\s*=\s*(\{.+?\});/', $html, $matches);
         }
 
         if (empty($matches[1])) {
-            return ['status' => 'none', 'live' => null, 'upcoming' => []];
+            return $this->buildEmptyResponse();
         }
 
         $data = json_decode($matches[1], true);
         if (!$data) {
-            return ['status' => 'none', 'live' => null, 'upcoming' => []];
+            return $this->buildEmptyResponse();
         }
 
-        // Walk the JSON tree to find video renderers
-        $videoRenderers = $this->extractVideoRenderers($data);
+        // Extract all video items supporting both lockupViewModel (modern) and videoRenderer (legacy)
+        $allItems = $this->extractAllVideoItems($data);
 
-        $liveVideo     = null;
-        $upcomingList  = [];
+        $liveVideo          = null;
+        $upcomingList       = [];
+        $haramLive          = null;
+        $haramUpcoming      = [];
+        $nabawiLive         = null;
+        $nabawiUpcoming     = [];
 
-        foreach ($videoRenderers as $renderer) {
-            $title        = $this->extractTitle($renderer);
-            $videoId      = $renderer['videoId'] ?? null;
-            $isLive       = $this->isLiveBadge($renderer);
-            $isUpcoming   = $this->isUpcomingBadge($renderer);
-            $isIndonesian = $this->isIndonesian($title);
+        foreach ($allItems as $item) {
+            $isLive       = $item['isLive'] ?? false;
+            $isUpcoming   = $item['isUpcoming'] ?? false;
+            $isIndonesian = $item['isIndonesian'] ?? false;
+            $masjid       = $item['masjid'] ?? 'haram';
 
-            if (!$videoId || !$title) continue;
+            // Strict Filter: Only include streams with Indonesian translation
+            if (!$isIndonesian) {
+                continue;
+            }
 
-            $thumbnailUrl = "https://i.ytimg.com/vi/{$videoId}/hqdefault.jpg";
-            $scheduledAt  = $this->extractScheduledTime($renderer);
+            if ($isLive) {
+                // State 3: Live stream active (Indonesian translation)
+                if (!$liveVideo) {
+                    $liveVideo = $item;
+                }
 
-            $item = [
-                'videoId'     => $videoId,
-                'title'       => $title,
-                'thumbnail'   => $thumbnailUrl,
-                'url'         => "https://www.youtube.com/watch?v={$videoId}",
-                'scheduledAt' => $scheduledAt,
-                'isIndonesian' => $isIndonesian,
-            ];
-
-            if ($isLive && $isIndonesian && !$liveVideo) {
-                $liveVideo = $item;
+                if ($masjid === 'haram') {
+                    $haramLive = $item;
+                } elseif ($masjid === 'nabawi') {
+                    $nabawiLive = $item;
+                }
             } elseif ($isUpcoming) {
+                // State 2: Upcoming stream (Indonesian translation)
                 $upcomingList[] = $item;
+                if ($masjid === 'haram') {
+                    $haramUpcoming[] = $item;
+                } elseif ($masjid === 'nabawi') {
+                    $nabawiUpcoming[] = $item;
+                }
             }
         }
 
-        if ($liveVideo) {
-            return [
-                'status'   => 'live',
-                'live'     => $liveVideo,
-                'upcoming' => $upcomingList,
-            ];
+        // If general live exists, assign to active mosque if empty
+        if ($liveVideo && !$haramLive && !$nabawiLive) {
+            if ($liveVideo['masjid'] === 'nabawi') {
+                $nabawiLive = $liveVideo;
+            } else {
+                $haramLive = $liveVideo;
+            }
         }
 
-        if (!empty($upcomingList)) {
-            return [
-                'status'   => 'upcoming',
-                'live'     => null,
-                'upcoming' => $upcomingList,
-            ];
+        // Determine 3-State for overall status
+        $overallStateId = 1;
+        $overallStatus  = 'none';
+        $stateTitle     = 'Belum Ada Jadwal Siaran (Standby)';
+
+        if ($liveVideo || $haramLive || $nabawiLive) {
+            $overallStateId = 3;
+            $overallStatus  = 'live';
+            $stateTitle     = 'Siaran Langsung (Live Now)';
+        } elseif (!empty($upcomingList)) {
+            $overallStateId = 2;
+            $overallStatus  = 'upcoming';
+            $stateTitle     = 'Siaran Terjadwal (Upcoming)';
+        }
+
+        // Determine State for Masjidil Haram
+        $haramStateId = 1;
+        $haramStatus  = 'none';
+        if ($haramLive) {
+            $haramStateId = 3;
+            $haramStatus  = 'live';
+        } elseif (!empty($haramUpcoming)) {
+            $haramStateId = 2;
+            $haramStatus  = 'upcoming';
+        }
+
+        // Determine State for Masjid Nabawi
+        $nabawiStateId = 1;
+        $nabawiStatus  = 'none';
+        if ($nabawiLive) {
+            $nabawiStateId = 3;
+            $nabawiStatus  = 'live';
+        } elseif (!empty($nabawiUpcoming)) {
+            $nabawiStateId = 2;
+            $nabawiStatus  = 'upcoming';
         }
 
         return [
-            'status'   => 'none',
-            'live'     => null,
-            'upcoming' => [],
+            'status'         => $overallStatus,
+            'state_id'       => $overallStateId,
+            'state_title'    => $stateTitle,
+            'live'           => $liveVideo ?? $haramLive ?? $nabawiLive,
+            'upcoming'       => $upcomingList,
+            'masjidil_haram' => [
+                'status'   => $haramStatus,
+                'state_id' => $haramStateId,
+                'live'     => $haramLive,
+                'upcoming' => $haramUpcoming,
+                'name'     => 'Masjidil Haram (Makkah)',
+            ],
+            'masjid_nabawi'  => [
+                'status'   => $nabawiStatus,
+                'state_id' => $nabawiStateId,
+                'live'     => $nabawiLive,
+                'upcoming' => $nabawiUpcoming,
+                'name'     => 'Masjid Nabawi (Madinah)',
+            ],
+        ];
+    }
+
+    private function buildEmptyResponse(): array
+    {
+        return [
+            'status'         => 'none',
+            'state_id'       => 1,
+            'state_title'    => 'Belum Ada Jadwal Siaran (Standby)',
+            'live'           => null,
+            'upcoming'       => [],
+            'masjidil_haram' => [
+                'status'   => 'none',
+                'state_id' => 1,
+                'live'     => null,
+                'upcoming' => [],
+                'name'     => 'Masjidil Haram (Makkah)',
+            ],
+            'masjid_nabawi'  => [
+                'status'   => 'none',
+                'state_id' => 1,
+                'live'     => null,
+                'upcoming' => [],
+                'name'     => 'Masjid Nabawi (Madinah)',
+            ],
         ];
     }
 
     /**
-     * Recursively extract all videoRenderer objects from yt data
+     * Extract video items supporting modern lockupViewModel and legacy videoRenderer
      */
-    private function extractVideoRenderers(array $data): array
+    private function extractAllVideoItems(array $data): array
     {
-        $results = [];
-        array_walk_recursive($data, function ($value, $key) {
-            // noop — we need structural, not leaf walk
-        });
+        $items = [];
 
-        return $this->deepFind($data, 'videoRenderer');
+        // 1. Modern lockupViewModel (YouTube 2025/2026 Web format)
+        $lockups = $this->deepFind($data, 'lockupViewModel');
+        foreach ($lockups as $lockup) {
+            $parsed = $this->parseLockupViewModel($lockup);
+            if ($parsed) $items[] = $parsed;
+        }
+
+        // 2. Legacy videoRenderer (Classic YouTube format)
+        $renderers = $this->deepFind($data, 'videoRenderer');
+        foreach ($renderers as $renderer) {
+            $parsed = $this->parseVideoRenderer($renderer);
+            if ($parsed) $items[] = $parsed;
+        }
+
+        // Deduplicate by videoId
+        $unique = [];
+        foreach ($items as $item) {
+            if (!empty($item['videoId']) && !isset($unique[$item['videoId']])) {
+                $unique[$item['videoId']] = $item;
+            }
+        }
+
+        return array_values($unique);
+    }
+
+    private function parseLockupViewModel(array $node): ?array
+    {
+        $videoId = $node['contentId']
+            ?? $node['rendererContext']['commandContext']['onTap']['innertubeCommand']['watchEndpoint']['videoId']
+            ?? null;
+
+        $title = $node['metadata']['lockupMetadataViewModel']['title']['content']
+            ?? $node['rendererContext']['accessibilityContext']['label']
+            ?? '';
+
+        if (!$videoId || !$title) return null;
+
+        $jsonString = json_encode($node);
+
+        // Check LIVE badge
+        $isLive = false;
+        $overlays = $node['contentImage']['thumbnailViewModel']['overlays'] ?? [];
+        $overlayText = strtoupper(json_encode($overlays));
+        if (str_contains($overlayText, '"LIVE"') || str_contains($overlayText, 'LIVE_NOW') || str_contains($overlayText, 'THUMBNAIL_OVERLAY_BADGE_STYLE_LIVE')) {
+            $isLive = true;
+        }
+
+        // Check UPCOMING badge
+        $isUpcoming = false;
+        if (str_contains($overlayText, '"UPCOMING"') || str_contains($jsonString, 'addUpcomingEventReminderEndpoint') || str_contains($jsonString, 'Scheduled for') || str_contains($jsonString, 'Terjadwal')) {
+            $isUpcoming = true;
+        }
+
+        // Scheduled time text
+        $scheduledAt = null;
+        $metadataRows = $node['metadata']['lockupMetadataViewModel']['metadata']['contentMetadataViewModel']['metadataRows'] ?? [];
+        foreach ($metadataRows as $row) {
+            foreach ($row['metadataParts'] ?? [] as $part) {
+                $text = $part['text']['content'] ?? '';
+                if (str_contains($text, 'Scheduled') || str_contains($text, 'Terjadwal')) {
+                    $scheduledAt = $text;
+                    break 2;
+                }
+            }
+        }
+
+        $isIndonesian = $this->isIndonesian($title);
+        $masjid       = $this->detectMasjid($title);
+
+        return [
+            'videoId'      => $videoId,
+            'title'        => $title,
+            'thumbnail'    => "https://i.ytimg.com/vi/{$videoId}/hqdefault.jpg",
+            'url'          => "https://www.youtube.com/watch?v={$videoId}",
+            'scheduledAt'  => $scheduledAt,
+            'isIndonesian' => $isIndonesian,
+            'masjid'       => $masjid,
+            'isLive'       => $isLive,
+            'isUpcoming'   => $isUpcoming,
+        ];
+    }
+
+    private function parseVideoRenderer(array $renderer): ?array
+    {
+        $videoId = $renderer['videoId'] ?? null;
+        $title   = $this->extractTitle($renderer);
+        if (!$videoId || !$title) return null;
+
+        $isLive       = $this->isLiveBadge($renderer);
+        $isUpcoming   = $this->isUpcomingBadge($renderer);
+        $scheduledAt  = $this->extractScheduledTime($renderer);
+        $isIndonesian = $this->isIndonesian($title);
+        $masjid       = $this->detectMasjid($title);
+
+        return [
+            'videoId'      => $videoId,
+            'title'        => $title,
+            'thumbnail'    => "https://i.ytimg.com/vi/{$videoId}/hqdefault.jpg",
+            'url'          => "https://www.youtube.com/watch?v={$videoId}",
+            'scheduledAt'  => $scheduledAt,
+            'isIndonesian' => $isIndonesian,
+            'masjid'       => $masjid,
+            'isLive'       => $isLive,
+            'isUpcoming'   => $isUpcoming,
+        ];
     }
 
     private function deepFind(array $data, string $key): array
@@ -155,7 +335,6 @@ class KhutbahController extends Controller
 
     private function extractTitle(array $renderer): string
     {
-        // title.runs[0].text or title.simpleText
         $title = $renderer['title']['simpleText']
             ?? $renderer['title']['runs'][0]['text']
             ?? '';
@@ -164,21 +343,18 @@ class KhutbahController extends Controller
 
     private function isLiveBadge(array $renderer): bool
     {
-        // Check badges for LIVE badge
         $badges = $renderer['badges'] ?? [];
         foreach ($badges as $badge) {
             $label = strtoupper($badge['metadataBadgeRenderer']['label'] ?? '');
             if (str_contains($label, 'LIVE')) return true;
         }
 
-        // Check thumbnailOverlays for LIVE
         $overlays = $renderer['thumbnailOverlays'] ?? [];
         foreach ($overlays as $overlay) {
             $text = strtoupper(json_encode($overlay));
             if (str_contains($text, '"LIVE"') || str_contains($text, 'LIVE_NOW')) return true;
         }
 
-        // Check viewCountText for "watching now"
         $viewText = strtolower(json_encode($renderer['viewCountText'] ?? []));
         if (str_contains($viewText, 'watching')) return true;
 
@@ -187,10 +363,8 @@ class KhutbahController extends Controller
 
     private function isUpcomingBadge(array $renderer): bool
     {
-        // upcomingEventData presence means it's scheduled
         if (!empty($renderer['upcomingEventData'])) return true;
 
-        // Check badges
         $badges = $renderer['badges'] ?? [];
         foreach ($badges as $badge) {
             $style = strtoupper($badge['metadataBadgeRenderer']['style'] ?? '');
@@ -205,19 +379,33 @@ class KhutbahController extends Controller
 
     private function isIndonesian(string $title): bool
     {
-        return (bool) preg_match('/\bindonesi[a-z]*/i', $title);
+        return (bool) preg_match('/(indonesi[a-z]*|indonesia|إندونيسية|اندونيسية)/ui', $title);
     }
 
     private function extractScheduledTime(array $renderer): ?string
     {
-        // upcomingEventData.startTime is unix timestamp
         $startTime = $renderer['upcomingEventData']['startTime'] ?? null;
         if ($startTime) {
             return date('c', (int)$startTime);
         }
 
-        // Try text
         $text = $renderer['upcomingEventData']['upcomingEventText']['runs'][0]['text'] ?? null;
         return $text;
     }
+
+    private function detectMasjid(string $title): string
+    {
+        // Check for Prophet's Mosque / Masjid Nabawi (Arabic, English, French, Russian, Indonesian/Malay)
+        if (preg_match('/(nabawi|madinah|medina|نبوي|prophet|proph[eé]tique|пророка)/ui', $title)) {
+            return 'nabawi';
+        }
+        // Check for Grand Mosque / Masjidil Haram
+        if (preg_match('/(haram|makkah|mecca|حرام|grand mosque|sacr[eé]e|аль-харам)/ui', $title)) {
+            return 'haram';
+        }
+        return 'haram';
+    }
+
 }
+
+

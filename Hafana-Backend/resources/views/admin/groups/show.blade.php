@@ -12,6 +12,7 @@
     </div>
     <div style="display:flex; gap:10px;">
         <a href="{{ route('admin.groups.index') }}" class="btn-secondary">← Daftar Group</a>
+        <a href="{{ route('admin.groups.export-pdf', $group) }}" class="btn-secondary" target="_blank">📄 Download PDF</a>
         <a href="{{ route('admin.users.create', ['group_id' => $group->id]) }}" class="btn-primary">+ Tambah Jemaah Manual</a>
     </div>
 </div>
@@ -89,7 +90,8 @@ Petunjuk Tambahan:
     <div class="actions">
         <a href="{{ route('admin.groups.edit', $group) }}" class="btn-action btn-edit">✏️ Edit Nama Group</a>
 
-        {{-- Double Confirm Delete Button --}}
+        {{-- Double Confirm Delete Button (Admin Only) --}}
+        @if(auth('admin')->user()->isAdmin())
         <form id="delete-group-show-form" method="POST" action="{{ route('admin.groups.destroy', $group) }}" style="margin:0">
             @csrf
             @method('DELETE')
@@ -97,7 +99,9 @@ Petunjuk Tambahan:
                 🚨 Hapus Data Group Ini
             </button>
         </form>
+        @endif
     </div>
+
 </div>
 
 {{-- Jemaah Users Table --}}
@@ -107,11 +111,10 @@ Petunjuk Tambahan:
             <tr>
                 <th>#</th>
                 <th>Nama Lengkap Jemaah</th>
-                <th>Nomor Visa (Username)</th>
-                <th>Tanggal Lahir (Password)</th>
+                <th>Nomor Visa</th>
+                <th>Tanggal Lahir</th>
                 <th>Nomor Paspor</th>
                 <th>No HP</th>
-                <th>Status Pelacakan</th>
                 <th>Aksi</th>
             </tr>
         </thead>
@@ -123,28 +126,38 @@ Petunjuk Tambahan:
                 <td><code style="background:var(--bg); padding:3px 8px; border-radius:4px;">{{ $user->nomor_visa }}</code></td>
                 <td><code>{{ $user->tanggal_lahir ? date('Y-m-d', strtotime($user->tanggal_lahir)) : '-' }}</code></td>
                 <td>{{ $user->nomor_paspor ?? '-' }}</td>
-                <td>{{ $user->no_hp ?? '-' }}</td>
                 <td>
-                    @if($user->last_located_at)
-                        <span class="badge badge-on">📍 Aktif ({{ $user->last_located_at->diffForHumans() }})</span>
+                    @if($user->no_hp)
+                        @php
+                            $hp = preg_replace('/^0/', '62', $user->no_hp);
+                            $waMsg = urlencode("Halo, saya ingin menyimpan kontak: {$user->name} ({$user->no_hp})");
+                            $waUrl = "https://wa.me/{$hp}?text={$waMsg}";
+                        @endphp
+                        <span style="display:flex; align-items:center; gap:6px;">
+                            {{ $user->no_hp }}
+                            <button type="button" onclick="copyText('{{ $user->no_hp }}', this)" style="background:none; border:none; cursor:pointer; font-size:14px;" title="Copy Nomor HP">📋</button>
+                            <a href="{{ $waUrl }}" target="_blank" style="font-size:14px;" title="Buka WhatsApp">💬</a>
+                        </span>
                     @else
-                        <span class="badge badge-off">Belum Ada Lokasi</span>
+                        <span style="color:#bbb;">-</span>
                     @endif
                 </td>
                 <td>
                     <div class="actions">
                         <a href="{{ route('admin.users.edit', ['user' => $user->id, 'return_to_group' => 1]) }}" class="btn-action btn-edit">✏️ Edit</a>
+                        @if(auth('admin')->user()->isAdmin())
                         <form method="POST" action="{{ route('admin.users.destroy', ['user' => $user->id, 'return_to_group' => 1]) }}" style="margin:0" onsubmit="return confirm('Hapus akun jemaah {{ addslashes($user->name) }}?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn-action btn-delete">🗑️ Hapus</button>
                         </form>
+                        @endif
                     </div>
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="8" class="empty">
+                <td colspan="7" class="empty">
                     Belum ada data Jemaah di group ini.
                 </td>
             </tr>
@@ -161,13 +174,11 @@ Petunjuk Tambahan:
 function copyAiPromptShow(btnId, textId) {
     const textElement = document.getElementById(textId);
     const btnElement = document.getElementById(btnId);
-    
     textElement.select();
     navigator.clipboard.writeText(textElement.value).then(() => {
         const originalText = btnElement.innerHTML;
         btnElement.innerHTML = '✓ Prompt Tersalin!';
         btnElement.style.backgroundColor = 'var(--success)';
-        
         setTimeout(() => {
             btnElement.innerHTML = originalText;
             btnElement.style.backgroundColor = 'var(--primary)';
@@ -175,13 +186,19 @@ function copyAiPromptShow(btnId, textId) {
     });
 }
 
+function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅';
+        setTimeout(() => { btn.innerHTML = orig; }, 1800);
+    });
+}
+
 function confirmDeleteGroupShow(groupName, userCount) {
     const step1 = confirm(`⚠️ KONFIRMASI 1 DARI 2:\n\nApakah Anda YAKIN ingin menghapus Group "${groupName}"?`);
     if (!step1) return;
-
-    const step2 = confirm(`🚨 KONFIRMASI PERINGATAN KEDUA (2 DARI 2):\n\nPerhatian! Menghapus Group "${groupName}" akan PERMANEN MENGHAPUS SELURUH ${userCount} AKUN JEMAAH di dalamnya beserta seluruh data pelacakan lokasinya!\n\nKlik OK untuk MEMPROSES PENGHAPUSAN.`);
+    const step2 = confirm(`🚨 KONFIRMASI PERINGATAN KEDUA (2 DARI 2):\n\nPerhatian! Menghapus Group "${groupName}" akan PERMANEN MENGHAPUS SELURUH ${userCount} AKUN JEMAAH di dalamnya!\n\nKlik OK untuk MEMPROSES PENGHAPUSAN.`);
     if (!step2) return;
-
     document.getElementById('delete-group-show-form').submit();
 }
 </script>

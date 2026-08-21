@@ -24,7 +24,7 @@
                 <option value="">-- Semua Group Rombongan --</option>
                 @foreach($groups as $g)
                     <option value="{{ $g->id }}" {{ request('group_id') == $g->id ? 'selected' : '' }}>
-                        {{ $g->nama_group }}
+                        {{ $g->nama_group }} {{ !$g->is_active ? '(Non-aktif)' : '' }}
                     </option>
                 @endforeach
             </select>
@@ -42,8 +42,8 @@
             <tr>
                 <th>#</th>
                 <th>Nama Jemaah</th>
-                <th>Nomor Visa (Login)</th>
-                <th>Tanggal Lahir (Password)</th>
+                <th>Nomor Visa</th>
+                <th>Tanggal Lahir</th>
                 <th>Nomor Paspor</th>
                 <th>Group Rombongan</th>
                 <th>No HP</th>
@@ -63,19 +63,39 @@
                         <a href="{{ route('admin.groups.show', $user->group) }}" style="color:var(--primary); font-weight:600; text-decoration:none;">
                             👥 {{ $user->group->nama_group }}
                         </a>
+                        @if(!$user->group->is_active)
+                            <span class="badge badge-danger" style="font-size:10px; margin-left:4px;">Non-aktif</span>
+                        @endif
                     @else
                         <span style="color:var(--text-muted);">- Tanpa Group -</span>
                     @endif
                 </td>
-                <td>{{ $user->no_hp ?? '-' }}</td>
+                <td>
+                    @if($user->no_hp)
+                        @php
+                            $hp = preg_replace('/^0/', '62', $user->no_hp);
+                            $waMsg = urlencode("Halo, saya ingin menyimpan kontak: {$user->name} ({$user->no_hp})");
+                            $waUrl = "https://wa.me/{$hp}?text={$waMsg}";
+                        @endphp
+                        <span style="display:flex; align-items:center; gap:6px;">
+                            {{ $user->no_hp }}
+                            <button type="button" onclick="copyText('{{ $user->no_hp }}', this)" style="background:none; border:none; cursor:pointer; font-size:14px;" title="Copy Nomor HP">📋</button>
+                            <a href="{{ $waUrl }}" target="_blank" style="font-size:14px;" title="Buka WhatsApp">💬</a>
+                        </span>
+                    @else
+                        <span style="color:var(--text-muted);">-</span>
+                    @endif
+                </td>
                 <td>
                     <div class="actions">
                         <a href="{{ route('admin.users.edit', $user) }}" class="btn-action btn-edit">✏️ Edit</a>
+                        @if(auth('admin')->user()->isAdmin())
                         <form method="POST" action="{{ route('admin.users.destroy', $user) }}" style="margin:0" onsubmit="return confirm('Hapus akun jemaah {{ addslashes($user->name) }}?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn-action btn-delete">🗑️ Hapus</button>
                         </form>
+                        @endif
                     </div>
                 </td>
             </tr>
@@ -93,4 +113,15 @@
 <div class="pagination-wrap">
     {{ $users->links() }}
 </div>
+
+<script>
+function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅';
+        setTimeout(() => { btn.innerHTML = orig; }, 1800);
+    });
+}
+</script>
 @endsection
+

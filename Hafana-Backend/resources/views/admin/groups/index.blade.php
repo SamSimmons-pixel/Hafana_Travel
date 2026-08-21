@@ -21,13 +21,14 @@
                 <th>Nama Group / Rombongan</th>
                 <th>Keterangan</th>
                 <th>Jumlah Jemaah</th>
+                <th>Status</th>
                 <th>Tanggal Dibuat</th>
                 <th>Aksi</th>
             </tr>
         </thead>
         <tbody>
             @forelse($groups as $group)
-            <tr>
+            <tr style="{{ !$group->is_active ? 'opacity:0.65;' : '' }}">
                 <td>{{ $loop->iteration }}</td>
                 <td>
                     <a href="{{ route('admin.groups.show', $group) }}" style="color:var(--primary); font-weight:700; text-decoration:none;">
@@ -40,26 +41,39 @@
                         👥 {{ $group->users_count }} Jemaah
                     </span>
                 </td>
+                <td>
+                    {{-- Toggle Aktif/Non-aktif --}}
+                    <form method="POST" action="{{ route('admin.groups.toggle-active', $group) }}" style="margin:0; display:inline;">
+                        @csrf
+                        <button type="submit" class="badge {{ $group->is_active ? 'badge-success' : 'badge-danger' }}"
+                            style="border:none; cursor:pointer; font-size:12px; padding:4px 10px; border-radius:12px;">
+                            {{ $group->is_active ? '✅ Aktif' : '❌ Non-aktif' }}
+                        </button>
+                    </form>
+                </td>
                 <td>{{ $group->created_at->format('d M Y, H:i') }}</td>
                 <td>
                     <div class="actions">
-                        <a href="{{ route('admin.groups.show', $group) }}" class="btn-action btn-info">👁️ Lihat / Edit Jemaah</a>
-                        <a href="{{ route('admin.groups.edit', $group) }}" class="btn-action btn-edit">✏️ Edit Group</a>
-                        
-                        {{-- Hapus Group Button with Double Confirmation --}}
+                        <a href="{{ route('admin.groups.show', $group) }}" class="btn-action btn-info">👁️ Lihat</a>
+                        <a href="{{ route('admin.groups.edit', $group) }}" class="btn-action btn-edit">✏️ Edit</a>
+                        <a href="{{ route('admin.groups.export-pdf', $group) }}" class="btn-action btn-info" target="_blank">📄 PDF</a>
+
+                        {{-- Hapus: hanya tampil untuk admin penuh --}}
+                        @if(auth('admin')->user()->isAdmin())
                         <form id="delete-group-form-{{ $group->id }}" method="POST" action="{{ route('admin.groups.destroy', $group) }}" style="margin:0">
                             @csrf
                             @method('DELETE')
                             <button type="button" class="btn-action btn-delete" onclick="confirmDeleteGroup({{ $group->id }}, '{{ addslashes($group->nama_group) }}', {{ $group->users_count }})">
-                                🗑️ Hapus Group
+                                🗑️ Hapus
                             </button>
                         </form>
+                        @endif
                     </div>
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" class="empty">
+                <td colspan="7" class="empty">
                     👥 Belum ada Group Jemaah. <a href="{{ route('admin.groups.create') }}" style="color:var(--primary)">Impor data JSON pertama!</a>
                 </td>
             </tr>
@@ -71,15 +85,14 @@
 {{-- Double Confirmation Script for Hapus Data Group --}}
 <script>
 function confirmDeleteGroup(groupId, groupName, userCount) {
-    // Confirmation 1
     const step1 = confirm(`⚠️ KONFIRMASI 1 DARI 2:\n\nApakah Anda yakin ingin menghapus Group "${groupName}"?`);
     if (!step1) return;
 
-    // Confirmation 2
-    const step2 = confirm(`🚨 KONFIRMASI PERINGATAN KEDUA (2 DARI 2):\n\nPerhatian! Menghapus Group "${groupName}" juga akan PERMANEN MENGHAPUS SELURUH ${userCount} AKUN JEMAAH di dalamnya beserta pelacakan lokasinya!\n\nKlik OK untuk melanjutkan penghapusan.`);
+    const step2 = confirm(`🚨 KONFIRMASI PERINGATAN KEDUA (2 DARI 2):\n\nPerhatian! Menghapus Group "${groupName}" juga akan PERMANEN MENGHAPUS SELURUH ${userCount} AKUN JEMAAH di dalamnya!\n\nKlik OK untuk melanjutkan penghapusan.`);
     if (!step2) return;
 
     document.getElementById(`delete-group-form-${groupId}`).submit();
 }
 </script>
 @endsection
+

@@ -58,11 +58,20 @@
                     </form>
                 </td>
 
-                {{-- Status Badge --}}
+                {{-- Toggle Publish Switch --}}
                 <td>
-                    <span class="badge {{ $art->is_published ? 'badge-on' : 'badge-off' }}">
-                        {{ $art->is_published ? '✓ Terbit' : '✗ Draft' }}
-                    </span>
+                    <form method="POST" action="{{ route('admin.articles.toggle-publish', $art->id) }}" style="margin:0">
+                        @csrf
+                        <div class="switch-wrap">
+                            <label class="switch" title="{{ $art->is_published ? 'Sembunyikan Artikel' : 'Terbitkan Artikel' }}">
+                                <input type="checkbox" {{ $art->is_published ? 'checked' : '' }} onchange="this.form.submit()">
+                                <span class="slider round"></span>
+                            </label>
+                            <span class="switch-label">
+                                {{ $art->is_published ? '✓ Terbit' : '✗ Draft' }}
+                            </span>
+                        </div>
+                    </form>
                 </td>
 
                 {{-- Action Buttons --}}

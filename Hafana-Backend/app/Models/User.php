@@ -19,9 +19,6 @@ class User extends Authenticatable
         'tanggal_lahir',
         'nomor_paspor',
         'no_hp',
-        'latitude',
-        'longitude',
-        'last_located_at',
     ];
 
     protected $hidden = [
@@ -30,9 +27,7 @@ class User extends Authenticatable
 
     protected function casts(): array
     {
-        return [
-            'last_located_at' => 'datetime',
-        ];
+        return [];
     }
 
     public function group(): BelongsTo
