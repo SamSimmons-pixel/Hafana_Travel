@@ -36,24 +36,78 @@ import { LARAVEL_API_URL, KhutbahLiveResponse, KhutbahLiveVideo } from '@/servic
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatScheduled(iso: string | null | undefined): string {
-  if (!iso) return '';
+export function getDeviceTimeZoneLabel(): string {
   try {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString('id-ID', {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    if (tz.includes('Jakarta') || tz.includes('Bangkok') || tz.includes('Pontianak') || tz === 'Asia/Jakarta') {
+      return 'WIB';
+    }
+    if (tz.includes('Makassar') || tz.includes('Ujung_Pandang') || tz.includes('Bali') || tz.includes('Manado') || tz.includes('Kuala_Lumpur') || tz.includes('Singapore')) {
+      return 'WITA';
+    }
+    if (tz.includes('Jayapura')) {
+      return 'WIT';
+    }
+    if (tz.includes('Riyadh') || tz.includes('Saudi') || tz.includes('Aden') || tz.includes('Kuwait') || tz.includes('Qatar') || tz.includes('Bahrain') || tz === 'Asia/Riyadh') {
+      return 'Waktu Saudi (AST)';
+    }
+
+    const formatter = new Intl.DateTimeFormat('id-ID', { timeZoneName: 'short' });
+    const parts = formatter.formatToParts(new Date());
+    const tzPart = parts.find(p => p.type === 'timeZoneName');
+    return tzPart ? tzPart.value : (tz || 'Waktu Lokal');
+  } catch {
+    return 'Waktu Lokal';
+  }
+}
+
+function parseScheduledDate(raw: string | null | undefined): Date | null {
+  if (!raw) return null;
+  const d = new Date(raw);
+  if (!isNaN(d.getTime())) return d;
+
+  const cleaned = raw.replace(/^Scheduled for\s+/i, '').replace(/^Terjadwal\s+/i, '').trim();
+  const d2 = new Date(cleaned);
+  if (!isNaN(d2.getTime())) return d2;
+
+  const match = cleaned.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4}),?\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (match) {
+    let month = parseInt(match[1], 10) - 1;
+    let day = parseInt(match[2], 10);
+    let year = parseInt(match[3], 10);
+    if (year < 100) year += 2000;
+    let hour = parseInt(match[4], 10);
+    let minute = parseInt(match[5], 10);
+    const ampm = match[6]?.toUpperCase();
+    if (ampm === 'PM' && hour < 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+    return new Date(Date.UTC(year, month, day, hour, minute));
+  }
+
+  return null;
+}
+
+function formatScheduled(raw: string | null | undefined): string {
+  if (!raw) return '';
+  const d = parseScheduledDate(raw);
+  if (!d) return raw;
+
+  const tzLabel = getDeviceTimeZoneLabel();
+  try {
+    const formatted = d.toLocaleDateString('id-ID', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Asia/Jakarta',
-    }) + ' WIB';
+    });
+    return `${formatted} ${tzLabel}`;
   } catch {
-    return iso;
+    return raw;
   }
 }
+
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
@@ -225,7 +279,7 @@ export default function KhutbahScreen() {
           Jadwal Siaran Khutbah Ditemukan
         </Text>
         <Text style={[s.state2BannerDesc, { color: isDarkMode ? '#fde68a' : '#78350f' }]}>
-          Kanal Al-Haramain Sermons telah merilis jadwal siaran langsung untuk {activeMosqueName}. Siaran akan otomatis live saat waktu khutbah tiba.
+          Kanal Al-Haramain Sermons telah merilis jadwal siaran langsung untuk {activeMosqueName}. Waktu siaran otomatis disesuaikan dengan zona waktu HP Anda ({getDeviceTimeZoneLabel()}).
         </Text>
       </View>
 

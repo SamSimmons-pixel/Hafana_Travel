@@ -89,15 +89,16 @@ class KhutbahController extends Controller
             $videoId = (string)$yt->videoId;
             if (!$videoId) continue;
 
-            $masjid = $this->detectMasjid($title);
-            $published = (string)$entry->published;
+            $masjid      = $this->detectMasjid($title);
+            $published   = (string)$entry->published;
+            $scheduledAt = $this->calculateKhutbahTime($published, $masjid);
 
             $item = [
                 'videoId'      => $videoId,
                 'title'        => $title,
                 'thumbnail'    => "https://i.ytimg.com/vi/{$videoId}/hqdefault.jpg",
                 'url'          => "https://www.youtube.com/watch?v={$videoId}",
-                'scheduledAt'  => $published,
+                'scheduledAt'  => $scheduledAt,
                 'isIndonesian' => true,
                 'masjid'       => $masjid,
                 'isLive'       => false,
@@ -138,6 +139,34 @@ class KhutbahController extends Controller
             ],
         ];
     }
+
+    /**
+     * Calculates the exact Friday broadcast time for the Khutbah sermon
+     */
+    private function calculateKhutbahTime(string $published, string $masjid): string
+    {
+        try {
+            $pubDate = new \DateTime($published, new \DateTimeZone('UTC'));
+            $dayOfWeek = (int)$pubDate->format('N'); // 1 (Mon) to 7 (Sun), 5 = Friday
+            if ($dayOfWeek <= 5) {
+                $diff = 5 - $dayOfWeek;
+                $pubDate->modify("+{$diff} days");
+            } else {
+                $diff = 12 - $dayOfWeek;
+                $pubDate->modify("+{$diff} days");
+            }
+
+            // Friday Khutbah prayer is ~12:24 local AST (09:24 UTC) for Haram, ~12:25 for Nabawi
+            $hour = 9;
+            $min  = ($masjid === 'nabawi') ? 25 : 24;
+            $pubDate->setTime($hour, $min, 0);
+
+            return $pubDate->format('c'); // ISO-8601 UTC timestamp
+        } catch (\Throwable $e) {
+            return $published;
+        }
+    }
+
 
 
     private function parseStreamsPage(string $html): array
