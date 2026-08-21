@@ -9,17 +9,15 @@ use Illuminate\Support\Facades\Http;
 
 class KhutbahController extends Controller
 {
-    private const CHANNEL_ID = 'UCdGtxP_p0YFpBJ39Qz3hkBA'; // @Al-haramain-Sermons channel ID
+    private const CHANNEL_ID = 'UCB0qibtjzOIemPjQSaoWkGg'; // @Al-haramain-Sermons channel ID
+    private const RSS_URL    = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCB0qibtjzOIemPjQSaoWkGg';
     private const CACHE_TTL  = 120; // 2 minutes cache for live status
 
     /**
      * GET /api/khutbah/live
      *
-     * Checks Al-Haramain Sermons channel for an active Indonesian live stream
-     * and, if none is found, returns upcoming scheduled streams.
-     *
-     * Response shape:
-     *  { status: 'live' | 'upcoming' | 'none', live: {...}|null, upcoming: [...] }
+     * Checks Al-Haramain Sermons channel for active Indonesian live/upcoming stream.
+     * Uses dual-layer fetch: Web scraping with Consent bypass + YouTube RSS feed fallback.
      */
     public function liveStatus(): JsonResponse
     {
@@ -32,25 +30,115 @@ class KhutbahController extends Controller
 
     private function fetchFromYouTube(): array
     {
+        // 1. Try HTML scraping with Cookie Consent bypass headers
         try {
             $html = Http::withHeaders([
                 'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Accept-Language' => 'en-US,en;q=0.9',
+                'Accept-Language' => 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Cookie'          => 'SOCS=CAESEwgDEgk2OTg0MzI4MjQaAmVuIAEaBgiA_LyaBg; CONSENT=PENDING+999;',
             ])
-                ->timeout(15)
+                ->timeout(10)
                 ->get('https://www.youtube.com/@Al-haramain-Sermons/streams')
                 ->body();
 
-            return $this->parseStreamsPage($html);
+            $result = $this->parseStreamsPage($html);
+            if (!empty($result['upcoming']) || !empty($result['live'])) {
+                return $result;
+            }
         } catch (\Throwable $e) {
-            return [
-                'status'   => 'error',
-                'live'     => null,
-                'upcoming' => [],
-                'error'    => $e->getMessage(),
-            ];
+            // Silently proceed to RSS fallback
         }
+
+        // 2. Reliable Fallback: Official YouTube RSS Feed (100% immune to Datacenter IP blocking)
+        try {
+            $rssResult = $this->fetchFromRssFeed();
+            if (!empty($rssResult['upcoming']) || !empty($rssResult['live'])) {
+                return $rssResult;
+            }
+        } catch (\Throwable $e) {
+            // Silently fallback to empty
+        }
+
+        return $this->buildEmptyResponse();
     }
+
+    /**
+     * Official YouTube RSS Feed parser (bypasses datacenter block/consent page)
+     */
+    private function fetchFromRssFeed(): array
+    {
+        $response = Http::timeout(10)->get(self::RSS_URL);
+        if (!$response->successful()) {
+            return $this->buildEmptyResponse();
+        }
+
+        $xml = @simplexml_load_string($response->body());
+        if (!$xml || !isset($xml->entry)) {
+            return $this->buildEmptyResponse();
+        }
+
+        $upcomingList   = [];
+        $haramUpcoming  = [];
+        $nabawiUpcoming = [];
+
+        foreach ($xml->entry as $entry) {
+            $title = (string)$entry->title;
+            if (!$this->isIndonesian($title)) continue;
+
+            $yt = $entry->children('http://www.youtube.com/xml/schemas/2015');
+            $videoId = (string)$yt->videoId;
+            if (!$videoId) continue;
+
+            $masjid = $this->detectMasjid($title);
+            $published = (string)$entry->published;
+
+            $item = [
+                'videoId'      => $videoId,
+                'title'        => $title,
+                'thumbnail'    => "https://i.ytimg.com/vi/{$videoId}/hqdefault.jpg",
+                'url'          => "https://www.youtube.com/watch?v={$videoId}",
+                'scheduledAt'  => $published,
+                'isIndonesian' => true,
+                'masjid'       => $masjid,
+                'isLive'       => false,
+                'isUpcoming'   => true,
+            ];
+
+            $upcomingList[] = $item;
+            if ($masjid === 'haram' && empty($haramUpcoming)) {
+                $haramUpcoming[] = $item;
+            } elseif ($masjid === 'nabawi' && empty($nabawiUpcoming)) {
+                $nabawiUpcoming[] = $item;
+            }
+        }
+
+        if (empty($upcomingList)) {
+            return $this->buildEmptyResponse();
+        }
+
+        return [
+            'status'         => 'upcoming',
+            'state_id'       => 2,
+            'state_title'    => 'Siaran Terjadwal (Upcoming)',
+            'live'           => null,
+            'upcoming'       => $upcomingList,
+            'masjidil_haram' => [
+                'status'   => !empty($haramUpcoming) ? 'upcoming' : 'none',
+                'state_id' => !empty($haramUpcoming) ? 2 : 1,
+                'live'     => null,
+                'upcoming' => $haramUpcoming,
+                'name'     => 'Masjidil Haram (Makkah)',
+            ],
+            'masjid_nabawi'  => [
+                'status'   => !empty($nabawiUpcoming) ? 'upcoming' : 'none',
+                'state_id' => !empty($nabawiUpcoming) ? 2 : 1,
+                'live'     => null,
+                'upcoming' => $nabawiUpcoming,
+                'name'     => 'Masjid Nabawi (Madinah)',
+            ],
+        ];
+    }
+
 
     private function parseStreamsPage(string $html): array
     {

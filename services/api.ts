@@ -10,7 +10,7 @@ import * as SecureStore from 'expo-secure-store';
 
 // 🎓 Change this to your computer's local IP or domain when running Laravel!
 // Example: 'http://192.168.1.50:8000/api' or 'http://localhost:8000/api'
-export const LARAVEL_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.122.122.128:8000/api';
+export const LARAVEL_API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://aplikasi.hafanatravel.com/api';
 
 /**
  * Helper to construct full storage URL for uploaded files/images.
