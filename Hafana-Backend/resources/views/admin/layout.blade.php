@@ -428,14 +428,15 @@
         }
         /* Draggable image inside editor */
         #editor img {
-            max-width: 100%;
-            height: auto;
+            max-width: 280px;
+            max-height: 200px;
+            object-fit: cover;
             cursor: grab;
             border: 2px dashed transparent;
             border-radius: 8px;
             transition: border-color 0.2s, opacity 0.2s, box-shadow 0.2s;
-            display: block;
-            margin: 12px 0;
+            display: inline-block;
+            margin: 8px;
             user-select: none;
         }
         #editor img:hover {
@@ -470,7 +471,7 @@
         <form method="POST" action="{{ route('admin.logout') }}" style="margin:0">
             @csrf
             <button type="submit" class="nav-logout">
-                Logout ({{ Auth::guard('admin')->user()->name }})
+                Logout ({{ Auth::guard('admin')->user()->name }} · {{ Auth::guard('admin')->user()->isAdmin() ? 'Admin' : 'Sub Admin' }})
             </button>
         </form>
     </nav>

@@ -32,6 +32,19 @@
                 @error('password')<p class="error-msg">{{ $message }}</p>@enderror
             </div>
 
+            <div class="form-group">
+                <label>Role / Hak Akses *</label>
+                <select name="role" required {{ auth('admin')->user()->isSubAdmin() ? 'disabled' : '' }}>
+                    <option value="admin" {{ old('role', $admin->role) === 'admin' ? 'selected' : '' }}>👑 Full Admin (Semua Akses & Hapus Data)</option>
+                    <option value="sub_admin" {{ old('role', $admin->role) === 'sub_admin' ? 'selected' : '' }}>🛡️ Sub Admin (Hanya Lihat & Edit, Tidak Bisa Hapus Data)</option>
+                </select>
+                @if(auth('admin')->user()->isSubAdmin())
+                    <input type="hidden" name="role" value="{{ $admin->role }}">
+                @endif
+                @error('role')<p class="error-msg">{{ $message }}</p>@enderror
+            </div>
+
+
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Simpan Perubahan</button>
                 <a href="{{ route('admin.admins.index') }}" class="btn-secondary">Batal</a>

@@ -21,6 +21,7 @@ import {
 import { useAuth } from '@/context/auth';
 import { useAppTheme } from '@/context/theme';
 import { Article, apiRequest, fetchArticles, formatIndonesianDate, getStorageUrl } from '@/services/api';
+import { PhonePromptModal } from '@/components/PhonePromptModal';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -58,6 +59,7 @@ export default function HomeScreen() {
   const [pakets, setPakets] = useState<Paket[]>([]);
   const [loadingPakets, setLoading] = useState(true);
   const [appLogo, setAppLogo] = useState<string | null>(null);
+  const [dismissedPhonePrompt, setDismissedPhonePrompt] = useState(false);
 
   const [articles, setArticles]               = useState<Article[]>([]);
   const [loadingArticles, setLoadingArticles] = useState(true);
@@ -143,9 +145,20 @@ export default function HomeScreen() {
 
   const filtered = pakets;
 
+  // On home, phone prompt is shown if user has no phone number and hasn't dismissed it
+  const shouldPromptPhone = Boolean(user && (!user.no_hp || user.no_hp.trim() === '') && !dismissedPhonePrompt);
+
   return (
     <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
+
+      {/* Dismissible Phone Prompt on Home */}
+      <PhonePromptModal
+        visible={shouldPromptPhone}
+        canDismiss={true}
+        onDismiss={() => setDismissedPhonePrompt(true)}
+        onSuccess={() => setDismissedPhonePrompt(true)}
+      />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={layoutStyles.scrollContent}>
 
         {/* ── TOP BAR ── */}

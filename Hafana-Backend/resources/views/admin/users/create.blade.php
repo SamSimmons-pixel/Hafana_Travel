@@ -27,14 +27,14 @@
             </div>
 
             <div class="form-group">
-                <label>Nama Lengkap Jemaah *</label>
-                <input type="text" name="name" value="{{ old('name') }}" placeholder="Contoh: Ahmad Syahputra" required>
+                <label>Nama Lengkap Jemaah (Login Akun) *</label>
+                <input type="text" name="name" value="{{ old('name') }}" placeholder="Contoh: AHMAD SYAHPUTRA" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()" required>
                 @error('name')<p class="error-msg">{{ $message }}</p>@enderror
             </div>
 
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Nomor Visa (Username Login) *</label>
+                    <label>Nomor Visa *</label>
                     <input type="text" name="nomor_visa" value="{{ old('nomor_visa') }}" placeholder="Contoh: V-123456" required>
                     @error('nomor_visa')<p class="error-msg">{{ $message }}</p>@enderror
                 </div>
@@ -52,11 +52,12 @@
                     @error('nomor_paspor')<p class="error-msg">{{ $message }}</p>@enderror
                 </div>
                 <div class="form-group">
-                    <label>No. HP / WhatsApp (Opsional)</label>
-                    <input type="text" name="no_hp" value="{{ old('no_hp') }}" placeholder="Contoh: 08123456789">
+                    <label>No. HP / WhatsApp (Hanya Angka)</label>
+                    <input type="tel" inputmode="numeric" pattern="[0-9]+" name="no_hp" value="{{ old('no_hp') }}" placeholder="Contoh: 08123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                     @error('no_hp')<p class="error-msg">{{ $message }}</p>@enderror
                 </div>
             </div>
+
 
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Simpan Akun Jemaah</button>

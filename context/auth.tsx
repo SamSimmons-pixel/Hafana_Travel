@@ -17,8 +17,10 @@ import { User, AuthResponse } from '../types/auth';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signIn: (nomor_visa: string, tanggal_lahir: string) => Promise<{ error: any }>;
+  signIn: (name: string, tanggal_lahir: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  updatePhone: (no_hp: string) => Promise<{ error: any }>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -26,11 +28,22 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signIn: async () => ({ error: null }),
   signOut: async () => {},
+  updatePhone: async () => ({ error: null }),
+  refreshUser: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const refreshUser = async () => {
+    try {
+      const userData = await apiRequest<User>('/user');
+      setUser(userData);
+    } catch (err) {
+      console.log('Error refreshing user profile:', err);
+    }
+  };
 
   // Check stored session on launch (Laravel Auth::user())
   useEffect(() => {
@@ -54,13 +67,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuthStatus();
   }, []);
 
-  // Sign In (POST /api/login)
-  const signIn = async (nomor_visa: string, tanggal_lahir: string) => {
+  // Sign In (POST /api/auth/login) with full name (uppercase) & tanggal_lahir
+  const signIn = async (name: string, tanggal_lahir: string) => {
     try {
-      // 🎓 Calls Laravel Route::post('/api/login')
       const res = await apiRequest<{ token: string; user: User }>('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ nomor_visa, tanggal_lahir }),
+        body: JSON.stringify({ name: name.toUpperCase().trim(), tanggal_lahir }),
       });
 
       await setAuthToken(res.token);
@@ -71,10 +83,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign Out (POST /api/logout)
+  // Update Phone Number (PATCH /api/user/phone)
+  const updatePhone = async (no_hp: string) => {
+    try {
+      const res = await apiRequest<{ message: string; user: User }>('/user/phone', {
+        method: 'PATCH',
+        body: JSON.stringify({ no_hp: no_hp.trim() }),
+      });
+
+      if (res.user) {
+        setUser(res.user);
+      }
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message };
+    }
+  };
+
+  // Sign Out (POST /api/auth/logout)
   const signOut = async () => {
     try {
-      await apiRequest('/logout', { method: 'POST' });
+      await apiRequest('/auth/logout', { method: 'POST' });
     } catch (e) {
       // Ignore network errors on logout
     } finally {
@@ -83,7 +112,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-
   return (
     <AuthContext.Provider
       value={{
@@ -91,12 +119,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         signIn,
         signOut,
+        updatePhone,
+        refreshUser,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
+
 
 export const useAuth = () => {
     const context = useContext(AuthContext);

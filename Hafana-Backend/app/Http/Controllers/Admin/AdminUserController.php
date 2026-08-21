@@ -37,6 +37,7 @@ class AdminUserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|max:255|unique:admins,email',
             'password' => 'required|string|min:6',
+            'role'     => 'required|in:admin,sub_admin',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -64,6 +65,7 @@ class AdminUserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|max:255|unique:admins,email,' . $admin->id,
             'password' => 'nullable|string|min:6',
+            'role'     => 'required|in:admin,sub_admin',
         ]);
 
         if (!empty($validated['password'])) {
@@ -83,8 +85,16 @@ class AdminUserController extends Controller
      */
     public function destroy(Admin $admin): RedirectResponse
     {
+        if (auth('admin')->user()->isSubAdmin()) {
+            return back()->with('error', 'Sub Admin tidak memiliki akses untuk menghapus Admin.');
+        }
+
         if (Admin::count() <= 1) {
             return back()->with('error', 'Tidak dapat menghapus admin terakhir!');
+        }
+
+        if ($admin->id === auth('admin')->id()) {
+            return back()->with('error', 'Tidak dapat menghapus akun Anda sendiri saat sedang login!');
         }
 
         $name = $admin->name;

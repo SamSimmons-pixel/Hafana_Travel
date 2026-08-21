@@ -16,36 +16,57 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ── Group Rombongan Sample ──
-        $group = Group::create([
-            'nama_group' => 'Keberangkatan 16 Sep 2026 - Rombongan 1',
-            'keterangan' => 'Pembimbing Ust. Yusuf As Sidawy',
-        ]);
+        $group = Group::firstOrCreate(
+            ['nama_group' => 'Keberangkatan 16 Sep 2026 - Rombongan 1'],
+            [
+                'keterangan' => 'Pembimbing Ust. Yusuf As Sidawy',
+                'is_active'  => true,
+            ]
+        );
 
-        // ── Jemaah Users ──
-        User::factory()->create([
-            'group_id' => $group->id,
-            'name' => 'Test User',
-            'nomor_visa' => '1234567890',
-            'tanggal_lahir' => '1995-08-15',
-            'nomor_paspor' => 'A1234567',
-            'no_hp' => '081234567890',
-        ]);
+        // ── Jemaah Users (All uppercase names) ──
+        User::updateOrCreate(
+            ['nomor_visa' => '1234567890'],
+            [
+                'group_id'      => $group->id,
+                'name'          => 'TEST USER',
+                'tanggal_lahir' => '1995-08-15',
+                'nomor_paspor'  => 'A1234567',
+                'no_hp'         => '081234567890',
+            ]
+        );
 
-        User::factory()->create([
-            'group_id' => $group->id,
-            'name' => 'Ahmad Syahputra',
-            'nomor_visa' => 'V-123456',
-            'tanggal_lahir' => '1998-05-20',
-            'nomor_paspor' => 'B9876543',
-            'no_hp' => '089876543210',
-        ]);
+        User::updateOrCreate(
+            ['nomor_visa' => 'V-123456'],
+            [
+                'group_id'      => $group->id,
+                'name'          => 'AHMAD SYAHPUTRA',
+                'tanggal_lahir' => '1998-05-20',
+                'nomor_paspor'  => 'B9876543',
+                'no_hp'         => '089876543210',
+            ]
+        );
 
-        // ── Admin Account ──
-        Admin::create([
-            'name'     => 'Admin Hafana',
-            'email'    => 'admin@hafana.com',
-            'password' => Hash::make('password'),
-        ]);
+        // ── Admin Accounts ──
+        Admin::updateOrCreate(
+            ['email' => 'admin@hafana.com'],
+            [
+                'name'     => 'Admin Hafana',
+                'password' => Hash::make('password'),
+                'role'     => 'admin',
+            ]
+        );
+
+        Admin::updateOrCreate(
+            ['email' => 'subadmin@hafana.com'],
+            [
+                'name'     => 'Staff Sub Admin',
+                'password' => Hash::make('password'),
+                'role'     => 'sub_admin',
+            ]
+        );
+
+
 
         // ── Dummy Paket Umrah ──
         $pakets = [
@@ -85,8 +106,9 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($pakets as $paket) {
-            Paket::create($paket);
+            Paket::firstOrCreate(['nama_paket' => $paket['nama_paket']], $paket);
         }
+
 
         $this->call(ArticleSeeder::class);
     }

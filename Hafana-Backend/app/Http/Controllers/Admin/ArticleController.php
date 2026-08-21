@@ -91,6 +91,13 @@ class ArticleController extends Controller
         return back()->with('success', 'Status Pin Halaman Utama berhasil diperbarui');
     }
 
+    public function togglePublish(Article $article)
+    {
+        $article->update(['is_published' => !$article->is_published]);
+        $status = $article->is_published ? 'diterbitkan' : 'disembunyikan';
+        return back()->with('success', "Artikel berhasil {$status}.");
+    }
+
     public function uploadImage(Request $request)
     {
         $request->validate([

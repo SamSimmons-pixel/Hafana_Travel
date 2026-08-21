@@ -54,6 +54,10 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
     Route::resource('groups', AdminGroupController::class);
     Route::post('groups/{group}/append-json', [AdminGroupController::class, 'appendJson'])
         ->name('groups.append-json');
+    Route::post('groups/{group}/toggle-active', [AdminGroupController::class, 'toggleActive'])
+        ->name('groups.toggle-active');
+    Route::get('groups/{group}/export-pdf', [AdminGroupController::class, 'exportPdf'])
+        ->name('groups.export-pdf');
 
     // Jemaah User management
     Route::resource('users', AdminUserController::class);
@@ -67,4 +71,6 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
     Route::resource('articles', \App\Http\Controllers\Admin\ArticleController::class);
     Route::post('articles/{article}/toggle-pin', [\App\Http\Controllers\Admin\ArticleController::class, 'togglePin'])
         ->name('articles.toggle-pin');
+    Route::post('articles/{article}/toggle-publish', [\App\Http\Controllers\Admin\ArticleController::class, 'togglePublish'])
+        ->name('articles.toggle-publish');
 });

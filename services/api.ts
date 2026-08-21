@@ -235,16 +235,31 @@ export interface KhutbahLiveVideo {
   url: string;
   scheduledAt: string | null;
   isIndonesian: boolean;
+  masjid?: string;
+}
+
+export interface MosqueKhutbahData {
+  status?: 'live' | 'upcoming' | 'none';
+  state_id?: 1 | 2 | 3;
+  live: KhutbahLiveVideo | null;
+  upcoming: KhutbahLiveVideo[];
+  name: string;
 }
 
 export interface KhutbahLiveResponse {
   status: 'live' | 'upcoming' | 'none' | 'error';
+  state_id?: 1 | 2 | 3;
+  state_title?: string;
   live: KhutbahLiveVideo | null;
   upcoming: KhutbahLiveVideo[];
+  masjidil_haram?: MosqueKhutbahData;
+  masjid_nabawi?: MosqueKhutbahData;
   error?: string;
 }
+
 
 export async function fetchKhutbahLive(): Promise<KhutbahLiveResponse> {
   return await apiRequest<KhutbahLiveResponse>('/khutbah/live');
 }
+
 
