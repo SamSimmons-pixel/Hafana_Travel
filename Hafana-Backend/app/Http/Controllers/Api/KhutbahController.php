@@ -42,7 +42,7 @@ class KhutbahController extends Controller
                 ->body();
 
             $result = $this->parseStreamsPage($html);
-            if (!empty($result['upcoming']) || !empty($result['live'])) {
+            if ($result !== null) {
                 return $result;
             }
         } catch (\Throwable $e) {
@@ -52,7 +52,7 @@ class KhutbahController extends Controller
         // 2. Reliable Fallback: Official YouTube RSS Feed (100% immune to Datacenter IP blocking)
         try {
             $rssResult = $this->fetchFromRssFeed();
-            if (!empty($rssResult['upcoming']) || !empty($rssResult['live'])) {
+            if ($rssResult !== null) {
                 return $rssResult;
             }
         } catch (\Throwable $e) {
@@ -77,8 +77,12 @@ class KhutbahController extends Controller
             return $this->buildEmptyResponse();
         }
 
+        $now            = new \DateTime('now', new \DateTimeZone('UTC'));
+        $liveVideo      = null;
         $upcomingList   = [];
+        $haramLive      = null;
         $haramUpcoming  = [];
+        $nabawiLive     = null;
         $nabawiUpcoming = [];
 
         foreach ($xml->entry as $entry) {
@@ -93,6 +97,18 @@ class KhutbahController extends Controller
             $published   = (string)$entry->published;
             $scheduledAt = $this->calculateKhutbahTime($published, $masjid);
 
+            $schedDate = new \DateTime($scheduledAt, new \DateTimeZone('UTC'));
+            // Khutbah duration is ~2 hours. If scheduled time + 2 hours has passed, the sermon is finished (State 1)
+            $endedDate = (clone $schedDate)->modify('+2 hours');
+
+            if ($now > $endedDate) {
+                // Stream has ended/finished! Do not count as upcoming or live.
+                continue;
+            }
+
+            $isLive = ($now >= $schedDate && $now <= $endedDate);
+            $isUpcoming = ($now < $schedDate);
+
             $item = [
                 'videoId'      => $videoId,
                 'title'        => $title,
@@ -101,44 +117,58 @@ class KhutbahController extends Controller
                 'scheduledAt'  => $scheduledAt,
                 'isIndonesian' => true,
                 'masjid'       => $masjid,
-                'isLive'       => false,
-                'isUpcoming'   => true,
+                'isLive'       => $isLive,
+                'isUpcoming'   => $isUpcoming,
             ];
 
-            $upcomingList[] = $item;
-            if ($masjid === 'haram' && empty($haramUpcoming)) {
-                $haramUpcoming[] = $item;
-            } elseif ($masjid === 'nabawi' && empty($nabawiUpcoming)) {
-                $nabawiUpcoming[] = $item;
+            if ($isLive) {
+                if (!$liveVideo) $liveVideo = $item;
+                if ($masjid === 'haram' && !$haramLive) $haramLive = $item;
+                elseif ($masjid === 'nabawi' && !$nabawiLive) $nabawiLive = $item;
+            } elseif ($isUpcoming) {
+                $upcomingList[] = $item;
+                if ($masjid === 'haram' && empty($haramUpcoming)) $haramUpcoming[] = $item;
+                elseif ($masjid === 'nabawi' && empty($nabawiUpcoming)) $nabawiUpcoming[] = $item;
             }
         }
 
-        if (empty($upcomingList)) {
+        if (!$liveVideo && empty($upcomingList)) {
             return $this->buildEmptyResponse();
         }
 
+        $overallStatus  = $liveVideo ? 'live' : 'upcoming';
+        $overallStateId = $liveVideo ? 3 : 2;
+        $stateTitle     = $liveVideo ? 'Sedang Berlangsung (Live)' : 'Siaran Terjadwal (Upcoming)';
+
+        $haramStatus  = $haramLive ? 'live' : (!empty($haramUpcoming) ? 'upcoming' : 'none');
+        $haramStateId = $haramLive ? 3 : (!empty($haramUpcoming) ? 2 : 1);
+
+        $nabawiStatus  = $nabawiLive ? 'live' : (!empty($nabawiUpcoming) ? 'upcoming' : 'none');
+        $nabawiStateId = $nabawiLive ? 3 : (!empty($nabawiUpcoming) ? 2 : 1);
+
         return [
-            'status'         => 'upcoming',
-            'state_id'       => 2,
-            'state_title'    => 'Siaran Terjadwal (Upcoming)',
-            'live'           => null,
+            'status'         => $overallStatus,
+            'state_id'       => $overallStateId,
+            'state_title'    => $stateTitle,
+            'live'           => $liveVideo,
             'upcoming'       => $upcomingList,
             'masjidil_haram' => [
-                'status'   => !empty($haramUpcoming) ? 'upcoming' : 'none',
-                'state_id' => !empty($haramUpcoming) ? 2 : 1,
-                'live'     => null,
+                'status'   => $haramStatus,
+                'state_id' => $haramStateId,
+                'live'     => $haramLive,
                 'upcoming' => $haramUpcoming,
                 'name'     => 'Masjidil Haram (Makkah)',
             ],
             'masjid_nabawi'  => [
-                'status'   => !empty($nabawiUpcoming) ? 'upcoming' : 'none',
-                'state_id' => !empty($nabawiUpcoming) ? 2 : 1,
-                'live'     => null,
+                'status'   => $nabawiStatus,
+                'state_id' => $nabawiStateId,
+                'live'     => $nabawiLive,
                 'upcoming' => $nabawiUpcoming,
                 'name'     => 'Masjid Nabawi (Madinah)',
             ],
         ];
     }
+
 
     /**
      * Calculates the exact Friday broadcast time for the Khutbah sermon
@@ -169,7 +199,7 @@ class KhutbahController extends Controller
 
 
 
-    private function parseStreamsPage(string $html): array
+    private function parseStreamsPage(string $html): ?array
     {
         // Extract ytInitialData JSON from the YouTube page
         preg_match('/var ytInitialData\s*=\s*(\{.+?\});/', $html, $matches);
@@ -178,12 +208,12 @@ class KhutbahController extends Controller
         }
 
         if (empty($matches[1])) {
-            return $this->buildEmptyResponse();
+            return null; // Return null so fetchFromYouTube falls back to RSS
         }
 
         $data = json_decode($matches[1], true);
         if (!$data) {
-            return $this->buildEmptyResponse();
+            return null;
         }
 
         // Extract all video items supporting both lockupViewModel (modern) and videoRenderer (legacy)
@@ -377,21 +407,28 @@ class KhutbahController extends Controller
             $isLive = true;
         }
 
-        // Check UPCOMING badge
+        // Check UPCOMING badge (Must have real UPCOMING badge/reminder, not past text)
         $isUpcoming = false;
-        if (str_contains($overlayText, '"UPCOMING"') || str_contains($jsonString, 'addUpcomingEventReminderEndpoint') || str_contains($jsonString, 'Scheduled for') || str_contains($jsonString, 'Terjadwal')) {
+        if (
+            str_contains($overlayText, '"UPCOMING"') ||
+            str_contains($overlayText, 'THUMBNAIL_OVERLAY_BADGE_STYLE_UPCOMING') ||
+            str_contains($jsonString, 'addUpcomingEventReminderEndpoint') ||
+            !empty($node['upcomingEventData'])
+        ) {
             $isUpcoming = true;
         }
 
         // Scheduled time text
         $scheduledAt = null;
-        $metadataRows = $node['metadata']['lockupMetadataViewModel']['metadata']['contentMetadataViewModel']['metadataRows'] ?? [];
-        foreach ($metadataRows as $row) {
-            foreach ($row['metadataParts'] ?? [] as $part) {
-                $text = $part['text']['content'] ?? '';
-                if (str_contains($text, 'Scheduled') || str_contains($text, 'Terjadwal')) {
-                    $scheduledAt = $text;
-                    break 2;
+        if ($isUpcoming) {
+            $metadataRows = $node['metadata']['lockupMetadataViewModel']['metadata']['contentMetadataViewModel']['metadataRows'] ?? [];
+            foreach ($metadataRows as $row) {
+                foreach ($row['metadataParts'] ?? [] as $part) {
+                    $text = $part['text']['content'] ?? '';
+                    if (str_contains($text, 'Scheduled') || str_contains($text, 'Terjadwal')) {
+                        $scheduledAt = $text;
+                        break 2;
+                    }
                 }
             }
         }
@@ -486,9 +523,15 @@ class KhutbahController extends Controller
         foreach ($badges as $badge) {
             $style = strtoupper($badge['metadataBadgeRenderer']['style'] ?? '');
             $label = strtoupper($badge['metadataBadgeRenderer']['label'] ?? '');
-            if (str_contains($style, 'UPCOMING') || str_contains($label, 'UPCOMING') || str_contains($label, 'SCHEDULED')) {
+            if (str_contains($style, 'UPCOMING') || $label === 'UPCOMING' || $label === 'SEGERA') {
                 return true;
             }
+        }
+
+        $overlays = $renderer['thumbnailOverlays'] ?? [];
+        foreach ($overlays as $overlay) {
+            $text = strtoupper(json_encode($overlay));
+            if (str_contains($text, '"UPCOMING"') || str_contains($text, 'THUMBNAIL_OVERLAY_BADGE_STYLE_UPCOMING')) return true;
         }
 
         return false;

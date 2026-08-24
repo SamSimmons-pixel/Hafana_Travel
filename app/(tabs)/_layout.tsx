@@ -1,12 +1,14 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { COLORS, TAB_ICON } from '@/components/styles';
 import { useAuth } from '@/context/auth';
 import { useAppTheme } from '@/context/theme';
+import RodjaLogoSvg from '@/components/RodjaLogoSvg';
+
 
 function RodjaTabButton({ onPress, accessibilityState, colors }: any) {
   const focused = accessibilityState?.selected;
@@ -30,11 +32,7 @@ function RodjaTabButton({ onPress, accessibilityState, colors }: any) {
           },
         ]}
       >
-        <Image
-          source={require('@/assets/images/rodja-logo.png')}
-          style={s.rodjaLogo}
-          resizeMode="cover"
-        />
+        <RodjaLogoSvg size={44} />
       </View>
       <Text
         style={[

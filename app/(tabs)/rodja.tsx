@@ -14,7 +14,6 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  Image,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -32,6 +31,7 @@ import { COLORS, FONT, RADIUS, SPACING, SHADOW, layoutStyles } from '@/component
 import { useAuth } from '@/context/auth';
 import { useAppTheme } from '@/context/theme';
 import { PhonePromptModal } from '@/components/PhonePromptModal';
+import RodjaLogoSvg from '@/components/RodjaLogoSvg';
 
 const { width } = Dimensions.get('window');
 const VIDEO_HEIGHT = Math.round((width * 9) / 16);
@@ -448,11 +448,7 @@ export default function RodjaScreen() {
       {/* Top Bar */}
       <View style={[s.topBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Image
-            source={require('@/assets/images/rodja-logo.png')}
-            style={s.headerLogo}
-            resizeMode="cover"
-          />
+          <RodjaLogoSvg size={38} />
           <View>
             <Text style={[s.topBarTitle, { color: colors.textPrimary }]}>Rodja TV Live</Text>
             <Text style={[s.topBarSub, { color: colors.textMuted }]}>Menebar Cahaya Sunnah</Text>
