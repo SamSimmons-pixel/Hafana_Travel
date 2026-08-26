@@ -3,11 +3,11 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
+import RodjaLogoSvg from '@/components/RodjaLogoSvg';
+import { TAB_ICON } from '@/components/styles';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { COLORS, TAB_ICON } from '@/components/styles';
 import { useAuth } from '@/context/auth';
 import { useAppTheme } from '@/context/theme';
-import RodjaLogoSvg from '@/components/RodjaLogoSvg';
 
 
 function RodjaTabButton({ onPress, accessibilityState, colors }: any) {
@@ -16,14 +16,14 @@ function RodjaTabButton({ onPress, accessibilityState, colors }: any) {
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={onPress}
-      style={s.rodjaButtonContainer}
+      style={[s.rodjaButtonContainer, { backgroundColor: 'transparent' }]}
     >
       <View
         style={[
           s.rodjaCircle,
           {
             borderColor: focused ? colors.primary : colors.surface,
-            backgroundColor: '#0a192f',
+            backgroundColor: focused ? colors.primary : colors.surface,
           },
           focused && {
             shadowColor: colors.primary,
@@ -40,7 +40,7 @@ function RodjaTabButton({ onPress, accessibilityState, colors }: any) {
           { color: focused ? colors.primary : colors.textMuted },
         ]}
       >
-        Rodja TV
+        Live Rodja TV
       </Text>
     </TouchableOpacity>
   );
@@ -87,6 +87,7 @@ export default function TabLayout() {
         name="rodja"
         options={{
           title: 'Rodja TV',
+          tabBarItemStyle: { backgroundColor: 'transparent' },
           tabBarButton: (props) => <RodjaTabButton {...props} colors={colors} />,
         }}
       />
@@ -110,6 +111,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     zIndex: 99,
     flex: 1,
+    backgroundColor: 'transparent',
   },
   rodjaCircle: {
     width: 52,
@@ -118,11 +120,7 @@ const s = StyleSheet.create({
     borderWidth: 3,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 8,
+    elevation: 2,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -130,17 +128,6 @@ const s = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 26,
-  },
-  liveDotIndicator: {
-    position: 'absolute',
-    bottom: 2,
-    right: 3,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: '#ef4444',
-    borderWidth: 1.5,
-    borderColor: '#ffffff',
   },
   rodjaText: {
     fontSize: 10,

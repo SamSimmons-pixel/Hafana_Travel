@@ -6,6 +6,7 @@
  * Styles sourced from @/components/styles — edit theme.ts to retheme.
  */
 
+import { PhonePromptModal } from '@/components/PhonePromptModal';
 import {
   COLORS, FONT,
   MENU_ICONS,
@@ -15,27 +16,25 @@ import {
   UI_ICONS,
   cardStyles,
   emptyStyles,
-  layoutStyles, sectionStyles,
-  textStyles,
+  layoutStyles, sectionStyles
 } from '@/components/styles';
 import { useAuth } from '@/context/auth';
 import { useAppTheme } from '@/context/theme';
 import { Article, apiRequest, fetchArticles, formatIndonesianDate, getStorageUrl } from '@/services/api';
-import { PhonePromptModal } from '@/components/PhonePromptModal';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome6, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -61,9 +60,9 @@ export default function HomeScreen() {
   const [appLogo, setAppLogo] = useState<string | null>(null);
   const [dismissedPhonePrompt, setDismissedPhonePrompt] = useState(false);
 
-  const [articles, setArticles]               = useState<Article[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loadingArticles, setLoadingArticles] = useState(true);
-  const [articleError, setArticleError]       = useState(false);
+  const [articleError, setArticleError] = useState(false);
 
   const loadArticles = async () => {
     setLoadingArticles(true);
@@ -208,8 +207,30 @@ export default function HomeScreen() {
 
         {/* ── GREETING BANNER ── */}
         <View style={[s.greeting, { backgroundColor: isDarkMode ? '#1e293b' : colors.primaryDark }]}>
-          <Text style={s.greetingHi}>Assalamu'alaikum</Text>
-          <Text style={s.greetingName}>{user?.name ?? 'Jemaah'}</Text>
+          <View style={s.greetingRow}>
+            {/* Left Column: Greeting */}
+            <View style={s.greetingLeft}>
+              <Text style={s.greetingHi}>Assalamu'alaikum</Text>
+              <Text style={s.greetingName} numberOfLines={1}>
+                {user?.name ?? 'Jemaah'}
+              </Text>
+            </View>
+
+            {/* Vertical Divider */}
+            <View style={s.greetingDivider} />
+
+            {/* Right Column: Tentang Kami Link */}
+            <TouchableOpacity
+              style={s.aboutBtn}
+              activeOpacity={0.75}
+              onPress={() => router.push('/tentang' as any)}
+            >
+              <View style={s.aboutBtnContent}>
+                <Text style={s.aboutBtnText}>Profil Hafana</Text>
+                <MaterialCommunityIcons name="chevron-right" size={16} color="#fde68a" />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── SEARCH BAR ── */}
@@ -419,6 +440,86 @@ export default function HomeScreen() {
           )}
         </View>
 
+        {/* ── CLEAN TEXT FOOTER ── */}
+        <View style={s.footerContainer}>
+          <Text style={[s.footerBrandName, { color: colors.textPrimary }]}>
+            HAFANA TOUR & TRAVEL
+          </Text>
+          <Text style={[s.footerLegalName, { color: colors.primary }]}>
+            PT. Haramain Safarindo Hasanah • PPIU SK No. 26052300381750003
+          </Text>
+
+          <Text style={[s.footerDesc, { color: colors.textSecondary }]}>
+            Penyelenggara perjalanan umrah resmi di bawah bimbingan Ustadz Badru Salam, Lc (Pembina Radio Rodja & Rodja TV). Teman ibadah di Tanah Suci.
+          </Text>
+
+          <Text style={[s.footerContact, { color: colors.textMuted }]}>
+            Cileungsi, Bogor, Jawa Barat • WA: 0812-2232-2360
+          </Text>
+
+          <TouchableOpacity
+            style={s.footerAboutLink}
+            activeOpacity={0.7}
+            onPress={() => router.push('/tentang' as any)}
+          >
+            <Text style={[s.footerAboutLinkText, { color: colors.primary }]}>
+              Profil Kami Selengkapnya ›
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={[s.footerCopyright, { color: colors.textMuted }]}>
+            © 2024–{new Date().getFullYear()} PT. Haramain Safarindo Hasanah. All rights reserved.
+          </Text>
+
+          {/* Social Media Links */}
+          <View style={s.footerSocialRow}>
+            <TouchableOpacity
+              style={[s.footerSocialIconBtn, isDarkMode ? s.footerSocialIconBtnDark : s.footerSocialIconBtnLight]}
+              activeOpacity={0.7}
+              onPress={() => Linking.openURL('https://www.instagram.com/hafana.travel').catch(() => {})}
+              accessibilityLabel="Instagram Hafana Travel"
+            >
+              <FontAwesome6 name="instagram" size={18} color="#E4405F" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[s.footerSocialIconBtn, isDarkMode ? s.footerSocialIconBtnDark : s.footerSocialIconBtnLight]}
+              activeOpacity={0.7}
+              onPress={() => Linking.openURL('https://www.youtube.com/@hafana.travel').catch(() => {})}
+              accessibilityLabel="YouTube Hafana Travel"
+            >
+              <FontAwesome6 name="youtube" size={18} color="#FF0000" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[s.footerSocialIconBtn, isDarkMode ? s.footerSocialIconBtnDark : s.footerSocialIconBtnLight]}
+              activeOpacity={0.7}
+              onPress={() => Linking.openURL('https://www.tiktok.com/@hafana.travel').catch(() => {})}
+              accessibilityLabel="TikTok Hafana Travel"
+            >
+              <FontAwesome6 name="tiktok" size={18} color={isDarkMode ? '#ffffff' : '#000000'} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[s.footerSocialIconBtn, isDarkMode ? s.footerSocialIconBtnDark : s.footerSocialIconBtnLight]}
+              activeOpacity={0.7}
+              onPress={() => Linking.openURL('https://www.facebook.com/hafana.travel/').catch(() => {})}
+              accessibilityLabel="Facebook Hafana Travel"
+            >
+              <FontAwesome6 name="facebook" size={18} color="#1877F2" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[s.footerSocialIconBtn, isDarkMode ? s.footerSocialIconBtnDark : s.footerSocialIconBtnLight]}
+              activeOpacity={0.7}
+              onPress={() => Linking.openURL('https://hafanatravel.com/').catch(() => {})}
+              accessibilityLabel="Website Hafana Travel"
+            >
+              <FontAwesome6 name="globe" size={17} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -484,11 +585,47 @@ const s = StyleSheet.create({
 
   greeting: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: 18,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: 14,
   },
-  greetingHi: { color: 'rgba(255,255,255,0.85)', fontSize: FONT.sizeMd, marginBottom: 2 },
-  greetingName: { color: COLORS.surface, fontSize: 22, fontWeight: FONT.weightBlack },
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  greetingLeft: {
+    flex: 1,
+    paddingRight: SPACING.sm,
+  },
+  greetingHi: { color: 'rgba(255,255,255,0.85)', fontSize: FONT.sizeSm, marginBottom: 2 },
+  greetingName: { color: COLORS.surface, fontSize: 18, fontWeight: FONT.weightBlack },
+  greetingDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    marginHorizontal: SPACING.xs,
+  },
+  aboutBtn: {
+    paddingLeft: SPACING.xs,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  aboutBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+    gap: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+  },
+  aboutBtnText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
 
   searchBar: {
     flexDirection: 'row',
@@ -614,5 +751,75 @@ const s = StyleSheet.create({
     color: '#ffffff',
     fontWeight: FONT.weightBold,
     fontSize: FONT.sizeSm,
+  },
+
+  footerContainer: {
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    paddingBottom: SPACING.xxl + 10,
+    alignItems: 'center',
+    gap: 4,
+  },
+  footerBrandName: {
+    fontSize: FONT.sizeSm,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  footerLegalName: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  footerDesc: {
+    fontSize: FONT.sizeXs,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: 2,
+    maxWidth: 320,
+  },
+  footerContact: {
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  footerAboutLink: {
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    marginTop: 4,
+  },
+  footerAboutLinkText: {
+    fontSize: FONT.sizeXs,
+    fontWeight: '700',
+  },
+  footerCopyright: {
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  footerSocialRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.md,
+    marginTop: 8,
+  },
+  footerSocialIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerSocialIconBtnLight: {
+    backgroundColor: '#ffffff',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  footerSocialIconBtnDark: {
+    backgroundColor: '#1e293b',
   },
 });

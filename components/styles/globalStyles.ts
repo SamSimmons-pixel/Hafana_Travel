@@ -15,7 +15,7 @@ export const layoutStyles = StyleSheet.create({
     backgroundColor: COLORS.bg,
   },
   scrollContent: {
-    paddingBottom: 40,
+    
   },
   row: {
     flexDirection: 'row',

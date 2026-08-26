@@ -25,6 +25,7 @@ import {
 } from '@/components/styles';
 import { useAppTheme } from '@/context/theme';
 import { Article, fetchArticleById, formatIndonesianDate, getStorageUrl } from '@/services/api';
+import ImageViewerModal, { GalleryItemData } from '@/components/ImageViewerModal';
 
 export default function ArticleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -34,6 +35,11 @@ export default function ArticleDetailScreen() {
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(false);
+
+  // Fullscreen viewer
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerIndex, setViewerIndex]     = useState(0);
+  const [viewerItems, setViewerItems]     = useState<GalleryItemData[]>([]);
 
   const loadDetail = async () => {
     if (!id) return;
@@ -66,6 +72,35 @@ export default function ArticleDetailScreen() {
   };
 
   const heroImageUri = getStorageUrl(article?.thumbnail_url) || article?.thumbnail_url;
+
+  /** Collect ALL image URIs from hero + body content for the viewer */
+  const buildViewerItems = (heroUri: string | null | undefined, content: string | undefined): GalleryItemData[] => {
+    const imgs: GalleryItemData[] = [];
+    if (heroUri) imgs.push({ id: 'hero', imageUrl: heroUri, caption: article?.title });
+    if (content) {
+      const mdRegex = /!\[([^\]]*)\]\s*\(\s*([^\s)]+)\s*\)/gi;
+      const htmlRegex = /<img\b[^>]*src=["']([^"']+)["'][^>]*\/?>/gi;
+      let m;
+      while ((m = mdRegex.exec(content)) !== null) {
+        const url = getStorageUrl(m[2]) || m[2];
+        imgs.push({ id: `md-${imgs.length}`, imageUrl: url, caption: m[1] || undefined });
+      }
+      while ((m = htmlRegex.exec(content)) !== null) {
+        const url = getStorageUrl(m[1]) || m[1];
+        const altMatch = m[0].match(/alt=["']([^"']*)["']/i);
+        imgs.push({ id: `html-${imgs.length}`, imageUrl: url, caption: altMatch ? altMatch[1] : undefined });
+      }
+    }
+    return imgs;
+  };
+
+  const openViewer = (uri: string) => {
+    const items = buildViewerItems(heroImageUri, article?.content);
+    const idx = items.findIndex(i => i.imageUrl === uri);
+    setViewerItems(items);
+    setViewerIndex(idx >= 0 ? idx : 0);
+    setViewerVisible(true);
+  };
 
   return (
     <SafeAreaView style={[layoutStyles.screen, { backgroundColor: colors.bg }]}>
@@ -113,13 +148,20 @@ export default function ArticleDetailScreen() {
         >
           {/* Hero Image */}
           {heroImageUri ? (
-            <View style={s.heroBox}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => openViewer(heroImageUri)}
+              style={s.heroBox}
+            >
               <Image
                 source={{ uri: heroImageUri }}
                 style={s.heroImage}
                 resizeMode="cover"
               />
-            </View>
+              <View style={s.zoomHint}>
+                <MaterialCommunityIcons name="magnify-plus-outline" size={16} color="#ffffff" />
+              </View>
+            </TouchableOpacity>
           ) : null}
 
           {/* Title & Metadata */}
@@ -149,17 +191,33 @@ export default function ArticleDetailScreen() {
           <View style={[s.divider, { backgroundColor: colors.border }]} />
 
           {/* Rich Content Renderer */}
-          <ArticleContentBody content={article.content} colors={colors} />
+          <ArticleContentBody content={article.content} colors={colors} onImagePress={openViewer} />
 
           <View style={{ height: 60 }} />
         </ScrollView>
       )}
+
+      {/* Fullscreen Image Viewer */}
+      <ImageViewerModal
+        visible={viewerVisible}
+        items={viewerItems}
+        initialIndex={viewerIndex}
+        onClose={() => setViewerVisible(false)}
+      />
     </SafeAreaView>
   );
 }
 
 /** Render Markdown / Rich Text / HTML Body */
-function ArticleContentBody({ content, colors }: { content: string; colors: any }) {
+function ArticleContentBody({
+  content,
+  colors,
+  onImagePress,
+}: {
+  content: string;
+  colors: any;
+  onImagePress?: (uri: string) => void;
+}) {
   if (!content) return null;
 
   // Split content by both Markdown (![alt](url)) and HTML (<img ...>) image tags
@@ -180,7 +238,12 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
           const resolvedUri = getStorageUrl(rawUrl) || rawUrl;
 
           return (
-            <View key={index} style={s.inlineImageBox}>
+            <TouchableOpacity
+              key={index}
+              activeOpacity={0.85}
+              onPress={() => onImagePress?.(resolvedUri)}
+              style={s.inlineImageBox}
+            >
               <Image
                 source={{ uri: resolvedUri }}
                 style={s.inlineImage}
@@ -191,7 +254,10 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
                   {altText}
                 </Text>
               ) : null}
-            </View>
+              <View style={s.zoomHint}>
+                <MaterialCommunityIcons name="magnify-plus-outline" size={14} color="#ffffff" />
+              </View>
+            </TouchableOpacity>
           );
         }
 
@@ -204,7 +270,12 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
           const resolvedUri = getStorageUrl(rawUrl) || rawUrl;
 
           return (
-            <View key={index} style={s.inlineImageBox}>
+            <TouchableOpacity
+              key={index}
+              activeOpacity={0.85}
+              onPress={() => onImagePress?.(resolvedUri)}
+              style={s.inlineImageBox}
+            >
               <Image
                 source={{ uri: resolvedUri }}
                 style={s.inlineImage}
@@ -215,7 +286,10 @@ function ArticleContentBody({ content, colors }: { content: string; colors: any 
                   {altText}
                 </Text>
               ) : null}
-            </View>
+              <View style={s.zoomHint}>
+                <MaterialCommunityIcons name="magnify-plus-outline" size={14} color="#ffffff" />
+              </View>
+            </TouchableOpacity>
           );
         }
 
@@ -569,5 +643,14 @@ const s = StyleSheet.create({
     color: '#ffffff',
     fontWeight: FONT.weightBold,
     fontSize: FONT.sizeSm,
+  },
+
+  zoomHint: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: RADIUS.md,
+    padding: 5,
   },
 });

@@ -201,7 +201,7 @@ export default function KhutbahScreen() {
       <View style={s.stateHeaderRow}>
         <View style={[s.statePill, { backgroundColor: '#ef4444' }]}>
           <Animated.View style={[s.liveDotWhite, { transform: [{ scale: pulseAnim }] }]} />
-          <Text style={s.statePillTextLight}>STATE 3 • LIVE SEKARANG</Text>
+          <Text style={s.statePillTextLight}>LIVE SEKARANG</Text>
         </View>
         <View style={[s.langBadge, { backgroundColor: isDarkMode ? '#14532d' : '#dcfce7' }]}>
           <Text style={[s.langBadgeText, { color: '#16a34a' }]}>🇮🇩 Bahasa Indonesia</Text>
@@ -224,39 +224,6 @@ export default function KhutbahScreen() {
         />
       </View>
 
-      {/* Action Buttons */}
-      <View style={{ gap: SPACING.sm }}>
-        {!playing ? (
-          <TouchableOpacity
-            style={[s.mainActionBtn, { backgroundColor: '#16a34a' }]}
-            onPress={() => setPlaying(true)}
-            activeOpacity={0.85}
-          >
-            <MaterialCommunityIcons name="play-circle" size={20} color="#ffffff" />
-            <Text style={s.mainActionBtnText}>Putar Siaran Langsung di Aplikasi</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[s.mainActionBtn, { backgroundColor: '#dc2626' }]}
-            onPress={() => setPlaying(false)}
-            activeOpacity={0.85}
-          >
-            <MaterialCommunityIcons name="pause-circle" size={20} color="#ffffff" />
-            <Text style={s.mainActionBtnText}>Jeda Siaran</Text>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          style={[s.secondaryActionBtn, { borderColor: isDarkMode ? '#22c55e' : '#86efac' }]}
-          onPress={() => openYouTube(video.url)}
-          activeOpacity={0.7}
-        >
-          <MaterialCommunityIcons name="youtube" size={20} color="#FF0000" />
-          <Text style={[s.secondaryActionBtnText, { color: isDarkMode ? '#ffffff' : '#166534' }]}>
-            Buka di YouTube
-          </Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 
@@ -268,7 +235,7 @@ export default function KhutbahScreen() {
         <View style={s.stateHeaderRow}>
           <View style={[s.statePill, { backgroundColor: '#d97706' }]}>
             <MaterialCommunityIcons name="calendar-clock" size={14} color="#ffffff" />
-            <Text style={s.statePillTextLight}>STATE 2 • SIARAN TERJADWAL</Text>
+            <Text style={s.statePillTextLight}>SIARAN TERJADWAL</Text>
           </View>
           <Text style={[s.stateHeaderSub, { color: isDarkMode ? '#fbbf24' : '#b45309' }]}>
             Upcoming Live
@@ -364,7 +331,7 @@ export default function KhutbahScreen() {
       <View style={s.stateHeaderRow}>
         <View style={[s.statePill, { backgroundColor: isDarkMode ? '#475569' : '#64748b' }]}>
           <MaterialCommunityIcons name="clock-outline" size={14} color="#ffffff" />
-          <Text style={s.statePillTextLight}>STATE 1 • BELUM ADA JADWAL (STANDBY)</Text>
+          <Text style={s.statePillTextLight}>BELUM ADA JADWAL</Text>
         </View>
         <Text style={[s.stateHeaderSub, { color: colors.textMuted }]}>Offline</Text>
       </View>

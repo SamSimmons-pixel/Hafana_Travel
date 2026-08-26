@@ -21,6 +21,8 @@ import { AuthProvider } from '@/context/auth';
 import { AppThemeProvider, useAppTheme } from '@/context/theme';
 import { DARK_COLORS, LIGHT_COLORS } from '@/components/styles/theme';
 
+import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
+
 // ── Custom navigation themes (matched to our brand palette) ────────────────────
 
 const LIGHT_NAV_THEME = {
@@ -78,11 +80,13 @@ function InnerLayout() {
         <Stack.Screen name="waktu-sholat"     options={{ headerShown: false, ...screenBg }} />
         <Stack.Screen name="destination/[id]" options={{ headerShown: false, ...screenBg }} />
         <Stack.Screen name="articles/[id]"    options={{ headerShown: false, ...screenBg }} />
+        <Stack.Screen name="tentang"          options={{ headerShown: false, ...screenBg }} />
         <Stack.Screen
           name="modal"
           options={{ presentation: 'modal', title: 'Modal', headerShown: true }}
         />
       </Stack>
+      <FloatingWhatsApp />
       <StatusBar style={isDarkMode ? 'light' : 'dark'} backgroundColor={colors.bg} />
     </ThemeProvider>
   );

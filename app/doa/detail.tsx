@@ -395,7 +395,7 @@ const s = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   ribbonBadge: {
-    backgroundColor: '#29B6F6', // Vibrant cyan-blue flag/ribbon
+    backgroundColor: '#f4b238', // Vibrant cyan-blue flag/ribbon
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderTopLeftRadius: 6,
@@ -406,7 +406,7 @@ const s = StyleSheet.create({
     ...SHADOW.card,
   },
   ribbonBadgeText: {
-    color: '#ffffff',
+    color: '#1a2a3a',
     fontSize: FONT.sizeSm,
     fontWeight: FONT.weightBlack,
     letterSpacing: 0.5,

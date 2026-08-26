@@ -1,15 +1,19 @@
 {
   "expo": {
-    "name": "Hafana-Travel",
-    "slug": "Hafana-Travel",
+    "name": "Hafana Tour & Travel",
+    "slug": "hafana-travel",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/Logo hafana travel.png",
     "scheme": "hafanatravel",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.HafanaTravel",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,14 +28,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/Logo hafana travel.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/597237233_893532000185730_6217460492187036240_n.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -46,6 +50,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3d800e8a-1c70-4dc3-858d-7d4459e9edb8"
+      }
     }
   }
 }

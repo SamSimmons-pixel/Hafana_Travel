@@ -29,6 +29,7 @@ import {
 } from '@/components/styles';
 import { useAppTheme } from '@/context/theme';
 import { apiRequest, getStorageUrl } from '@/services/api';
+import ImageViewerModal, { GalleryItemData } from '@/components/ImageViewerModal';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Paket {
@@ -68,6 +69,9 @@ export default function DetailPaketScreen() {
   const [paket, setPaket]   = useState<Paket | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fullscreen viewer
+  const [viewerVisible, setViewerVisible] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
@@ -103,7 +107,17 @@ export default function DetailPaketScreen() {
         {/* ── HERO IMAGE ── */}
         <View style={[s.hero, { backgroundColor: colors.primaryLight }]}>
           {imgUri ? (
-            <Image source={{ uri: imgUri }} style={s.heroImage} />
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setViewerVisible(true)}
+              style={StyleSheet.absoluteFill}
+            >
+              <Image source={{ uri: imgUri }} style={s.heroImage} />
+              {/* Zoom hint */}
+              <View style={s.zoomHint}>
+                <MaterialCommunityIcons name="magnify-plus-outline" size={18} color="#ffffff" />
+              </View>
+            </TouchableOpacity>
           ) : (
             <View style={[s.heroPlaceholder, { backgroundColor: colors.primary }]}>
               <MaterialCommunityIcons name="mosque" size={72} color="#ffffff" />
@@ -121,6 +135,16 @@ export default function DetailPaketScreen() {
           </View>
         </View>
 
+        {/* ── FULLSCREEN VIEWER ── */}
+        {imgUri ? (
+          <ImageViewerModal
+            visible={viewerVisible}
+            items={[{ id: paket.id, imageUrl: imgUri, caption: paket.nama_paket }] as GalleryItemData[]}
+            initialIndex={0}
+            onClose={() => setViewerVisible(false)}
+          />
+        ) : null}
+
         {/* ── CONTENT ── */}
         <View style={s.body}>
           {/* Title */}
@@ -128,7 +152,7 @@ export default function DetailPaketScreen() {
 
           {/* Harga — highlighted */}
           <View style={[s.hargaCard, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}>
-            <Text style={[s.hargaLabel, { color: colors.primary }]}>Harga per Orang</Text>
+            <Text style={[s.hargaLabel, { color: colors.primary }]}>Harga Mulai Dari</Text>
             <Text style={[s.hargaValue, { color: colors.primary }]}>{formatRupiah(paket.harga)}</Text>
           </View>
 
@@ -191,7 +215,7 @@ export default function DetailPaketScreen() {
             }}
           >
             <MaterialCommunityIcons name="phone" size={20} color="#ffffff" style={{ marginRight: 8 }} />
-            <Text style={s.ctaBtnText}>Hubungi Agen</Text>
+            <Text style={s.ctaBtnText}>Tanya Admin</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -318,4 +342,13 @@ const s = StyleSheet.create({
     ...SHADOW.button,
   },
   ctaBtnText: { color: COLORS.surface, fontSize: FONT.sizeLg, fontWeight: FONT.weightBlack },
+
+  zoomHint: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: RADIUS.md,
+    padding: 6,
+  },
 });
