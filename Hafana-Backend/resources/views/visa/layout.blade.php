@@ -7,8 +7,10 @@
     <meta name="description" content="Portal Resmi Pengecekan Visa & Data Keberangkatan Jemaah Umrah PT. Haramain Safarindo Hasanah (Hafana Travel)">
     <meta name="theme-color" content="#254091">
     
-    <!-- Favicon -->
+    <!-- Favicon & Touch Icons -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
 
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -131,7 +133,7 @@
         <!-- Header Bar -->
         <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-hafana-border dark:border-hafana-darkBorder px-4 py-3.5 flex items-center justify-between transition-colors">
             <div class="flex items-center gap-3">
-                <img src="{{ !empty($appLogo) ? asset('storage/' . $appLogo) : asset('images/logo.png') }}" alt="Hafana Travel Logo" class="h-8 w-auto object-contain">
+                <img src="{{ asset('images/logo.png') }}" alt="Hafana Travel Logo" class="h-8 w-auto object-contain">
                 <div>
                     <h1 class="text-sm font-extrabold text-hafana-textPrimary dark:text-hafana-darkTextPrimary tracking-tight leading-tight">
                         Hafana Travel
