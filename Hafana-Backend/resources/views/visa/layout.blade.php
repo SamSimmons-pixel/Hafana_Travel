@@ -131,13 +131,7 @@
         <!-- Header Bar -->
         <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-hafana-border dark:border-hafana-darkBorder px-4 py-3.5 flex items-center justify-between transition-colors">
             <div class="flex items-center gap-3">
-                @if(!empty($appLogo))
-                    <img src="{{ asset('storage/' . $appLogo) }}" alt="Hafana Travel Logo" class="h-8 w-auto object-contain">
-                @else
-                    <div class="w-8 h-8 rounded-xl bg-hafana-primary flex items-center justify-center text-white font-bold text-xs shadow-md">
-                        HF
-                    </div>
-                @endif
+                <img src="{{ !empty($appLogo) ? asset('storage/' . $appLogo) : asset('images/logo.png') }}" alt="Hafana Travel Logo" class="h-8 w-auto object-contain">
                 <div>
                     <h1 class="text-sm font-extrabold text-hafana-textPrimary dark:text-hafana-darkTextPrimary tracking-tight leading-tight">
                         Hafana Travel
