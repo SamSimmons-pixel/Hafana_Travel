@@ -20,7 +20,6 @@
         "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/images/Logo hafana travel.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.HafanaTravel"
     },
