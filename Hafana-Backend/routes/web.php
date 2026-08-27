@@ -8,6 +8,28 @@ use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\GroupController as AdminGroupController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\AdminUserController as AdminCrewController;
+use App\Http\Controllers\VisaPortalController;
+
+// ── Visa Portal Routes (visa.hafanatravel.com & /visa path fallback) ─────────
+$visaDomain = env('VISA_DOMAIN', 'visa.hafanatravel.com');
+
+// 1. Subdomain matching (visa.hafanatravel.com)
+Route::domain($visaDomain)->name('visa.')->group(function () {
+    Route::get('/', [VisaPortalController::class, 'index'])->name('index');
+    Route::get('/search-names', [VisaPortalController::class, 'searchNames'])->name('search-names');
+    Route::post('/verify', [VisaPortalController::class, 'verify'])->name('verify');
+    Route::post('/update-phone', [VisaPortalController::class, 'updatePhone'])->name('update-phone');
+    Route::post('/logout', [VisaPortalController::class, 'logout'])->name('logout');
+});
+
+// 2. Direct path fallback (e.g. localhost:8000/visa) for local dev & testing
+Route::prefix('visa')->group(function () {
+    Route::get('/', [VisaPortalController::class, 'index']);
+    Route::get('/search-names', [VisaPortalController::class, 'searchNames']);
+    Route::post('/verify', [VisaPortalController::class, 'verify']);
+    Route::post('/update-phone', [VisaPortalController::class, 'updatePhone']);
+    Route::post('/logout', [VisaPortalController::class, 'logout']);
+});
 
 Route::get('/', function () {
     return redirect()->route('admin.login');
