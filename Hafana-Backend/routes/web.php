@@ -9,6 +9,20 @@ use App\Http\Controllers\Admin\GroupController as AdminGroupController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\AdminUserController as AdminCrewController;
 use App\Http\Controllers\VisaPortalController;
+use App\Http\Controllers\AppLandingController;
+
+// ── App Landing Page Routes (app.hafanatravel.com) ──────────────────────────
+$appDomain = env('APP_LANDING_DOMAIN', 'app.hafanatravel.com');
+
+// 1. Subdomain matching (app.hafanatravel.com)
+Route::domain($appDomain)->name('app-landing.')->group(function () {
+    Route::get('/', [AppLandingController::class, 'index'])->name('index');
+});
+
+// 2. Path fallback for local dev (localhost:8000/app)
+Route::prefix('app')->group(function () {
+    Route::get('/', [AppLandingController::class, 'index']);
+});
 
 // ── Visa Portal Routes (visa.hafanatravel.com & /visa path fallback) ─────────
 $visaDomain = env('VISA_DOMAIN', 'visa.hafanatravel.com');
