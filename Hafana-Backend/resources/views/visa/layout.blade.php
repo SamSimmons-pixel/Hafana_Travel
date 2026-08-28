@@ -7,6 +7,23 @@
     <meta name="description" content="Portal Resmi Pengecekan Visa & Data Keberangkatan Jemaah Umrah PT. Haramain Safarindo Hasanah (Hafana Travel)">
     <meta name="theme-color" content="#254091">
     
+    <!-- Open Graph / WhatsApp Preview -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://visa.hafanatravel.com">
+    <meta property="og:title" content="Pengecekan Visa & Data Jemaah — Hafana Tour & Travel">
+    <meta property="og:description" content="Portal Resmi Pengecekan Visa, Nomor Paspor, dan Kepastian Rombongan Keberangkatan Jemaah Umrah PT. Haramain Safarindo Hasanah (Hafana Travel).">
+    <meta property="og:image" content="{{ asset('images/og-visa-preview.jpg') }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Portal Visa Hafana Tour & Travel">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pengecekan Visa & Data Jemaah — Hafana Tour & Travel">
+    <meta name="twitter:description" content="Portal Resmi Pengecekan Visa, Nomor Paspor, dan Kepastian Rombongan Keberangkatan Jemaah Umrah PT. Haramain Safarindo Hasanah.">
+    <meta name="twitter:image" content="{{ asset('images/og-visa-preview.jpg') }}">
+
     <!-- Favicon & Touch Icons -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="shortcut icon" type="image/png" href="{{ asset('images/logo.png') }}">
