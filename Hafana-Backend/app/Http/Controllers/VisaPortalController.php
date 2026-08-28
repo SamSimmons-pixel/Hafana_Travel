@@ -120,10 +120,9 @@ class VisaPortalController extends Controller
         }
 
         $request->validate([
-            'no_hp' => ['required', 'regex:/^[0-9+]{8,20}$/'],
+            'no_hp' => 'required|string|min:8|max:20',
         ], [
             'no_hp.required' => 'Nomor WhatsApp wajib diisi.',
-            'no_hp.regex'    => 'Nomor WhatsApp hanya boleh berupa angka (nomor telepon valid).',
         ]);
 
         $user = User::find($visaUserId);
