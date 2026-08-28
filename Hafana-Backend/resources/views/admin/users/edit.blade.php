@@ -58,7 +58,7 @@
                 </div>
                 <div class="form-group">
                     <label>No. HP / WhatsApp (Hanya Angka)</label>
-                    <input type="tel" inputmode="numeric" pattern="[0-9]+" name="no_hp" value="{{ old('no_hp', $user->no_hp) }}" placeholder="Contoh: 08123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    <input type="tel" name="no_hp" value="{{ old('no_hp', $user->no_hp) }}" placeholder="Contoh: 08123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                     @error('no_hp')<p class="error-msg">{{ $message }}</p>@enderror
                 </div>
             </div>
