@@ -948,7 +948,7 @@
                 @foreach($screenshots as $img)
                 <div class="slide">
                     <div class="slide-inner">
-                        <img src="{{ asset('images/app/' . $img) }}" alt="Screenshot Hafana Travel">
+                        <img src="{{ asset(ltrim($img, '/')) }}" alt="Screenshot Hafana Travel">
                     </div>
                 </div>
                 @endforeach
