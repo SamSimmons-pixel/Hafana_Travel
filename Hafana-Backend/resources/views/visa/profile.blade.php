@@ -228,8 +228,13 @@
                 <input 
                     type="tel" 
                     name="no_hp" 
+                    id="no_hp_input"
                     value="{{ $user->no_hp }}"
                     placeholder="Contoh: 081234567890" 
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    maxlength="16"
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                     required
                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-hafana-primary"
                 >
