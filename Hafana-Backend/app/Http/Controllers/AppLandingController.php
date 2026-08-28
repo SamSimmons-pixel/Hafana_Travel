@@ -23,20 +23,20 @@ class AppLandingController extends Controller
         // URL will be: https://app.hafanatravel.com/images/app/screenshots/01-beranda.jpg
         //
         $screenshots = [
-            // 'screenshots/01-beranda.jpg',
-            // 'screenshots/02-paket.jpg',
-            // 'screenshots/03-khutbah.jpg',
-            // 'screenshots/04-profil.jpg',
-            // 'screenshots/05-waktu-sholat.jpg',
-            // 'screenshots/06-kiblat.jpg',
-            // 'screenshots/07-doa.jpg',
-            // 'screenshots/08-quran.jpg',
+            'MockupApp-img/mockup (1).jpg',
+            'MockupApp-img/mockup (2).jpg',
+            'MockupApp-img/mockup (3).jpg',
+            'MockupApp-img/mockup (4).jpg',
+            'MockupApp-img/mockup (5).jpg',
+            'MockupApp-img/mockup (6).jpg',
+            'MockupApp-img/mockup (7).jpg',
+            'MockupApp-img/mockup (8).jpg',
         ];
 
         // ── Download Link ───────────────────────────────────────────────────────
         // Replace with your GitHub Releases APK download URL.
         // Example: 'https://github.com/yourusername/hafana-travel/releases/download/v1.0.0/hafana-travel-v1.0.0.apk'
-        $apkDownloadUrl = '#'; // TODO: ganti dengan link GitHub Release APK kamu
+        $apkDownloadUrl = 'https://github.com/SamSimmons-pixel/Hafana_Travel/releases/download/v1.0.0/Hafana.apk';
 
         return view('app.landing', compact('screenshots', 'apkDownloadUrl'));
     }
