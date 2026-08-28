@@ -471,9 +471,9 @@
         .slider-container {
             position: relative;
             width: 100%;
-            max-width: 960px;
+            max-width: 1080px;
             margin: 0 auto;
-            height: 400px;
+            height: 680px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -495,10 +495,10 @@
         .slide {
             position: relative;
             flex: 0 0 33.3333%;
-            height: 280px;
+            height: 540px;
             padding: 0 16px;
-            transform: scale(0.85);
-            opacity: 0.35;
+            transform: scale(0.88);
+            opacity: 0.4;
             will-change: transform, opacity;
         }
 
@@ -506,18 +506,20 @@
             position: relative;
             width: 100%;
             height: 100%;
-            border-radius: 18px;
+            border-radius: 24px;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .slide img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            border-radius: 18px;
-            border: 2px solid #334155;
+            object-fit: contain;
+            border-radius: 20px;
             pointer-events: none;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
             display: block;
         }
 
@@ -525,7 +527,7 @@
             width: 100%;
             height: 100%;
             background: var(--dark-surface);
-            border-radius: 18px;
+            border-radius: 20px;
             border: 2px dashed #334155;
             display: flex;
             flex-direction: column;
@@ -551,7 +553,7 @@
             position: absolute;
             inset: 0;
             pointer-events: none;
-            border-radius: 18px;
+            border-radius: 24px;
             opacity: 0;
             will-change: opacity;
         }
@@ -562,7 +564,7 @@
         .slide.is-right .slide-inner::after  { opacity: 0.85; }
         .slide.is-center {
             opacity: 1;
-            transform: scale(1.2);
+            transform: scale(1.18);
             z-index: 2;
         }
         .slide.is-center .slide-inner::before,
@@ -807,9 +809,8 @@
             .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
             .stat-item:last-child { border-bottom: none; }
 
-            .slide { flex: 0 0 80%; }
-            .slider-container { height: 320px; }
-            .slide { height: 240px; }
+            .slide { flex: 0 0 75%; height: 480px; }
+            .slider-container { height: 560px; }
 
             .features-grid { grid-template-columns: 1fr 1fr; }
 
@@ -819,6 +820,8 @@
         @media (max-width: 480px) {
             .features-grid { grid-template-columns: 1fr; }
             .hero { padding: 72px 20px 60px; }
+            .slide { flex: 0 0 85%; height: 420px; }
+            .slider-container { height: 500px; }
         }
     </style>
 </head>
@@ -1114,7 +1117,9 @@
             let currentIndex = totalRaw;
             let isTransitioning = false;
 
-            function getSlideWidth() { return container.offsetWidth / 3; }
+            function getSlideWidth() {
+                return allSlides[0] ? allSlides[0].offsetWidth : (container.offsetWidth / 3);
+            }
 
             function setClasses() {
                 allSlides.forEach((slide, idx) => {
@@ -1125,11 +1130,16 @@
                 });
             }
 
+            function getCenterOffset(idx) {
+                const sw = getSlideWidth();
+                return idx * sw - (container.offsetWidth - sw) / 2;
+            }
+
             function updateSlider(animate = true) {
                 if (animate) track.classList.add('animating');
                 else         track.classList.remove('animating');
                 setClasses();
-                const offset = (currentIndex - 1) * getSlideWidth();
+                const offset = getCenterOffset(currentIndex);
                 track.style.transform = `translateX(-${offset}px)`;
             }
 
@@ -1177,7 +1187,12 @@
             // Touch & Drag
             let startX = 0, isDragging = false;
             function startDrag(x) { if (isTransitioning) return; isDragging = true; startX = x; track.classList.remove('animating'); }
-            function dragMove(x) { if (!isDragging) return; const d = x - startX; const base = (currentIndex - 1) * getSlideWidth(); track.style.transform = `translateX(-${base - d}px)`; }
+            function dragMove(x) {
+                if (!isDragging) return;
+                const d = x - startX;
+                const base = getCenterOffset(currentIndex);
+                track.style.transform = `translateX(-${base - d}px)`;
+            }
             function endDrag(x) { if (!isDragging) return; isDragging = false; const d = x - startX; if (d < -40) moveNext(); else if (d > 40) movePrev(); else updateSlider(true); }
 
             container.addEventListener('mousedown', e => startDrag(e.clientX));
