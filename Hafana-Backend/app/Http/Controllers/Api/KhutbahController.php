@@ -30,11 +30,11 @@ class KhutbahController extends Controller
 
     private function fetchFromYouTube(): array
     {
-        // 1. Try HTML scraping with Cookie Consent bypass headers
+        // 1. Try HTML scraping with Cookie Consent bypass headers and English language for stable "Upcoming" badges
         try {
             $html = Http::withHeaders([
                 'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Accept-Language' => 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept-Language' => 'en-US,en;q=0.9',
                 'Cookie'          => 'SOCS=CAESEwgDEgk2OTg0MzI4MjQaAmVuIAEaBgiA_LyaBg; CONSENT=PENDING+999;',
             ])
                 ->timeout(10)
@@ -399,38 +399,66 @@ class KhutbahController extends Controller
 
         $jsonString = json_encode($node);
 
-        // Check LIVE badge
-        $isLive = false;
+        // Extract all overlay badges from modern lockup structure
+        $badges = [];
         $overlays = $node['contentImage']['thumbnailViewModel']['overlays'] ?? [];
-        $overlayText = strtoupper(json_encode($overlays));
-        if (str_contains($overlayText, '"LIVE"') || str_contains($overlayText, 'LIVE_NOW') || str_contains($overlayText, 'THUMBNAIL_OVERLAY_BADGE_STYLE_LIVE')) {
+        foreach ($overlays as $overlay) {
+            // 1. thumbnailBottomOverlayViewModel (e.g. "Upcoming" badge in 2025/2026 YouTube)
+            $bottomBadges = $overlay['thumbnailBottomOverlayViewModel']['badges'] ?? [];
+            foreach ($bottomBadges as $b) {
+                $txt = $b['thumbnailBadgeViewModel']['text'] ?? '';
+                if ($txt !== '') $badges[] = $txt;
+            }
+            // 2. thumbnailOverlayBadgeViewModel
+            $topBadges = $overlay['thumbnailOverlayBadgeViewModel']['thumbnailBadges'] ?? [];
+            foreach ($topBadges as $b) {
+                $txt = $b['thumbnailBadgeViewModel']['text'] ?? '';
+                if ($txt !== '') $badges[] = $txt;
+            }
+        }
+
+        // Extract scheduled time text from metadata rows
+        $scheduledAt = null;
+        $metadataRows = $node['metadata']['lockupMetadataViewModel']['metadata']['contentMetadataViewModel']['metadataRows'] ?? [];
+        foreach ($metadataRows as $row) {
+            foreach ($row['metadataParts'] ?? [] as $part) {
+                $text = $part['text']['content'] ?? '';
+                if (str_contains($text, 'Scheduled') || str_contains($text, 'Terjadwal') || str_contains($text, 'Tayang')) {
+                    $scheduledAt = $text;
+                    break 2;
+                }
+            }
+        }
+
+        // Check LIVE status
+        $isLive = false;
+        foreach ($badges as $b) {
+            if (strcasecmp($b, 'LIVE') === 0 || strcasecmp($b, 'LIVE NOW') === 0) {
+                $isLive = true;
+                break;
+            }
+        }
+        if (!$isLive && (str_contains($jsonString, '"LIVE"') || str_contains($jsonString, 'LIVE_NOW') || str_contains($jsonString, 'THUMBNAIL_OVERLAY_BADGE_STYLE_LIVE'))) {
             $isLive = true;
         }
 
-        // Check UPCOMING badge (Must have real UPCOMING badge/reminder, not past text)
+        // Check UPCOMING status (Explicitly checks "Upcoming" badge object / text)
         $isUpcoming = false;
-        if (
-            str_contains($overlayText, '"UPCOMING"') ||
-            str_contains($overlayText, 'THUMBNAIL_OVERLAY_BADGE_STYLE_UPCOMING') ||
-            str_contains($jsonString, 'addUpcomingEventReminderEndpoint') ||
-            !empty($node['upcomingEventData'])
-        ) {
-            $isUpcoming = true;
-        }
-
-        // Scheduled time text
-        $scheduledAt = null;
-        if ($isUpcoming) {
-            $metadataRows = $node['metadata']['lockupMetadataViewModel']['metadata']['contentMetadataViewModel']['metadataRows'] ?? [];
-            foreach ($metadataRows as $row) {
-                foreach ($row['metadataParts'] ?? [] as $part) {
-                    $text = $part['text']['content'] ?? '';
-                    if (str_contains($text, 'Scheduled') || str_contains($text, 'Terjadwal')) {
-                        $scheduledAt = $text;
-                        break 2;
-                    }
-                }
+        foreach ($badges as $b) {
+            if (strcasecmp($b, 'Upcoming') === 0 || strcasecmp($b, 'Segera') === 0) {
+                $isUpcoming = true;
+                break;
             }
+        }
+        if (!$isUpcoming && (
+            str_contains($jsonString, '"text":"Upcoming"') ||
+            str_contains($jsonString, '"text": "Upcoming"') ||
+            str_contains($jsonString, 'THUMBNAIL_OVERLAY_BADGE_STYLE_UPCOMING') ||
+            str_contains($jsonString, 'addUpcomingEventReminderEndpoint') ||
+            !empty($node['upcomingEventData']) ||
+            $scheduledAt !== null
+        )) {
+            $isUpcoming = true;
         }
 
         $isIndonesian = $this->isIndonesian($title);
