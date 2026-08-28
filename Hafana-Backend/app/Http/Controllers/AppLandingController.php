@@ -27,7 +27,6 @@ class AppLandingController extends Controller
             '/mockupapp-img/mockup-(2).jpg',
             '/mockupapp-img/mockup-(3).jpg',
             '/mockupapp-img/mockup-(4).jpg',
-            '/mockupapp-img/mockup-(5).jpg',
             '/mockupapp-img/mockup-(6).jpg',
             '/mockupapp-img/mockup-(7).jpg',
             '/mockupapp-img/mockup-(8).jpg',
