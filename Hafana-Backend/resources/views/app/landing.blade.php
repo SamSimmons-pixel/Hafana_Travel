@@ -1102,6 +1102,7 @@
             <a href="https://hafanatravel.com" class="footer-link" target="_blank" rel="noopener">hafanatravel.com</a>
             <a href="https://hafanatravel.com/tentang/" class="footer-link" target="_blank" rel="noopener">Tentang Kami</a>
             <a href="{{ $apkDownloadUrl }}" class="footer-link" id="footer-dl-link">Download APK</a>
+            <a href="{{ url('/app/privacy') }}" class="footer-link" target="_blank" rel="noopener">Privacy Policy</a>
         </div>
         <p class="footer-copy">&copy; {{ date('Y') }} PT. Haramain Safarindo Hasanah (Hafana Travel). Seluruh hak dilindungi.</p>
     </footer>

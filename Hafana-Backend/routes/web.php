@@ -17,11 +17,13 @@ $appDomain = env('APP_LANDING_DOMAIN', 'app.hafanatravel.com');
 // 1. Subdomain matching (app.hafanatravel.com)
 Route::domain($appDomain)->name('app-landing.')->group(function () {
     Route::get('/', [AppLandingController::class, 'index'])->name('index');
+    Route::get('/privacy', [AppLandingController::class, 'privacy'])->name('privacy');
 });
 
 // 2. Path fallback for local dev (localhost:8000/app)
 Route::prefix('app')->group(function () {
     Route::get('/', [AppLandingController::class, 'index']);
+    Route::get('/privacy', [AppLandingController::class, 'privacy']);
 });
 
 // ── Visa Portal Routes (visa.hafanatravel.com & /visa path fallback) ─────────

@@ -39,4 +39,16 @@ class AppLandingController extends Controller
 
         return view('app.landing', compact('screenshots', 'apkDownloadUrl'));
     }
+
+    /**
+     * GET /privacy  (app.hafanatravel.com/privacy or /app/privacy path fallback)
+     *
+     * Standalone public Privacy Policy page.
+     * No authentication required — reusable for any future public page
+     * (e.g. registration flow) that needs to reference the privacy policy.
+     */
+    public function privacy()
+    {
+        return view('app.privacy');
+    }
 }
